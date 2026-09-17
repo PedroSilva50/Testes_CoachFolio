@@ -1,0 +1,9 @@
+Copyright (c) 2026 Pedro Silva (Coachfolio)
+
+PROPRIETARY AND CLOSED SOURCE LICENSE
+
+All rights reserved. This software and associated documentation files (the "Software") are the intellectual property of Pedro Silva.
+
+You may NOT use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, in part or in whole, without the express written permission of the author.
+
+The Software is provided "AS IS", without warranty of any kind, express or implied. In no event shall the author be liable for any claim, damages or other liability arising from, out of or in connection with the Software or the use or other dealings in the Software.
