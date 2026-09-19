@@ -1179,8 +1179,44 @@ window.triggerSafeShare = async function() {
     window.pendingShareFile = null;
     window.closeModal();
 };
-window.triggerSafePrint = function() {
-    window.print();
+window.triggerSafePrint = async function() {
+    const printArea = document.getElementById('print-area');
+    if (!printArea || !printArea.innerHTML.trim()) {
+        showToast('Área de impressão vazia.');
+        closeModal();
+        return;
+    }
+
+    // Se estiver no iPhone/iPad em modo PWA (Adicionado ao Ecrã Principal)
+    const isIOSPWA = (window.navigator.standalone === true) || (window.matchMedia('(display-mode: standalone)').matches && /iPhone|iPad|iPod/.test(navigator.userAgent));
+
+    if (isIOSPWA) {
+        try {
+            showToast('A preparar ficheiro para o iOS... ⏳');
+            // Cria um ficheiro HTML formatado em Blob para ser aceite pelo menu nativo do iOS
+            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}</body></html>`;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const file = new File([blob], `Coachfolio_Relatorio_${Date.now()}.html`, { type: 'text/html' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Relatório Coachfolio'
+                });
+                closeModal();
+                showToast('Relatório partilhado / guardado! ⚽');
+                return;
+            }
+        } catch (e) {
+            if (e.name !== 'AbortError') console.log('Partilha iOS cancelada/falhou:', e);
+        }
+    }
+
+    // Fallback nativo para Browsers normais no PC ou Android
+    closeModal();
+    setTimeout(() => {
+        window.print();
+    }, 200);
 };
 window.archiveSeason = function() { closeModal(); modalConfig = { type: 'archiveSeason' }; document.getElementById('modal-root').innerHTML = renderModalHTML(); };
 window.doArchiveSeason = function() {
