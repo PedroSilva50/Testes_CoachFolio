@@ -245,6 +245,7 @@ window.setAbsenceReason = function(pId, reason) {
       delete trainingForm.customMinutes[pId];
     }
   }
+
   render();
 };
 
@@ -342,6 +343,7 @@ window.uiSaveTraining = function() {
       absences: absencesObj,
       customMinutes: customMinsObj
     };
+    
     state.trainings.push(newTr);
   }
 
@@ -421,6 +423,7 @@ window.viewExerciseScheme = function(notebookId) {
     if (typeof showToast === 'function') showToast('Esquema tático não encontrado.');
     return;
   }
+
   if (typeof loadTacticalPlay === 'function') {
     loadTacticalPlay(notebookId);
   }
@@ -448,7 +451,7 @@ window.exportCallupPDF = function(schId) {
   let locLabel = s.location === 'casa' ? 'CASA' : 'FORA';
   let matchTitle = s.location === 'casa' ? `${getMyClub()} 🆚 ${s.opponent}` : `${s.opponent} 🆚 ${getMyClub()}`;
 
-  const called = sortPlayerObjs(eligiblePlayers().filter(p => s.callup.includes(p.id)));
+  const called = sortPlayerObjs(eligiblePlayers().filter(p => (s.callup || []).includes(p.id)));
   let rowsHtml = '';
   if (called.length === 0) {
     rowsHtml = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#9CA3AF;">Nenhum jogador selecionado na convocatória.</td></tr>';
