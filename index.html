@@ -254,7 +254,7 @@
     border-top: 1px solid var(--line, #1D3B28);
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: stretch;
     padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
     z-index: 9999;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
@@ -264,14 +264,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center; /* Centraliza verticalmente o ícone e texto */
+    gap: 3px;
     color: var(--muted, #888888);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
+    hite-space: nowrap; /* Impede a quebra em 2 linhas */
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -304,6 +306,7 @@ body {
 </style>
 <!-- Manifesto para transformar em App Nativa (PWA) -->
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="./icon-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Coachfolio">
@@ -331,7 +334,7 @@ body {
         <span id="nav-lbl-strat">Tática</span>
     </div>
     <div class="dock-btn navbtn" data-hub="equipa" onclick="navigateToHub('equipa')">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 1 0 7.75"></path></svg>
         <span id="nav-lbl-team">Equipa</span>
     </div>
 </nav>
