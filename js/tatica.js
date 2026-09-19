@@ -103,7 +103,16 @@ window.setDrawColor = function(color) { currentDrawColor = color; render(); };
 window.clearCanvasLines = function() { 
     state.tacticPaths = []; 
     saveState(); 
-    render(); 
+    redrawCanvas();
+    render();
+    if(typeof showToast === 'function') showToast('Riscos apagados! 🧹');
+};
+
+window.clearAllTacticPieces = function() {
+    state.tactics = [];
+    saveState();
+    render();
+    if(typeof showToast === 'function') showToast('Peças removidas! 🗑️');
 };
 
 window.undoLastPath = function() { 
@@ -247,16 +256,16 @@ function renderTatica() {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <span style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">CAIXA DE PEÇAS</span>
             
-            <!-- LIMPEZA SEPARADA COM MAIS ESPAÇAMENTO -->
+            <!-- LIMPEZA SEPARADA COM AÇÕES DIRETA -->
             <div style="display:flex; gap:12px; align-items:center;">
                 <div style="display:flex; gap:4px;">
                     <button class="btn btn-outline" style="font-size:9px; padding:3px 6px;" onclick="undoLastPath()" title="Desfazer Risco">↩️ RISCO</button>
-                    <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; color:var(--red); border-color:var(--red);" onclick="askConfirm('Limpar todos os riscos desenhados?', ()=>clearCanvasLines())" title="Limpar Riscos">🧹 RISCOS</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; color:var(--red); border-color:var(--red);" onclick="clearCanvasLines()" title="Limpar Riscos">🧹 RISCOS</button>
                 </div>
                 <div style="width:1px; height:16px; background:var(--line);"></div>
                 <div style="display:flex; gap:4px;">
                     <button class="btn btn-outline" style="font-size:9px; padding:3px 6px;" onclick="undoLastTacticPiece()" title="Desfazer Peça">↩️ PEÇA</button>
-                    <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; color:var(--red); border-color:var(--red);" onclick="askConfirm('Apagar todas as peças do relvado?', ()=>{ state.tactics=[]; saveState(); render(); })" title="Limpar Peças">🗑️ PEÇAS</button>
+                    <button class="btn btn-outline" style="font-size:9px; padding:3px 6px; color:var(--red); border-color:var(--red);" onclick="clearAllTacticPieces()" title="Limpar Peças">🗑️ PEÇAS</button>
                 </div>
             </div>
         </div>
