@@ -73,26 +73,72 @@ function renderModalHTML(){
      state.enableVideos = true;
      state.enableBirthdays = true;
 
-     // Define qual aba está aberta por defeito
      window.settingsTab = window.settingsTab !== undefined ? window.settingsTab : 'identidade';
 
-     // Função auxiliar corrigida: flex-shrink:0 e sem herdar padding da classe .card
      const makeAccordion = (id, icon, title, content) => {
          const isOpen = window.settingsTab === id;
          return `
          <div style="margin:0; padding:0; flex-shrink:0; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); text-align:left; overflow:hidden;">
-             <div style="padding:16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${isOpen ? 'var(--surface)' : 'transparent'}; border-bottom:${isOpen ? '1px solid var(--line)' : 'none'};" 
+             <div style="padding:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${isOpen ? 'var(--surface)' : 'transparent'}; border-bottom:${isOpen ? '1px solid var(--line)' : 'none'};" 
                   onclick="window.settingsTab = window.settingsTab === '${id}' ? null : '${id}'; document.getElementById('modal-root').innerHTML = renderModalHTML();">
                  <div style="font-size:12px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin:0; line-height:1; display:flex; align-items:center; gap:6px;">
                     <span>${icon}</span> <span>${title}</span>
                  </div>
                  <div style="color:var(--gold); font-size:14px; transition: transform 0.2s; line-height:1;">${isOpen ? '▼' : '▶'}</div>
              </div>
-             ${isOpen ? `<div style="padding:16px; animation: fadeIn 0.2s ease-in-out;">${content}</div>` : ''}
+             ${isOpen ? `<div style="padding:14px; animation: fadeIn 0.2s ease-in-out;">${content}</div>` : ''}
          </div>
          `;
      };
 
+     // ... (mantém o conteúdo das variáveis contentIdentidade, contentTatica, etc.)
+
+     return `
+     <style>
+       @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+     </style>
+     <div class="modal-overlay" style="padding: 10px;" onclick="if(event.target===this) closeModal()">
+       <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column; padding: 16px; max-width: 480px; position: relative; z-index: 10000;">
+         <h3 style="margin-top:0; margin-bottom:12px; color:var(--gold); flex-shrink:0;">${t('set_title')}</h3>
+         
+         <!-- ÁREA COM SCROLL INTERNO -->
+         <div style="flex: 1; overflow-y: auto; padding-right: 4px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;">
+             
+             ${makeAccordion('identidade', '🛡️', 'Identidade do Clube', contentIdentidade)}
+             ${makeAccordion('tatica', '📋', 'Tática e Jogo', contentTatica)}
+             ${makeAccordion('modulos', '📱', 'Módulos & Interface', contentModulos)}
+             ${makeAccordion('epoca', '📅', 'Gestão de Época', contentEpoca)}
+             
+             <div style="flex-shrink:0; margin:4px 0 0 0; padding:14px; border-radius:12px; border:1px dashed var(--line); background:var(--surface-2); text-align:left;">
+               <div style="font-size:11px; color:var(--chalk); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">💾 Dados & Backups</div>
+               <div style="font-size:10px; color:var(--muted); margin-bottom:12px; line-height:1.4;">Para evitar a perda de dados, exporta um backup regularmente.</div>
+               
+               ${typeof getAutoSaveStatusHTML === 'function' ? getAutoSaveStatusHTML() : ''}
+               
+               <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:12px;">
+                 <button class="btn btn-gold" style="font-size:11px; font-weight:bold; flex:1;" onclick="event.stopPropagation(); window.exportDataJSON();">📥 ${t('exp_json')}</button>
+                 <label class="btn btn-outline" style="font-size:11px; font-weight:bold; flex:1; margin:0; cursor:pointer; text-align:center;">
+                   📤 ${t('imp_json')}
+                   <input type="file" id="json-file-input" accept=".json" style="display:none;" onchange="importData(this)">
+                 </label>
+               </div>
+               
+               <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; margin-bottom:4px;"><span>Armazenamento</span><span>${sizeKB.toFixed(1)} KB / ~5 MB</span></div>
+               <div style="height:6px; background:var(--surface); border-radius:3px; overflow:hidden; margin-bottom:12px;"><div style="height:100%; width:${pct}%; background:${strColor};"></div></div>
+               
+               <button class="btn btn-red" style="width:100%; font-size:12px;" onclick="event.stopPropagation(); wipeAllData();">🗑️ Limpar Dados (Reset)</button>
+             </div>
+
+         </div>
+         
+         <!-- BOTÕES FIXOS NO FUNDO DO MODAL (SEMPRE VISÍVEIS) -->
+         <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 6px;">
+             <button class="btn" style="width:100%; background:#0E211A; color:#fff; border:1px solid var(--line); font-size:11px; padding:10px;" onclick="abrirCreditos()">🤝 Créditos & Parceiros</button>
+             <button class="btn btn-outline" style="width:100%; font-size:12px; padding:10px;" onclick="closeModal()">${t('close')}</button>
+         </div>
+       </div>
+     </div>`;
+  
      // CONTEÚDO DAS ABAS (Intacto com todas as funcionalidades e IDs)
      const contentIdentidade = `
         <div class="field" style="margin-bottom:12px;">
@@ -774,61 +820,62 @@ function validateBackupFile(data) {
 }
 
 window.importData = function(input) { 
-  const file = input.files[0]; 
+  const file = input.files ? input.files[0] : null; 
   if(!file) return; 
   
+  showToast('A ler ficheiro de backup... ⏳');
+
   const reader = new FileReader(); 
   reader.onload = (e) => { 
     try { 
       const p = JSON.parse(e.target.result); 
       
-      // 1. Passa pelo Porteiro
-      validateBackupFile(p);
+      // Validação do ficheiro
+      if (typeof validateBackupFile === 'function') {
+          validateBackupFile(p);
+      }
       
-      // 2. Só pede confirmação se o ficheiro for válido
-      askConfirm(t('msg_overwrite'), () => { 
-        state = sanitizeData(p); 
-        
-        // 3. Garante que os arrays base não vêm a 'null'
-        if(!state.roster) state.roster = []; 
-        if(!state.matches) state.matches = []; 
-        if(!state.trainings) state.trainings = []; 
-        if(!state.schedule) state.schedule = []; 
-        if(!state.phaseReports) state.phaseReports = {}; 
-        if(!state.scoutingBook) state.scoutingBook = {};
-        if(!state.tactics) state.tactics = []; 
-        if(!state.tacticPaths) state.tacticPaths = []; 
-        if(!state.tacticalNotebook) state.tacticalNotebook = []; 
-        if(!state.videos) state.videos = []; 
-        if(!state.diary) state.diary = []; 
-        if(!state.leagues) state.leagues = []; 
-        if(!state.fines) state.fines = []; 
-        if(!state.staff) state.staff = [];
-        
-        // 4. Restaurar definições por defeito caso o backup seja muito antigo
-        if(!state.teamColor) state.teamColor = '#D9A441'; 
-        if(!state.oppColor) state.oppColor = '#C8493F'; 
-        if(!state.seasonFormat) state.seasonFormat = 'europeu'; 
-        if(!state.currentSeason) state.currentSeason = defaultSeason(); 
-        if(state.enableLeagues===undefined) state.enableLeagues=true; 
-        if(state.enableFines===undefined) state.enableFines=false; 
-        if(state.enableBirthdays===undefined) state.enableBirthdays=false; 
-        if(state.trackSubs===undefined) state.trackSubs=true; 
-        if(state.keepScreenAwake===undefined) state.keepScreenAwake=false;
-        if(state.isActivated===undefined) state.isActivated=true; // Garante que não bloqueia clientes antigos
-        
-        state.lastBackupDate = Date.now(); 
-        saveState(); 
-        render(); 
-        showToast(t('msg_bkp_imp')); 
-      }); 
+      // Aplica os dados diretamente
+      state = sanitizeData(p); 
+      
+      if(!state.roster) state.roster = []; 
+      if(!state.matches) state.matches = []; 
+      if(!state.trainings) state.trainings = []; 
+      if(!state.schedule) state.schedule = []; 
+      if(!state.phaseReports) state.phaseReports = {}; 
+      if(!state.scoutingBook) state.scoutingBook = {};
+      if(!state.tactics) state.tactics = []; 
+      if(!state.tacticPaths) state.tacticPaths = []; 
+      if(!state.tacticalNotebook) state.tacticalNotebook = []; 
+      if(!state.videos) state.videos = []; 
+      if(!state.diary) state.diary = []; 
+      if(!state.leagues) state.leagues = []; 
+      if(!state.fines) state.fines = []; 
+      if(!state.staff) state.staff = [];
+      
+      if(!state.teamColor) state.teamColor = '#D9A441'; 
+      if(!state.oppColor) state.oppColor = '#C8493F'; 
+      if(!state.seasonFormat) state.seasonFormat = 'europeu'; 
+      if(!state.currentSeason) state.currentSeason = defaultSeason(); 
+      if(state.isActivated===undefined) state.isActivated=true;
+      
+      state.lastBackupDate = Date.now(); 
+      saveState(); 
+      closeModal();
+      render(); 
+      showToast('✅ Backup restaurado com sucesso!'); 
     } catch(err) { 
       console.error("Erro na importação:", err);
-      showToast(t('msg_inv_file')); 
+      alert('Erro ao carregar o ficheiro JSON. Verifica se o ficheiro é um backup válido do Coachfolio.');
     } 
   }; 
+
+  reader.onerror = () => {
+    alert('Erro de leitura do ficheiro no dispositivo.');
+  };
+
   reader.readAsText(file); 
-  input.value = ''; // Limpa o input para poder importar o mesmo ficheiro a seguir se necessário
+  input.value = ''; 
 };
 function render(){
   try {
