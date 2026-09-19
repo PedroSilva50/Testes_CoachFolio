@@ -1,6 +1,37 @@
 function renderModalHTML(){
   if(!modalConfig) return '';
 
+  if (modalConfig && modalConfig.type === 'exerciseSelector') {
+      const exercises = (state.tacticalNotebook || []).filter(x => x.category === 'treino');
+      const query = (window.exerciseSearchQuery || '').trim().toLowerCase();
+      const filtered = exercises.filter(ex => !query || ex.name.toLowerCase().includes(query));
+
+      return `
+      <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div class="modal-card" style="max-width:440px; text-align:left;">
+          <h3 style="margin-top:0; color:var(--gold); text-align:center;">🏋️ Selecionar Exercício do Caderno</h3>
+          
+          <div class="field" style="margin-bottom:12px;">
+            <input type="text" placeholder="Pesquisar exercício..." value="${window.exerciseSearchQuery || ''}" oninput="window.exerciseSearchQuery=this.value; document.getElementById('modal-root').innerHTML = renderModalHTML();">
+          </div>
+
+          <div style="max-height:55vh; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:8px;">
+            ${filtered.length > 0 ? filtered.map(ex => `
+              <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:bold; color:var(--chalk); font-size:13px;">${ex.name}</div>
+                  <div style="font-size:10px; color:var(--muted);">${ex.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</div>
+                </div>
+                <button class="btn btn-green" style="font-size:10px; padding:6px 10px;" onclick="addExerciseToTraining('${ex.id}', 15)">+ Importar</button>
+              </div>
+            `).join('') : `<div class="empty">Nenhum exercício encontrado.</div>`}
+          </div>
+
+          <button class="btn btn-outline" style="width:100%; margin-top:14px;" onclick="closeModal()">${t('cancel')}</button>
+        </div>
+      </div>`;
+  }
+
   if(modalConfig.type === 'scouting') {
     let s = state.schedule.find(x => x.id === modalConfig.schId);
     if (!s) {

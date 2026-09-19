@@ -432,41 +432,42 @@ function renderTreinos(){
           <div class="field" style="margin-bottom:0;"><label>Duração Total (Min)</label><input id="tr-duration-input" type="number" inputmode="numeric" pattern="[0-9]*" min="15" max="300" step="5" placeholder="Ex: 90" value="${trainingForm.duration || 90}" onclick="this.select()" oninput="trainingForm.duration=parseInt(this.value,10)||'';"></div>
         </div>
 
-        <!-- IMPORTAÇÃO RÁPIDA DE EXERCÍCIOS DO CADERNO -->
+        <!-- BOTÃO LIMPO DE IMPORTAÇÃO -->
         <div style="margin-top:14px; border-top:1px dashed var(--line); padding-top:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin:0;">🏋️ Importar do Caderno</label>
-            <span style="font-size:10px; color:var(--muted);">Soma minutos automaticamente</span>
+            <label style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin:0;">🏋️ Exercícios do Caderno</label>
+            <button class="btn btn-gold" style="font-size:10px; padding:6px 10px;" onclick="openExerciseSelectorModal()">➕ Importar Exercício</button>
           </div>
-          
-          ${(state.tacticalNotebook || []).filter(x => x.category === 'treino').length > 0 ? `
-            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
-              ${(state.tacticalNotebook || []).filter(x => x.category === 'treino').map(ex => `
-                <button class="chip chip-sm" style="border-color:var(--green); color:var(--green); font-size:10px; padding:4px 8px;" onclick="addExerciseToTraining('${ex.id}')">+ ${ex.name}</button>
-              `).join('')}
-            </div>
-          ` : `<div style="font-size:10px; color:var(--muted); margin-bottom:10px;">Sem exercícios marcados como "Treino" no Caderno.</div>`}
 
           ${(trainingForm.exercises && trainingForm.exercises.length > 0) ? `
-            <div style="background:var(--surface-2); border-radius:8px; padding:8px; margin-bottom:10px; display:flex; flex-direction:column; gap:4px;">
-              <div style="font-size:10px; color:var(--muted); font-weight:bold; text-transform:uppercase;">Exercícios Selecionados:</div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
               ${trainingForm.exercises.map((ex, idx) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
-                  <span><b>${idx + 1}.</b> ${ex.name} (${ex.duration}m)</span>
-                  <button class="quick-del" style="color:var(--red); font-size:12px;" onclick="removeExerciseFromTraining(${idx})">✕</button>
+                <div style="background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="flex:1;">
+                    <div style="font-size:12px; font-weight:bold; color:var(--chalk);">${idx + 1}. ${ex.name}</div>
+                    <div style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:8px; margin-top:2px;">
+                      <span>Duração:</span>
+                      <input type="number" min="1" max="180" value="${ex.duration}" style="width:50px; padding:2px 4px; font-size:11px; text-align:center; background:var(--surface); border:1px solid var(--gold); color:var(--gold); font-weight:bold; border-radius:4px;" onchange="updateExerciseDurationInTraining(${idx}, this.value)">
+                      <span>Min</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); font-size:10px; padding:4px 8px;" onclick="viewExerciseScheme('${ex.notebookId}')">👁️ Ver</button>
+                    <button class="quick-del" style="color:var(--red); font-size:14px;" onclick="removeExerciseFromTraining(${idx})">✕</button>
+                  </div>
                 </div>
               `).join('')}
             </div>
-          ` : ''}
+          ` : `<div style="font-size:10px; color:var(--muted); margin-top:6px;">Nenhum exercício importado para esta sessão.</div>`}
         </div>
 
-        <div class="field" style="margin-top:8px; margin-bottom:10px;">
-          <label>🏋️‍♂️ Plano de Treino</label>
+        <div class="field" style="margin-top:12px; margin-bottom:10px;">
+          <label>🏋️‍♂️ Plano de Treino (Gerado/Editável)</label>
           <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
         </div>
 
         <div class="field" style="margin-bottom:0;">
-          <label>📝 Notas & Observações</label>
+          <label>📝 Observações</label>
           <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
         </div>
       </div>
@@ -688,4 +689,77 @@ window.recalculateTrainingPlanAndDuration = function() {
         trainingForm.plan = planLines.join('\n');
         trainingForm.notes = trainingForm.plan;
     }
+};
+
+window.exerciseSearchQuery = '';
+
+window.openExerciseSelectorModal = function() {
+    window.exerciseSearchQuery = '';
+    modalConfig = { type: 'exerciseSelector' };
+    const root = document.getElementById('modal-root');
+    if (root) root.innerHTML = renderModalHTML();
+};
+
+window.addExerciseToTraining = function(exerciseId, customDur = 15) {
+    if (!trainingForm) return;
+    const play = (state.tacticalNotebook || []).find(x => x.id === exerciseId);
+    if (!play) return;
+
+    if (!trainingForm.exercises) trainingForm.exercises = [];
+    
+    const exDuration = parseInt(customDur, 10) || play.duration || 15;
+    trainingForm.exercises.push({
+        id: uid(),
+        notebookId: play.id,
+        name: play.name,
+        duration: exDuration
+    });
+
+    window.recalculateTrainingPlanAndDuration();
+    closeModal();
+    render();
+    if (typeof showToast === 'function') showToast(`Importado: ${play.name} (+${exDuration}m)`);
+};
+
+window.updateExerciseDurationInTraining = function(index, newMins) {
+    if (!trainingForm || !trainingForm.exercises || !trainingForm.exercises[index]) return;
+    const val = parseInt(newMins, 10);
+    trainingForm.exercises[index].duration = isNaN(val) || val <= 0 ? 15 : val;
+    window.recalculateTrainingPlanAndDuration();
+    render();
+};
+
+window.removeExerciseFromTraining = function(index) {
+    if (!trainingForm || !trainingForm.exercises) return;
+    trainingForm.exercises.splice(index, 1);
+    window.recalculateTrainingPlanAndDuration();
+    render();
+};
+
+window.recalculateTrainingPlanAndDuration = function() {
+    if (!trainingForm || !trainingForm.exercises) return;
+    
+    let totalMins = 0;
+    let planLines = [];
+
+    trainingForm.exercises.forEach((ex, i) => {
+        const dur = parseInt(ex.duration, 10) || 15;
+        totalMins += dur;
+        planLines.push(`${i + 1}. ${ex.name} (${dur} Min)`);
+    });
+
+    trainingForm.duration = totalMins > 0 ? totalMins : (trainingForm.duration || 90);
+    if (planLines.length > 0) {
+        trainingForm.plan = planLines.join('\n');
+        trainingForm.notes = trainingForm.plan;
+    }
+};
+
+window.viewExerciseScheme = function(notebookId) {
+    const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
+    if (!play) {
+        showToast('Esquema tático não encontrado.');
+        return;
+    }
+    loadTacticalPlay(notebookId);
 };
