@@ -448,7 +448,8 @@ function handleDrawEnd(e) {
     saveState(); 
 }
 
-// CADERNO COM DIVISÃO DE JOGADAS E TREINOS
+window.notebookFilter = 'jogada'; // 'jogada' ou 'treino'
+
 function renderCaderno() {
     const notebook = state.tacticalNotebook || [];
     let html = `${topbarHtml(t('hub_strat_title'))}${renderStratSubHeader()}`;
@@ -456,52 +457,42 @@ function renderCaderno() {
     if(notebook.length === 0) {
         html += `<div class="empty">Nenhum esquema guardado no Caderno.<br>Cria um esquema no Quadro Tático e guarda como Jogada ou Treino.</div>`;
     } else {
-        const jogadas = notebook.filter(x => x.category !== 'treino');
-        const treinos = notebook.filter(x => x.category === 'treino');
+        html += `
+        <div class="seg" style="margin-bottom:14px;">
+            <div class="seg-btn ${window.notebookFilter==='jogada'?'active':''}" onclick="window.notebookFilter='jogada'; render();">📋 Jogadas (${notebook.filter(x=>x.category!=='treino').length})</div>
+            <div class="seg-btn ${window.notebookFilter==='treino'?'active':''}" onclick="window.notebookFilter='treino'; render();">🏋️ Exercícios (${notebook.filter(x=>x.category==='treino').length})</div>
+        </div>`;
 
-        html += `<div style="display:flex; flex-direction:column; gap:16px;">`;
+        const filtered = notebook.filter(x => {
+            if (window.notebookFilter === 'jogada') return x.category !== 'treino';
+            if (window.notebookFilter === 'treino') return x.category === 'treino';
+            return true;
+        });
 
-        if (jogadas.length > 0) {
-            html += `<div>
-                <div style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">📋 Jogadas Táticas (${jogadas.length})</div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                ${jogadas.map(play => `
+        if (filtered.length === 0) {
+            html += `<div class="empty">Nenhum item guardado nesta categoria.</div>`;
+        } else {
+            html += `<div style="display:flex; flex-direction:column; gap:10px;">`;
+            filtered.forEach(play => {
+                const isTreino = play.category === 'treino';
+                const badgeColor = isTreino ? 'var(--green)' : 'var(--gold)';
+                const badgeText = isTreino ? '🏋️ Exercício' : '📋 Jogada';
+
+                html += `
                     <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
                         <div>
                             <strong style="font-size:14px; color:var(--chalk); display:block;">${play.name}</strong>
-                            <span style="font-size:10px; color:var(--muted);">${play.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</span>
+                            <span style="font-size:10px; color:${badgeColor}; font-weight:bold; text-transform:uppercase;">${badgeText}</span>
+                            <span style="font-size:10px; color:var(--muted); margin-left:6px;">· ${play.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</span>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn btn-gold" style="padding:6px 12px; font-size:11px;" onclick="loadTacticalPlay('${play.id}')">▶ Carregar</button>
-                            <button class="quick-del" style="color:var(--red);" onclick="askConfirm('Apagar jogada?', ()=>deleteTacticalPlay('${play.id}'))">🗑</button>
+                            <button class="btn ${isTreino ? 'btn-green' : 'btn-gold'}" style="padding:6px 12px; font-size:11px;" onclick="loadTacticalPlay('${play.id}')">▶ Carregar</button>
+                            <button class="quick-del" style="color:var(--red);" onclick="askConfirm('Apagar do caderno?', ()=>deleteTacticalPlay('${play.id}'))">🗑</button>
                         </div>
-                    </div>
-                `).join('')}
-                </div>
-            </div>`;
+                    </div>`;
+            });
+            html += `</div>`;
         }
-
-        if (treinos.length > 0) {
-            html += `<div>
-                <div style="font-size:11px; color:var(--green); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">🏋️ Exercícios de Treino (${treinos.length})</div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                ${treinos.map(play => `
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
-                        <div>
-                            <strong style="font-size:14px; color:var(--chalk); display:block;">${play.name}</strong>
-                            <span style="font-size:10px; color:var(--muted);">${play.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</span>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-green" style="padding:6px 12px; font-size:11px;" onclick="loadTacticalPlay('${play.id}')">▶ Carregar</button>
-                            <button class="quick-del" style="color:var(--red);" onclick="askConfirm('Apagar exercício?', ()=>deleteTacticalPlay('${play.id}'))">🗑</button>
-                        </div>
-                    </div>
-                `).join('')}
-                </div>
-            </div>`;
-        }
-
-        html += `</div>`;
     }
     return html;
 }

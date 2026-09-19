@@ -431,15 +431,43 @@ function renderTreinos(){
           <div class="field" style="margin-bottom:0;"><label>${t('sch_date')}</label><input id="tr-date-input" type="date" value="${trainingForm.date}" oninput="trainingForm.date=this.value"></div>
           <div class="field" style="margin-bottom:0;"><label>Duração Total (Min)</label><input id="tr-duration-input" type="number" inputmode="numeric" pattern="[0-9]*" min="15" max="300" step="5" placeholder="Ex: 90" value="${trainingForm.duration || 90}" onclick="this.select()" oninput="trainingForm.duration=parseInt(this.value,10)||'';"></div>
         </div>
-        
-        <div class="field" style="margin-top:12px; margin-bottom:10px;">
+
+        <!-- IMPORTAÇÃO RÁPIDA DE EXERCÍCIOS DO CADERNO -->
+        <div style="margin-top:14px; border-top:1px dashed var(--line); padding-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin:0;">🏋️ Importar do Caderno</label>
+            <span style="font-size:10px; color:var(--muted);">Soma minutos automaticamente</span>
+          </div>
+          
+          ${(state.tacticalNotebook || []).filter(x => x.category === 'treino').length > 0 ? `
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+              ${(state.tacticalNotebook || []).filter(x => x.category === 'treino').map(ex => `
+                <button class="chip chip-sm" style="border-color:var(--green); color:var(--green); font-size:10px; padding:4px 8px;" onclick="addExerciseToTraining('${ex.id}')">+ ${ex.name}</button>
+              `).join('')}
+            </div>
+          ` : `<div style="font-size:10px; color:var(--muted); margin-bottom:10px;">Sem exercícios marcados como "Treino" no Caderno.</div>`}
+
+          ${(trainingForm.exercises && trainingForm.exercises.length > 0) ? `
+            <div style="background:var(--surface-2); border-radius:8px; padding:8px; margin-bottom:10px; display:flex; flex-direction:column; gap:4px;">
+              <div style="font-size:10px; color:var(--muted); font-weight:bold; text-transform:uppercase;">Exercícios Selecionados:</div>
+              ${trainingForm.exercises.map((ex, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                  <span><b>${idx + 1}.</b> ${ex.name} (${ex.duration}m)</span>
+                  <button class="quick-del" style="color:var(--red); font-size:12px;" onclick="removeExerciseFromTraining(${idx})">✕</button>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="field" style="margin-top:8px; margin-bottom:10px;">
           <label>🏋️‍♂️ Plano de Treino</label>
-          <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola 4v4; 3. Jogo condicionado..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
+          <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
         </div>
 
         <div class="field" style="margin-bottom:0;">
           <label>📝 Notas & Observações</label>
-          <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo. Atleta Martim muito focado..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
+          <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
         </div>
       </div>
 
@@ -477,7 +505,7 @@ function renderTreinos(){
   let filterUI = seasons.length > 1 ? `<div style="margin-bottom:14px; overflow-x:auto; display:flex; gap:6px; padding-bottom:6px;"><div class="seg-btn ${activeFilter==='TUDO'?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.planSeasonFilter='TUDO'; render()">Todas</div>${seasons.map(s=>`<div class="seg-btn ${activeFilter===s?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.planSeasonFilter='${s}'; render()">${s}</div>`).join('')}</div>` : '';
   const filtered = state.trainings.filter(t => activeFilter==='TUDO' || getEntitySeason(t) === activeFilter).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  return `${topbarHtml(t('hub_plan_title'))}${renderPlanSubHeader()}<button class="btn btn-gold" style="width:100%; margin-bottom:14px;" onclick="trainingForm={absences:{}, customMinutes:{}, plan:'', obs:'', notes:'', duration:90, date: new Date().toISOString().slice(0,10)}; render()">${t('tr_new')}</button>${filterUI}
+  return `${topbarHtml(t('hub_plan_title'))}${renderPlanSubHeader()}<button class="btn btn-gold" style="width:100%; margin-bottom:14px;" onclick="trainingForm={absences:{}, customMinutes:{}, exercises:[], plan:'', obs:'', notes:'', duration:90, date: new Date().toISOString().slice(0,10)}; render()">${t('tr_new')}</button>${filterUI}
     ${filtered.length ? filtered.map(tr=>{ 
       const open = expandedTraining === tr.id; 
       const duration = tr.duration || 90;
@@ -615,3 +643,49 @@ function renderVideos(){
       </div>`;
     }).join('') : `<div class="empty">Nenhum vídeo guardado.</div>`}`;
 }
+
+window.addExerciseToTraining = function(exerciseId) {
+    if (!trainingForm) return;
+    const play = (state.tacticalNotebook || []).find(x => x.id === exerciseId);
+    if (!play) return;
+
+    if (!trainingForm.exercises) trainingForm.exercises = [];
+    
+    const exDuration = play.duration || 15;
+    trainingForm.exercises.push({
+        id: uid(),
+        notebookId: play.id,
+        name: play.name,
+        duration: exDuration
+    });
+
+    window.recalculateTrainingPlanAndDuration();
+    render();
+    if (typeof showToast === 'function') showToast(`Importado: ${play.name} (+${exDuration}m)`);
+};
+
+window.removeExerciseFromTraining = function(index) {
+    if (!trainingForm || !trainingForm.exercises) return;
+    trainingForm.exercises.splice(index, 1);
+    window.recalculateTrainingPlanAndDuration();
+    render();
+};
+
+window.recalculateTrainingPlanAndDuration = function() {
+    if (!trainingForm || !trainingForm.exercises) return;
+    
+    let totalMins = 0;
+    let planLines = [];
+
+    trainingForm.exercises.forEach((ex, i) => {
+        const dur = parseInt(ex.duration, 10) || 15;
+        totalMins += dur;
+        planLines.push(`${i + 1}. ${ex.name} (${dur} Min)`);
+    });
+
+    trainingForm.duration = totalMins > 0 ? totalMins : (trainingForm.duration || 90);
+    if (planLines.length > 0) {
+        trainingForm.plan = planLines.join('\n');
+        trainingForm.notes = trainingForm.plan;
+    }
+};
