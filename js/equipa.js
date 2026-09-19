@@ -464,49 +464,50 @@ window.exportTrainingPDF = function(trId) {
       </tr>`;
   });
 
-  const planText = (tr.plan || tr.notes || '').trim();
-  const obsText = (tr.obs || '').trim();
-
-  let contentBoxesHtml = '';
-
-  if (planText && obsText) {
-    contentBoxesHtml = `
-      <div style="display:flex; gap:12px; margin-bottom:18px; page-break-inside:avoid;">
-        <div style="flex:1; border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB;">
-          <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">🏋️‍♂️ Plano de Treino</h3>
-          <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${planText}</div>
-        </div>
-        <div style="flex:1; border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB;">
-          <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📝 Notas & Observações</h3>
-          <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
-        </div>
-      </div>`;
-  } else if (planText) {
-    contentBoxesHtml = `
+  // BLOCO DE EXERCÍCIOS PARA O PDF
+  let exercisesPdfHtml = '';
+  if (tr.exercises && tr.exercises.length > 0) {
+    exercisesPdfHtml = `
       <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
-        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">🏋️‍♂️ Plano de Treino</h3>
-        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${planText}</div>
-      </div>`;
-  } else if (obsText) {
-    contentBoxesHtml = `
-      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
-        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📝 Notas & Observações</h3>
-        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
+        <h3 style="margin:0 0 8px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📋 Estrutura da Sessão (Exercícios)</h3>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${tr.exercises.map((ex, idx) => `
+            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px dashed #E5E7EB;">
+              <span><b>${idx + 1}.</b>${ex.name}</span>
+              <span style="font-weight:bold; color:#D9A441;">${ex.duration} Min</span>
+            </div>
+          `).join('')}
+        </div>
       </div>`;
   }
+
+  const planText = (tr.plan || tr.notes || '').trim();
+  const obsText = (tr.obs || '').trim();
 
   let html = `
     <div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
       <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
         <div>
           <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">RELATÓRIO DE SESSÃO DE TREINO</h1>
-          <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Data: ${dateStr} &nbsp;|&nbsp; Duração: ${duration} Min</p>
+          <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Data: ${dateStr} &nbsp;|&nbsp; Duração Total: ${duration} Min</p>
           <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${tr.season || state.currentSeason}</b> &nbsp;|&nbsp; Estado: <b>${isCompleted ? 'Concluído' : 'Agendado'}</b></p>
         </div>
         ${getClubLogoHtml()}
       </div>
 
-      ${contentBoxesHtml}
+      ${exercisesPdfHtml}
+
+      ${planText ? `
+      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
+        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">🏋️‍♂️ Plano Descritivo da Sessão</h3>
+        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${planText}</div>
+      </div>` : ''}
+
+      ${obsText ? `
+      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
+        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📝 Notas & Observações</h3>
+        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
+      </div>` : ''}
 
       <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; page-break-inside:avoid;">
         <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">
