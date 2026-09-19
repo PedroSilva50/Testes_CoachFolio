@@ -213,10 +213,10 @@ window.exportMatchPDF = function(mId) {
     else unused.push(p);
   });
 
-  // Tabela da Equipa Inicial (Sem a coluna Pos)
+  // Tabela da Equipa Inicial
   let startersHtml = '';
   sortPlayerObjs(starters).forEach(p => {
-    startersHtml += `<tr><td style="text-align:center; font-weight:bold; width:35px; padding:6px 0;">${p.number || '-'}</td><td style="text-align:left; font-weight:bold; padding-left:10px;">${p.name || t('pl_no_name')}</td></tr>`;
+    startersHtml += `<tr style="border-bottom: 1px solid #E5E7EB;"><td style="text-align:center; font-weight:bold; width:35px; padding:6px 0; color:#111827;">${p.number || '-'}</td><td style="text-align:left; font-weight:600; padding-left:10px; color:#1F2937;">${p.name || t('pl_no_name')}</td></tr>`;
   });
 
   // Tabela Completa da Convocatória com Minutos e Avaliações
@@ -227,23 +227,24 @@ window.exportMatchPDF = function(mId) {
   ];
 
   let lineupHtml = '';
-  sortedSquad.forEach(p => {
+  sortedSquad.forEach((p, idx) => {
     const isStarter = (m.lineup || []).includes(p.id);
     const wasSubbedIn = (m.subs || []).some(s => s.inId === p.id);
     let secs = calcPlayerMinutes(m, p.id);
     let minsStr = formatSecsToMinSec(secs);
     const r = (m.ratings && m.ratings[p.id]) ? `${m.ratings[p.id]}★` : '-';
-    let statusLabel = isStarter ? '<b>(XI)</b>' : (wasSubbedIn ? '(Sup)' : '(SNU)');
+    let statusLabel = isStarter ? '<span style="color:#059669; font-weight:bold;">(XI)</span>' : (wasSubbedIn ? '<span style="color:#D97706;">(Sup)</span>' : '<span style="color:#9CA3AF;">(SNU)</span>');
+    let bg = idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
     
-    lineupHtml += `<tr><td style="text-align:left; padding-left:8px;">${playerLabel(p)} ${statusLabel}</td><td style="white-space:nowrap; text-align:center; padding:0 4px;">${minsStr}</td><td style="text-align:center;">${r}</td></tr>`;
+    lineupHtml += `<tr style="background:${bg}; border-bottom:1px solid #F3F4F6;"><td style="text-align:left; padding:6px 8px; color:#111827;">${playerLabel(p)} ${statusLabel}</td><td style="white-space:nowrap; text-align:center; padding:6px 4px; font-family:monospace; font-weight:bold; color:#374151;">${minsStr}</td><td style="text-align:center; color:#D9A441; font-weight:bold;">${r}</td></tr>`;
   });
 
-  // 2. Substituições, Golos e Cartões
+  // Substituições, Golos e Cartões
   let subsHtml = '';
   if (m.subs && m.subs.length > 0) {
     m.subs.forEach(s => {
       let minDisplay = s.isHalftime ? 'INT' : (s.minute != null ? window.getGlobalMinuteDisplay(m, s.half, s.minute) + "'" : '-');
-      subsHtml += `<tr><td style="width:40px;">${minDisplay}</td><td style="color:#C8493F; text-align:left; padding-left:6px;">↓ ${playerName(s.outId)}</td><td style="color:#16A34A; text-align:left; padding-left:6px;">↑ ${playerName(s.inId)}</td></tr>`;
+      subsHtml += `<tr style="border-bottom:1px solid #F3F4F6;"><td style="width:40px; font-weight:bold; color:#6B7280; text-align:center;">${minDisplay}</td><td style="color:#DC2626; text-align:left; padding-left:6px; font-weight:500;">↓ ${playerName(s.outId)}</td><td style="color:#16A34A; text-align:left; padding-left:6px; font-weight:500;">↑ ${playerName(s.inId)}</td></tr>`;
     });
   }
 
@@ -253,13 +254,13 @@ window.exportMatchPDF = function(mId) {
        let subTag = g.goalSubtype === 'penalti' ? ' (Penálti)' : (g.goalSubtype === 'autogolo' ? ' (Autogolo)' : '');
        let desc = '';
        if (g.type === 'scored') {
-         desc = g.scorerId === 'autogolo' ? `⚽ Autogolo (Adversário)` : `⚽ ${playerName(g.scorerId)}${subTag} ${g.assistId && g.assistId !== 'none' ? '(Ast: ' + playerName(g.assistId) + ')' : ''}`;
+         desc = g.scorerId === 'autogolo' ? `⚽ Autogolo (Adversário)` : `⚽ ${playerName(g.scorerId)}${subTag} ${g.assistId && g.assistId !== 'none' ? '<span style="color:#6B7280; font-size:10px;">[Ast: ' + playerName(g.assistId) + ']</span>' : ''}`;
        } else {
          let ownGoalPlayer = g.scorerId ? ` [${playerName(g.scorerId)}]` : '';
          desc = `🥅 Golo Sofrido${subTag}${ownGoalPlayer}`;
        }
        let minDisplay = g.minute != null ? window.getGlobalMinuteDisplay(m, g.half, g.minute) + "'" : (g.half === 1 ? "1ªP" : "2ªP");
-       goalsHtml += `<tr><td style="width:50px;">${minDisplay}</td><td style="text-align:left; font-weight:bold; padding-left:10px;">${desc}</td></tr>`;
+       goalsHtml += `<tr style="border-bottom:1px solid #F3F4F6;"><td style="width:50px; font-weight:bold; color:#D9A441; text-align:center;">${minDisplay}</td><td style="text-align:left; font-weight:600; padding:6px 10px; color:#111827;">${desc}</td></tr>`;
     });
   }
 
@@ -267,89 +268,95 @@ window.exportMatchPDF = function(mId) {
   if (m.cards && m.cards.length > 0) {
     m.cards.forEach(c => {
       let minDisplay = c.minute != null ? window.getGlobalMinuteDisplay(m, c.half, c.minute) + "'" : '-';
-      cardsHtml += `<tr><td style="width:50px;">${minDisplay}</td><td style="text-align:left; padding-left:10px;">${c.color === 'Amarelo' ? '🟨' : '🟥'} ${playerName(c.playerId)}</td></tr>`;
+      cardsHtml += `<tr style="border-bottom:1px solid #F3F4F6;"><td style="width:50px; font-weight:bold; color:#6B7280; text-align:center;">${minDisplay}</td><td style="text-align:left; padding:6px 10px; color:#111827;">${c.color === 'Amarelo' ? '🟨' : '🟥'} ${playerName(c.playerId)}</td></tr>`;
     });
   }
 
-  // 3. Equipa Técnica Presente em Linha
+  // Equipa Técnica Presente
   const selectedStaffIds = m.originalSchedule?.staffCallup || [];
   const staffList = (state.staff || []).filter(st => selectedStaffIds.includes(st.id));
   let staffStr = staffList.length > 0 
     ? staffList.map(st => `<b>${st.name}</b> (${st.role || 'Equipa Técnica'})`).join(' &nbsp;•&nbsp; ')
     : 'Sem registo oficial de elementos presentes.';
 
-  // 4. Desenho do Campo Tático
+  // Campo Tático
   const tacticalPitchSVG = window.buildMatchTacticalPitchSVG ? window.buildMatchTacticalPitchSVG(m) : '';
 
-  let html = `<div class="print-card" style="padding:20px; font-family:-apple-system, sans-serif;">
-    <!-- CABEÇALHO COM EMBLEMA DO CLUBE -->
-    <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
+  let html = `<div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
+    <!-- CABEÇALHO COM EMBLEMA -->
+    <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
       <div>
-        <h1 style="font-size:22px; margin:0; text-transform:uppercase; color:#000;">RELATÓRIO DE JOGO</h1>
-        <p style="font-size:18px; font-weight:bold; margin:4px 0 0 0; color:#333;">${getMyClub()} ${sc} - ${co} ${m.opponent || 'Adversário'} (${locLabel})</p>
-        <p style="font-size:11px; color:#555; margin:3px 0 0 0;"><b>${getClubAndEscalao()}</b> | ${dateStr} | Época: <b>${m.season || state.currentSeason}</b> ${m.capitao ? ' | © Capitão: ' + playerName(m.capitao) : ''} | Duração: <b>${totalMatchMins}'</b></p>
+        <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">BOLETIM OFICIAL DE JOGO</h1>
+        <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">${getMyClub()} ${sc} - ${co} ${m.opponent || 'Adversário'} <span style="font-size:12px; font-weight:normal; color:#4B5563;">(${locLabel})</span></p>
+        <p style="font-size:11px; color:#4B5563; margin:4px 0 0 0;"><b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Data: <b>${dateStr}</b> &nbsp;|&nbsp; Época: <b>${m.season || state.currentSeason}</b> ${m.capitao ? ' &nbsp;|&nbsp; © Capitão: <b>' + playerName(m.capitao) + '</b>' : ''} &nbsp;|&nbsp; Duração: <b>${totalMatchMins}'</b></p>
       </div>
       ${getClubLogoHtml()}
     </div>
 
-    <!-- BLOCO 1: EQUIPA INICIAL (SEM POSIÇÃO) & CAMPO TÁTICO EXPANDIDO -->
-    <div style="display:flex; gap:15px; margin-bottom:15px; align-items:flex-start;">
-      <div style="flex:0.8;">
-        <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Equipa Inicial (${starters.length} Titulares)</h3>
+    <!-- BLOCO 1: EQUIPA INICIAL & CAMPO TÁTICO -->
+    <div style="display:flex; gap:16px; margin-bottom:18px; align-items:flex-start; page-break-inside:avoid;">
+      <div style="flex:0.8; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Titulares (${starters.length})</h3>
         <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead><tr><th style="width:35px;">Nº</th><th style="text-align:left; padding-left:10px;">Jogador</th></tr></thead>
-          <tbody>${startersHtml || '<tr><td colspan="2" style="text-align:center; padding:6px;">Sem titulares definidos</td></tr>'}</tbody>
+          <thead><tr style="background:#E5E7EB; color:#374151;"><th style="width:35px; padding:4px 0;">Nº</th><th style="text-align:left; padding-left:10px;">Atleta</th></tr></thead>
+          <tbody>${startersHtml || '<tr><td colspan="2" style="text-align:center; padding:8px; color:#9CA3AF;">Sem titulares definidos</td></tr>'}</tbody>
         </table>
       </div>
-      <div style="flex:1.2; text-align:center;">
-        <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Disposição Tática em Campo</h3>
+      <div style="flex:1.2; text-align:center; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Disposição Tática em Campo</h3>
         ${tacticalPitchSVG}
       </div>
     </div>
 
     <!-- BLOCO 2: INCIDÊNCIAS DO JOGO -->
-    <div style="display:flex; gap:20px; margin-bottom:15px; align-items:flex-start;">
-      <div style="flex:1.2;">
-        <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Golos e Ocorrências</h3>
+    <div style="display:flex; gap:16px; margin-bottom:18px; align-items:flex-start; page-break-inside:avoid;">
+      <div style="flex:1.2; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Golos e Ocorrências</h3>
         <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead><tr><th style="width:50px;">Min</th><th style="text-align:left; padding-left:10px;">Evento</th></tr></thead>
-          <tbody>${goalsHtml || '<tr><td colspan="2" style="text-align:center; padding:6px; color:#666;">Sem golos registados</td></tr>'}</tbody>
+          <thead><tr style="background:#E5E7EB; color:#374151;"><th style="width:50px; padding:4px 0;">Min</th><th style="text-align:left; padding-left:10px;">Evento</th></tr></thead>
+          <tbody>${goalsHtml || '<tr><td colspan="2" style="text-align:center; padding:8px; color:#9CA3AF;">Sem golos registados</td></tr>'}</tbody>
         </table>
       </div>
 
-      <div style="flex:1;">
-        <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Substituições & Cartões</h3>
-        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:8px;">
-          <thead><tr><th style="width:40px;">Min</th><th style="text-align:left; padding-left:6px;">Saiu</th><th style="text-align:left; padding-left:6px;">Entrou</th></tr></thead>
-          <tbody>${subsHtml || '<tr><td colspan="3" style="text-align:center; padding:4px; color:#666;">Sem substituições</td></tr>'}</tbody>
+      <div style="flex:1; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Substituições & Cartões</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;">
+          <thead><tr style="background:#E5E7EB; color:#374151;"><th style="width:40px; padding:4px 0;">Min</th><th style="text-align:left; padding-left:6px;">Saiu</th><th style="text-align:left; padding-left:6px;">Entrou</th></tr></thead>
+          <tbody>${subsHtml || '<tr><td colspan="3" style="text-align:center; padding:6px; color:#9CA3AF;">Sem substituições</td></tr>'}</tbody>
         </table>
         <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead><tr><th style="width:50px;">Min</th><th style="text-align:left; padding-left:10px;">Jogador</th></tr></thead>
-          <tbody>${cardsHtml || '<tr><td colspan="2" style="text-align:center; padding:4px; color:#666;">Sem cartões registados</td></tr>'}</tbody>
+          <thead><tr style="background:#E5E7EB; color:#374151;"><th style="width:50px; padding:4px 0;">Min</th><th style="text-align:left; padding-left:10px;">Atleta</th></tr></thead>
+          <tbody>${cardsHtml || '<tr><td colspan="2" style="text-align:center; padding:6px; color:#9CA3AF;">Sem cartões registados</td></tr>'}</tbody>
         </table>
       </div>
     </div>
 
     <!-- BLOCO 3: CONVOCATÓRIA E MINUTOS -->
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Convocatória e Minutos de Jogo (${sortedSquad.length} Atletas)</h3>
-    <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:15px;">
-      <thead><tr><th style="text-align:left; padding-left:8px;">Jogador</th><th style="width:75px; text-align:center;">Minutos</th><th style="width:40px; text-align:center;">Aval</th></tr></thead>
-      <tbody>${lineupHtml || '<tr><td colspan="3" style="text-align:center; padding:6px;">Sem registo de convocatória</td></tr>'}</tbody>
-    </table>
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px; page-break-inside:avoid;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Convocatória e Minutos de Jogo (${sortedSquad.length} Atletas)</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead><tr style="background:#E5E7EB; color:#374151;"><th style="text-align:left; padding:6px 8px;">Atleta</th><th style="width:75px; text-align:center; padding:6px 0;">Minutos</th><th style="width:45px; text-align:center; padding:6px 0;">Aval</th></tr></thead>
+        <tbody>${lineupHtml || '<tr><td colspan="3" style="text-align:center; padding:8px; color:#9CA3AF;">Sem registo de convocatória</td></tr>'}</tbody>
+      </table>
+    </div>
 
-    <!-- BLOCO 4: EQUIPA TÉCNICA PRESENTES -->
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 4px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Equipa Técnica Presente</h3>
-    <p style="font-size:11px; margin:0 0 15px 0; color:#333;">${staffStr}</p>
+    <!-- BLOCO 4: EQUIPA TÉCNICA -->
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 4px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">Equipa Técnica Presente</h3>
+      <p style="font-size:11px; margin:4px 0 0 0; color:#374151;">${staffStr}</p>
+    </div>
 
     <!-- BLOCO 5: NOTAS DO TREINADOR -->
     ${m.notes ? `
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">Notas do Treinador</h3>
-    <p style="white-space:pre-wrap; border:1px solid #CCC; padding:8px; border-radius:6px; background:#FFF; min-height:40px; font-size:11px; line-height:1.4; color:#333; margin-bottom:15px;">${m.notes}</p>
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px; page-break-inside:avoid;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">Observações Técnicas</h3>
+      <p style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937; margin:4px 0 0 0;">${m.notes}</p>
+    </div>
     ` : ''}
 
-    <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
-      <div style="font-size:10px; color:#666;">• Ficha de jogo gerada via Coachfolio v3.5.1</div>
-      <div style="text-align:center; width:200px; border-top:1px solid #000; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
+    <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <div style="font-size:10px; color:#9CA3AF;">• Documento de registo oficial — Coachfolio v3.5</div>
+      <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold; color:#111827;">A Equipa Técnica</div>
     </div>
   </div>`;
 

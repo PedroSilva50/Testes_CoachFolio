@@ -221,58 +221,53 @@ window.exportScoutingPDF = function(schId) {
   const printArea = document.getElementById('print-area');
 
   let html = `
-  <div class="print-card" style="padding:20px; font-family:-apple-system, sans-serif;">
-    <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
+  <div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
+    <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
       <div>
-        <h1 style="font-size:22px; margin:0; text-transform:uppercase; color:#000;">RELATÓRIO DE SCOUTING — ADVERSÁRIO</h1>
-        <p style="font-size:18px; font-weight:bold; margin:4px 0 0 0; color:#333;">Adversário: ${s.opponent || 'N/D'}</p>
-        <p style="font-size:11px; color:#555; margin:3px 0 0 0;">Clube: <b>${getClubAndEscalao()}</b> | Época: <b>${s.season || state.currentSeason}</b></p>
+        <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">RELATÓRIO TÁTICO DE SCOUTING</h1>
+        <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Adversário: ${s.opponent || 'N/D'}</p>
+        <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${s.season || state.currentSeason}</b></p>
       </div>
       ${getClubLogoHtml()}
     </div>
 
     <!-- PAINEL DE TÁTICA E BLOCO -->
-    <div style="background:#F3F4F6; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:15px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:11px; text-align:center;">
+    <div style="background:#F3F4F6; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:11px; text-align:center; page-break-inside:avoid;">
       <div>
-        <div style="font-size:9px; color:#666; font-weight:bold; text-transform:uppercase;">Sistema Tático Base</div>
-        <div style="font-size:14px; font-weight:bold; color:#000; margin-top:2px;">${sc.system || 'N/D'}</div>
+        <div style="font-size:9px; color:#6B7280; font-weight:800; text-transform:uppercase;">Sistema Tático Base</div>
+        <div style="font-size:15px; font-weight:800; color:#0E211A; margin-top:2px;">${sc.system || 'N/D'}</div>
       </div>
       <div>
-        <div style="font-size:9px; color:#666; font-weight:bold; text-transform:uppercase;">Bloco Defensivo</div>
-        <div style="font-size:14px; font-weight:bold; color:#000; margin-top:2px;">${sc.block || 'Médio'}</div>
+        <div style="font-size:9px; color:#6B7280; font-weight:800; text-transform:uppercase;">Bloco Defensivo</div>
+        <div style="font-size:15px; font-weight:800; color:#0E211A; margin-top:2px;">${sc.block || 'Médio'}</div>
       </div>
       <div>
-        <div style="font-size:9px; color:#666; font-weight:bold; text-transform:uppercase;">Construção / Saída</div>
-        <div style="font-size:14px; font-weight:bold; color:#000; margin-top:2px;">${sc.buildUp || 'Apoiada'}</div>
+        <div style="font-size:9px; color:#6B7280; font-weight:800; text-transform:uppercase;">Construção / Saída</div>
+        <div style="font-size:15px; font-weight:800; color:#0E211A; margin-top:2px;">${sc.buildUp || 'Apoiada'}</div>
       </div>
     </div>
 
     <!-- JOGADORES CHAVE / ALERTAS -->
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">⚠️ Jogadores-Chave & Alertas Individuais</h3>
-    <div style="border:1px solid #CCC; background:#FFF; border-radius:6px; padding:10px; min-height:50px; font-size:11px; line-height:1.4; color:#333; margin-bottom:15px; white-space:pre-wrap;">
-      ${sc.keyPlayers || 'Sem alertas individuais registados.'}
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:16px; page-break-inside:avoid;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">⚠️ Jogadores-Chave & Alertas Individuais</h3>
+      <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.keyPlayers || 'Sem alertas individuais registados.'}</div>
     </div>
 
     <!-- BOLAS PARADAS -->
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">🎯 Bolas Paradas</h3>
-    <div style="border:1px solid #CCC; background:#FFF; border-radius:6px; padding:10px; min-height:50px; font-size:11px; line-height:1.4; color:#333; margin-bottom:15px; white-space:pre-wrap;">
-      ${sc.setPieces || 'Sem observações de bolas paradas registadas.'}
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:16px; page-break-inside:avoid;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">🎯 Bolas Paradas (Ofensivas / Defensivas)</h3>
+      <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.setPieces || 'Sem observações de bolas paradas registadas.'}</div>
     </div>
 
     <!-- PLANO DE JOGO -->
-    <h3 style="font-size:12px; font-weight:bold; margin:0 0 6px 0; border-bottom:1px solid #000; padding-bottom:3px; text-transform:uppercase;">💡 O Nosso Plano de Jogo</h3>
-    <div style="border:1px solid #CCC; background:#FFF; border-radius:6px; padding:10px; min-height:60px; font-size:11px; line-height:1.4; color:#333; margin-bottom:20px; white-space:pre-wrap;">
-      ${sc.gamePlan || 'Sem plano de jogo especificado.'}
+    <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; page-break-inside:avoid;">
+      <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">💡 Estratégia & Plano de Jogo</h3>
+      <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.gamePlan || 'Sem plano de jogo especificado.'}</div>
     </div>
 
-    <!-- RODAPÉ -->
-    <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
-      <div style="font-size:10px; color:#666;">
-        • Documento de Análise de Scouting — Coachfolio v3.5.1
-      </div>
-      <div style="text-align:center; width:200px; border-top:1px solid #000; padding-top:4px; font-size:11px; font-weight:bold;">
-        O Observador / Treinador
-      </div>
+    <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <div style="font-size:10px; color:#6B7280;">• Análise Tática de Observação — Coachfolio v3.5</div>
+      <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">O Observador / Treinador</div>
     </div>
   </div>`;
 

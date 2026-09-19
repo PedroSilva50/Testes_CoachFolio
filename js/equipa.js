@@ -437,7 +437,7 @@ window.exportTrainingPDF = function(trId) {
   const allPlayers = eligiblePlayers();
   
   let rowsHtml = '';
-  allPlayers.forEach(p => {
+  allPlayers.forEach((p, idx) => {
     const reason = absObj[p.id];
     let statusText = '<span style="color:#059669; font-weight:bold;">🟢 Presente</span>';
     let minsCumpridos = `${duration}'`;
@@ -454,11 +454,13 @@ window.exportTrainingPDF = function(trId) {
       minsCumpridos = `${customMins}' / ${duration}'`;
     }
 
+    let bg = idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
+
     rowsHtml += `
-      <tr>
-        <td style="text-align:left; font-weight:bold; padding-left:12px;">${playerLabel(p)}</td>
-        <td style="text-align:center;">${statusText}</td>
-        <td style="text-align:center; font-family:monospace;">${minsCumpridos}</td>
+      <tr style="background:${bg}; border-bottom:1px solid #E5E7EB;">
+        <td style="text-align:left; font-weight:bold; padding:6px 12px; color:#111827;">${playerLabel(p)}</td>
+        <td style="text-align:center; padding:6px 0;">${statusText}</td>
+        <td style="text-align:center; font-family:monospace; font-weight:bold; color:#374151;">${minsCumpridos}</td>
       </tr>`;
   });
 
@@ -469,66 +471,64 @@ window.exportTrainingPDF = function(trId) {
 
   if (planText && obsText) {
     contentBoxesHtml = `
-      <div style="display:flex; gap:12px; margin-bottom:20px;">
-        <div style="flex:1; border:1px solid #CCC; padding:12px; border-radius:6px; background:#FFF;">
-          <h3 style="margin:0 0 6px 0; color:#000; font-size:12px; font-weight:bold;">🏋️‍♂️ PLANO DE TREINO</h3>
-          <div style="white-space:pre-wrap; font-size:11px; line-height:1.4; color:#222;">${planText}</div>
+      <div style="display:flex; gap:12px; margin-bottom:18px; page-break-inside:avoid;">
+        <div style="flex:1; border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB;">
+          <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">🏋️‍♂️ Plano de Treino</h3>
+          <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${planText}</div>
         </div>
-        <div style="flex:1; border:1px solid #CCC; padding:12px; border-radius:6px; background:#FFF;">
-          <h3 style="margin:0 0 6px 0; color:#000; font-size:12px; font-weight:bold;">📝 NOTAS & OBSERVAÇÕES</h3>
-          <div style="white-space:pre-wrap; font-size:11px; line-height:1.4; color:#222;">${obsText}</div>
+        <div style="flex:1; border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB;">
+          <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📝 Notas & Observações</h3>
+          <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
         </div>
       </div>`;
   } else if (planText) {
     contentBoxesHtml = `
-      <div style="border:1px solid #CCC; padding:12px 16px; border-radius:6px; background:#FFF; margin-bottom:20px;">
-        <h3 style="margin:0 0 6px 0; color:#000; font-size:12px; font-weight:bold;">🏋️‍♂️ PLANO DE TREINO</h3>
-        <div style="white-space:pre-wrap; font-size:11px; line-height:1.4; color:#222;">${planText}</div>
+      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
+        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">🏋️‍♂️ Plano de Treino</h3>
+        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${planText}</div>
       </div>`;
   } else if (obsText) {
     contentBoxesHtml = `
-      <div style="border:1px solid #CCC; padding:12px 16px; border-radius:6px; background:#FFF; margin-bottom:20px;">
-        <h3 style="margin:0 0 6px 0; color:#000; font-size:12px; font-weight:bold;">📝 NOTAS & OBSERVAÇÕES</h3>
-        <div style="white-space:pre-wrap; font-size:11px; line-height:1.4; color:#222;">${obsText}</div>
+      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
+        <h3 style="margin:0 0 6px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📝 Notas & Observações</h3>
+        <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
       </div>`;
   }
 
   let html = `
-    <div class="print-card">
-      <div class="print-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
+      <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
         <div>
-          <h1>RELATÓRIO DE SESSÃO DE TREINO</h1>
-          <p style="font-size:18px; font-weight:bold; margin-top:5px; color:#000;">Data: ${dateStr} | Duração: ${duration} Min</p>
-          <p style="font-size:13px; color:#444;">Clube: <b>${getClubAndEscalao()}</b> | Época: <b>${tr.season || state.currentSeason}</b> | Estado: <b>${isCompleted ? 'Concluído' : 'Agendado'}</b></p>
+          <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">RELATÓRIO DE SESSÃO DE TREINO</h1>
+          <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Data: ${dateStr} &nbsp;|&nbsp; Duração: ${duration} Min</p>
+          <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${tr.season || state.currentSeason}</b> &nbsp;|&nbsp; Estado: <b>${isCompleted ? 'Concluído' : 'Agendado'}</b></p>
         </div>
         ${getClubLogoHtml()}
       </div>
 
       ${contentBoxesHtml}
 
-      <h3 style="margin-bottom:10px; color:#000; border-bottom:2px solid #000; padding-bottom:4px; font-size:13px;">
-        🏃 CONTROLO DE PRESENÇAS & TEMPO EFETIVO (${allPlayers.length} ATLETAS)
-      </h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="text-align:left; padding-left:12px;">Nome do Atleta</th>
-            <th style="text-align:center;">Estado da Presença</th>
-            <th style="text-align:center;">Tempo Cumprido</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
+      <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; page-break-inside:avoid;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">
+          🏃 Controlo de Presenças & Tempo Efetivo (${allPlayers.length} Atletas)
+        </h3>
+        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <thead>
+            <tr style="background:#E5E7EB; color:#374151;">
+              <th style="text-align:left; padding:6px 12px;">Atleta</th>
+              <th style="text-align:center;">Estado da Presença</th>
+              <th style="text-align:center;">Tempo Cumprido</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
 
-      <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
-        <div style="font-size:10px; color:#666;">
-          <p style="margin:2px 0;">• Documento de registo de assiduidade e plano de treino — Coachfolio v3.5.1</p>
-        </div>
-        <div style="text-align:center; width:200px; border-top:1px solid #000; padding-top:5px; font-size:11px; font-weight:bold;">
-          A Equipa Técnica
-        </div>
+      <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:10px; color:#6B7280;">• Documento de registo de assiduidade — Coachfolio v3.5</div>
+        <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
       </div>
     </div>`;
 
@@ -802,7 +802,11 @@ function renderClassificacoes() {
                 let table = {}; lg.teams.forEach(t => table[t] = { name: t, p:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 });
                 lg.matches.forEach(m => { if(!table[m.h] || !table[m.a]) return; table[m.h].p++; table[m.a].p++; table[m.h].gf += m.hg; table[m.h].ga += m.ag; table[m.h].gd += (m.hg - m.ag); table[m.a].gf += m.ag; table[m.a].ga += m.hg; table[m.a].gd += (m.ag - m.hg); if(m.hg > m.ag) { table[m.h].w++; table[m.h].pts += 3; table[m.a].l++; } else if(m.hg === m.ag) { table[m.h].d++; table[m.a].d++; table[m.h].pts += 1; table[m.a].pts += 1; } else { table[m.a].w++; table[m.a].pts += 3; table[m.h].l++; } });
                 let sortedTable = Object.values(table).sort((a,b) => { if(b.pts !== a.pts) return b.pts - a.pts; if(b.gd !== a.gd) return b.gd - a.gd; return b.gf - a.gf; });
-                html += `<div style="border-top:1px solid var(--line); padding-top:12px; margin-top:12px; cursor:default;" onclick="event.stopPropagation();"><div class="panel-title">${t('lg_table')}</div>`;
+                html += `<div style="border-top:1px solid var(--line); padding-top:12px; margin-top:12px; cursor:default;" onclick="event.stopPropagation();">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div class="panel-title" style="margin:0;">${t('lg_table')}</div>
+                    <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="exportLeaguePDF('${lg.id}')">📄 Exportar PDF</button>
+                  </div>`;
                 if(sortedTable.length > 0) {
                     html += `<table class="league-table"><tr><th style="width:20px;">#</th><th class="team-name">Equipa</th><th>P</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>DG</th><th>Pts</th></tr>`;
                     sortedTable.forEach((row, idx) => { let isMyClub = row.name === getMyClub() || row.name === state.myClubName; html += `<tr style="${isMyClub?'background:var(--surface-2);':''}"><td style="color:var(--muted);">${idx+1}</td><td class="team-name" style="${isMyClub?'color:var(--gold);':''}">${row.name}</td><td>${row.p}</td><td>${row.w}</td><td>${row.d}</td><td>${row.l}</td><td>${row.gf}</td><td>${row.ga}</td><td>${row.gd>0?'+':''}${row.gd}</td><td><b style="color:var(--chalk);">${row.pts}</b></td></tr>`; });
@@ -1356,3 +1360,87 @@ window.updatePlayerBirthDate = function(id, val){
 };
 
 window.removePlayer = function(id){ const p=state.roster.find(x=>x.id===id); if(p){ p.active=false; saveState(); render(); } };
+
+window.exportLeaguePDF = function(lgId) {
+  const lg = state.leagues.find(l => l.id === lgId);
+  if (!lg) return;
+
+  // Calcula a tabela classificativa atualizada
+  let table = {}; 
+  lg.teams.forEach(t => table[t] = { name: t, p:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 });
+  lg.matches.forEach(m => { 
+    if(!table[m.h] || !table[m.a]) return; 
+    table[m.h].p++; table[m.a].p++; 
+    table[m.h].gf += m.hg; table[m.h].ga += m.ag; table[m.h].gd += (m.hg - m.ag); 
+    table[m.a].gf += m.ag; table[m.a].ga += m.hg; table[m.a].gd += (m.ag - m.hg); 
+    if(m.hg > m.ag) { table[m.h].w++; table[m.h].pts += 3; table[m.a].l++; } 
+    else if(m.hg === m.ag) { table[m.h].d++; table[m.a].d++; table[m.h].pts += 1; table[m.a].pts += 1; } 
+    else { table[m.a].w++; table[m.a].pts += 3; table[m.h].l++; } 
+  });
+
+  let sortedTable = Object.values(table).sort((a,b) => { 
+    if(b.pts !== a.pts) return b.pts - a.pts; 
+    if(b.gd !== a.gd) return b.gd - a.gd; 
+    return b.gf - a.gf; 
+  });
+
+  let rowsHtml = sortedTable.map((row, idx) => {
+    let isMyClub = row.name === getMyClub() || row.name === state.myClubName;
+    let bg = isMyClub ? '#FEF3C7' : (idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF');
+    return `
+      <tr style="background:${bg}; border-bottom:1px solid #E5E7EB; ${isMyClub ? 'font-weight:bold;' : ''}">
+        <td style="padding:6px; color:#6B7280;">${idx + 1}</td>
+        <td style="text-align:left; padding:6px 10px; color:${isMyClub ? '#D9A441' : '#111827'};">${row.name} ${isMyClub ? '⭐' : ''}</td>
+        <td style="padding:6px;">${row.p}</td>
+        <td style="padding:6px; color:#16A34A;">${row.w}</td>
+        <td style="padding:6px; color:#D97706;">${row.d}</td>
+        <td style="padding:6px; color:#DC2626;">${row.l}</td>
+        <td style="padding:6px;">${row.gf}</td>
+        <td style="padding:6px;">${row.ga}</td>
+        <td style="padding:6px;">${row.gd > 0 ? '+' : ''}${row.gd}</td>
+        <td style="padding:6px; font-weight:800; font-size:13px; color:#0E211A;">${row.pts}</td>
+      </tr>`;
+  }).join('');
+
+  let html = `
+    <div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
+      <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
+        <div>
+          <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">TABELA CLASSIFICATIVA OFICIAL</h1>
+          <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">🏆 ${lg.name}</p>
+          <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${state.currentSeason}</b> &nbsp;|&nbsp; Emissão: <b>${new Date().toLocaleDateString('pt-PT')}</b></p>
+        </div>
+        ${getClubLogoHtml()}
+      </div>
+
+      <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">
+          <thead>
+            <tr style="background:#E5E7EB; color:#374151;">
+              <th style="width:25px; padding:6px 0;">#</th>
+              <th style="text-align:left; padding-left:10px;">Equipa</th>
+              <th style="width:30px;">J</th>
+              <th style="width:30px;">V</th>
+              <th style="width:30px;">E</th>
+              <th style="width:30px;">D</th>
+              <th style="width:35px;">GM</th>
+              <th style="width:35px;">GS</th>
+              <th style="width:35px;">DG</th>
+              <th style="width:40px;">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml || '<tr><td colspan="10" style="padding:10px; color:#9CA3AF;">Sem dados registados.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="font-size:10px; color:#6B7280;">• Documento informativo de competição — Coachfolio v3.5</div>
+        <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Direção / Coordenação</div>
+      </div>
+    </div>`;
+
+  document.getElementById('print-area').innerHTML = html;
+  window.openSafePrintModal();
+};
