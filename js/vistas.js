@@ -271,11 +271,11 @@ function renderModalHTML(){
   if(modalConfig.type === 'safePrint') {
       return `<div class="modal-overlay">
         <div class="modal-card" style="padding: 30px 20px;">
-          <div style="font-size:40px; margin-bottom:10px;">✅</div>
-          <h3 style="margin-top:0; color:var(--gold);">Documento Preparado</h3>
-          <p style="font-size:13px; color:var(--chalk); margin-bottom:20px;">O relatório foi gerado com sucesso em plano de fundo. Clica no botão abaixo para abrir o menu do telemóvel.</p>
-          <button class="btn btn-gold" style="width:100%; font-size:15px; padding:12px;" onclick="closeModal(); triggerSafePrint();">🖨️ Abrir Menu / Imprimir</button>
-          <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="document.getElementById('print-area').innerHTML=''; closeModal();">Cancelar</button>
+          <div style="font-size:40px; margin-bottom:10px;">📄</div>
+          <h3 style="margin-top:0; color:var(--gold);">Relatório Gerado</h3>
+          <p style="font-size:13px; color:var(--chalk); margin-bottom:20px;">O teu relatório está pronto. Clica abaixo para abrir, imprimir ou guardar nos ficheiros do iPhone.</p>
+          <button class="btn btn-gold" style="width:100%; font-size:15px; padding:12px;" onclick="triggerSafePrint();">🖨️ Abrir / Partilhar / Imprimir</button>
+          <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="document.getElementById('print-area').innerHTML=''; closeModal();">Fechar</button>
         </div>
       </div>`;
   }
