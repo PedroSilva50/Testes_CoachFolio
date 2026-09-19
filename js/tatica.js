@@ -101,18 +101,22 @@ window.setTacticMode = function(mode) { currentTacticMode = mode; render(); };
 window.setDrawColor = function(color) { currentDrawColor = color; render(); };
 
 window.clearCanvasLines = function() { 
-    state.tacticPaths = []; 
-    saveState(); 
-    redrawCanvas();
-    render();
-    if(typeof showToast === 'function') showToast('Riscos apagados! 🧹');
+    if (confirm('Tem a certeza que deseja apagar todos os riscos desenhados?')) {
+        state.tacticPaths = []; 
+        saveState(); 
+        redrawCanvas();
+        render();
+        if(typeof showToast === 'function') showToast('Riscos apagados! 🧹');
+    }
 };
 
 window.clearAllTacticPieces = function() {
-    state.tactics = [];
-    saveState();
-    render();
-    if(typeof showToast === 'function') showToast('Peças removidas! 🗑️');
+    if (confirm('Tem a certeza que deseja remover todas as peças do relvado?')) {
+        state.tactics = [];
+        saveState();
+        render();
+        if(typeof showToast === 'function') showToast('Peças removidas! 🗑️');
+    }
 };
 
 window.undoLastPath = function() { 
