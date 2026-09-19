@@ -4,13 +4,19 @@
   "description": "Caderno de Treinador Profissional",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0D2015",
-  "theme_color": "#0D2015",
+  "background_color": "#0E211A",
+  "theme_color": "#0E211A",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/8144/8144883.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     }
