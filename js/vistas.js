@@ -91,55 +91,7 @@ function renderModalHTML(){
          `;
      };
 
-     // ... (mantém o conteúdo das variáveis contentIdentidade, contentTatica, etc.)
-
-     return `
-     <style>
-       @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-     </style>
-     <div class="modal-overlay" style="padding: 10px;" onclick="if(event.target===this) closeModal()">
-       <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column; padding: 16px; max-width: 480px; position: relative; z-index: 10000;">
-         <h3 style="margin-top:0; margin-bottom:12px; color:var(--gold); flex-shrink:0;">${t('set_title')}</h3>
-         
-         <!-- ÁREA COM SCROLL INTERNO -->
-         <div style="flex: 1; overflow-y: auto; padding-right: 4px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;">
-             
-             ${makeAccordion('identidade', '🛡️', 'Identidade do Clube', contentIdentidade)}
-             ${makeAccordion('tatica', '📋', 'Tática e Jogo', contentTatica)}
-             ${makeAccordion('modulos', '📱', 'Módulos & Interface', contentModulos)}
-             ${makeAccordion('epoca', '📅', 'Gestão de Época', contentEpoca)}
-             
-             <div style="flex-shrink:0; margin:4px 0 0 0; padding:14px; border-radius:12px; border:1px dashed var(--line); background:var(--surface-2); text-align:left;">
-               <div style="font-size:11px; color:var(--chalk); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">💾 Dados & Backups</div>
-               <div style="font-size:10px; color:var(--muted); margin-bottom:12px; line-height:1.4;">Para evitar a perda de dados, exporta um backup regularmente.</div>
-               
-               ${typeof getAutoSaveStatusHTML === 'function' ? getAutoSaveStatusHTML() : ''}
-               
-               <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:12px;">
-                 <button class="btn btn-gold" style="font-size:11px; font-weight:bold; flex:1;" onclick="event.stopPropagation(); window.exportDataJSON();">📥 ${t('exp_json')}</button>
-                 <label class="btn btn-outline" style="font-size:11px; font-weight:bold; flex:1; margin:0; cursor:pointer; text-align:center;">
-                   📤 ${t('imp_json')}
-                   <input type="file" id="json-file-input" accept=".json" style="display:none;" onchange="importData(this)">
-                 </label>
-               </div>
-               
-               <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; margin-bottom:4px;"><span>Armazenamento</span><span>${sizeKB.toFixed(1)} KB / ~5 MB</span></div>
-               <div style="height:6px; background:var(--surface); border-radius:3px; overflow:hidden; margin-bottom:12px;"><div style="height:100%; width:${pct}%; background:${strColor};"></div></div>
-               
-               <button class="btn btn-red" style="width:100%; font-size:12px;" onclick="event.stopPropagation(); wipeAllData();">🗑️ Limpar Dados (Reset)</button>
-             </div>
-
-         </div>
-         
-         <!-- BOTÕES FIXOS NO FUNDO DO MODAL (SEMPRE VISÍVEIS) -->
-         <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 6px;">
-             <button class="btn" style="width:100%; background:#0E211A; color:#fff; border:1px solid var(--line); font-size:11px; padding:10px;" onclick="abrirCreditos()">🤝 Créditos & Parceiros</button>
-             <button class="btn btn-outline" style="width:100%; font-size:12px; padding:10px;" onclick="closeModal()">${t('close')}</button>
-         </div>
-       </div>
-     </div>`;
-  
-     // CONTEÚDO DAS ABAS (Intacto com todas as funcionalidades e IDs)
+     // 1. CONTEÚDO DAS ABAS (Declarado ANTES do return para evitar erros de leitura)
      const contentIdentidade = `
         <div class="field" style="margin-bottom:12px;">
             <label>${t('set_club')}</label>
@@ -229,25 +181,24 @@ function renderModalHTML(){
         <button class="btn btn-outline" style="width:100%; font-size:12px;" onclick="event.stopPropagation(); archiveSeason();">${t('set_archive')}</button>
      `;
 
+     // 2. RETORNO DO MODAL (Com layout flexível para garantir que o botão Fechar fica visível)
      return `
      <style>
        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
      </style>
-     <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
-       <div class="modal-card" style="padding-bottom:10px; max-width: 480px;">
-         <h3 style="margin-top:0; margin-bottom:20px; color:var(--gold);">${t('set_title')}</h3>
+     <div class="modal-overlay" style="padding: 10px;" onclick="if(event.target===this) closeModal()">
+       <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column; padding: 16px; max-width: 480px; position: relative; z-index: 10000;">
+         <h3 style="margin-top:0; margin-bottom:12px; color:var(--gold); flex-shrink:0;">${t('set_title')}</h3>
          
-         <!-- Lista de opções com Flex Shrink protegido -->
-         <div style="max-height:65vh; overflow-y:auto; padding-right:5px; margin-bottom:15px; display:flex; flex-direction:column; gap:12px; scroll-behavior: smooth;">
+         <!-- ÁREA COM SCROLL INTERNO -->
+         <div style="flex: 1; overflow-y: auto; padding-right: 4px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;">
              
-             <!-- ABAS EXPANSÍVEIS -->
              ${makeAccordion('identidade', '🛡️', 'Identidade do Clube', contentIdentidade)}
              ${makeAccordion('tatica', '📋', 'Tática e Jogo', contentTatica)}
              ${makeAccordion('modulos', '📱', 'Módulos & Interface', contentModulos)}
              ${makeAccordion('epoca', '📅', 'Gestão de Época', contentEpoca)}
              
-             <!-- CARTÃO INDEPENDENTE (SEMPRE ABERTO: DADOS E BACKUPS) -->
-             <div style="flex-shrink:0; margin:12px 0 0 0; padding:16px; border-radius:12px; border:1px dashed var(--line); background:var(--surface-2); text-align:left;">
+             <div style="flex-shrink:0; margin:4px 0 0 0; padding:14px; border-radius:12px; border:1px dashed var(--line); background:var(--surface-2); text-align:left;">
                <div style="font-size:11px; color:var(--chalk); font-weight:bold; text-transform:uppercase; margin-bottom:8px;">💾 Dados & Backups</div>
                <div style="font-size:10px; color:var(--muted); margin-bottom:12px; line-height:1.4;">Para evitar a perda de dados, exporta um backup regularmente.</div>
                
@@ -257,7 +208,7 @@ function renderModalHTML(){
                  <button class="btn btn-gold" style="font-size:11px; font-weight:bold; flex:1;" onclick="event.stopPropagation(); window.exportDataJSON();">📥 ${t('exp_json')}</button>
                  <label class="btn btn-outline" style="font-size:11px; font-weight:bold; flex:1; margin:0; cursor:pointer; text-align:center;">
                    📤 ${t('imp_json')}
-                   <input type="file" accept=".json" style="display:none;" onchange="importData(this)">
+                   <input type="file" id="json-file-input" accept=".json" style="display:none;" onchange="importData(this)">
                  </label>
                </div>
                
@@ -269,9 +220,11 @@ function renderModalHTML(){
 
          </div>
          
-         <button class="btn" style="width:100%; margin-top:4px; background:#0E211A; color:#fff; border:1px solid var(--line);" onclick="abrirCreditos()">🤝 Créditos & Parceiros</button>
-         <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="closeModal()">${t('close')}</button>
-         <div style="font-size:9px; color:var(--muted); margin-top:10px;">v3.5.1 | COACHFOLIO</div>
+         <!-- BOTÕES FIXOS NO FUNDO DO MODAL -->
+         <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 6px;">
+             <button class="btn" style="width:100%; background:#0E211A; color:#fff; border:1px solid var(--line); font-size:11px; padding:10px;" onclick="abrirCreditos()">🤝 Créditos & Parceiros</button>
+             <button class="btn btn-outline" style="width:100%; font-size:12px; padding:10px;" onclick="closeModal()">${t('close')}</button>
+         </div>
        </div>
      </div>`;
   }
