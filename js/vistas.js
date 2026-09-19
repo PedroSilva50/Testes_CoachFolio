@@ -832,7 +832,10 @@ window.importData = function(input) {
 };
 function render(){
   try {
-      document.getElementById('nav-lbl-match').textContent = t('nav_hub_match'); document.getElementById('nav-lbl-plan').textContent = t('nav_hub_plan'); document.getElementById('nav-lbl-strat').textContent = t('nav_hub_strat'); document.getElementById('nav-lbl-team').textContent = t('nav_hub_team');
+      document.getElementById('nav-lbl-match').textContent = 'Jogo'; 
+      document.getElementById('nav-lbl-plan').textContent = 'Planos'; 
+      document.getElementById('nav-lbl-strat').textContent = 'Tática'; 
+      document.getElementById('nav-lbl-team').textContent = 'Equipa';
       document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.hub===currentHub));
       const app = document.getElementById('app'); const nav = document.getElementById('navbar');
       nav.style.display = 'flex'; /* Barra sempre visível */
