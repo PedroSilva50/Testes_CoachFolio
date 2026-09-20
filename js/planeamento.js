@@ -2,8 +2,6 @@
    MODULE: PLANEAMENTO & AGENDA (Treinos, Jogos, Convocatórias, Scouting)
    ========================================================================== */
 
-let trainingForm = null;
-let expandedTraining = null;
 window.planSeasonFilter = null;
 window.exerciseSearchQuery = '';
 
@@ -190,7 +188,7 @@ function renderTreinos() {
    AGENDA, CONVOCATÓRIAS & SCOUTING
    ========================================================================== */
 
-function renderAgenda() {
+function renderCalendario() {
   const seasons = getPlanSeasons();
   let activeFilter = window.planSeasonFilter === 'todas' ? state.currentSeason : (window.planSeasonFilter || state.currentSeason);
   let filterUI = seasons.length > 1 ? `<div style="margin-bottom:14px; overflow-x:auto; display:flex; gap:6px; padding-bottom:6px;"><div class="seg-btn ${activeFilter==='TUDO'?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.planSeasonFilter='TUDO'; render()">Todas</div>${seasons.map(s=>`<div class="seg-btn ${activeFilter===s?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.planSeasonFilter='${s}'; render()">${s}</div>`).join('')}</div>` : '';
@@ -424,9 +422,15 @@ window.viewExerciseScheme = function(notebookId) {
     return;
   }
 
-  if (typeof loadTacticalPlay === 'function') {
-    loadTacticalPlay(notebookId);
-  }
+  state.tacticFormat = play.format || 11;
+  state.tacticHalfPitch = !!play.halfPitch;
+  state.tactics = JSON.parse(JSON.stringify(play.tactics || []));
+  state.tacticPaths = JSON.parse(JSON.stringify(play.tacticPaths || []));
+  saveState();
+  
+  navigateToHub('estrategia');
+  navigateToTab('tatica');
+  render();
 };
 
 /* ==========================================================================

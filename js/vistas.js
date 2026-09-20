@@ -12,7 +12,7 @@ function renderModalHTML(){
           <h3 style="margin-top:0; color:var(--gold); text-align:center;">🏋️ Selecionar Exercício do Caderno</h3>
           
           <div class="field" style="margin-bottom:12px;">
-            <input type="text" placeholder="Pesquisar exercício..." value="${window.exerciseSearchQuery || ''}" oninput="window.exerciseSearchQuery=this.value; document.getElementById('modal-root').innerHTML = renderModalHTML();">
+            <input type="text" placeholder="Pesquisar exercício..." value="${window.exerciseSearchQuery || ''}" oninput="updateExerciseSearch(this.value)">
           </div>
 
           <div style="max-height:55vh; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:8px;">
@@ -891,3 +891,9 @@ function render(){
       }
   }
 }
+
+window.updateExerciseSearch = function(val) {
+  window.exerciseSearchQuery = val;
+  const root = document.getElementById('modal-root');
+  if (root) root.innerHTML = renderModalHTML();
+};
