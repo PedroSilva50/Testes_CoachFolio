@@ -32,6 +32,31 @@ function renderModalHTML(){
       </div>`;
   }
 
+  if (modalConfig && modalConfig.type === 'viewExerciseClean') {
+    return `
+    <div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal-card" style="max-width:440px; padding:15px;">
+        <h3 style="margin-top:0; color:var(--gold); margin-bottom:12px;">${modalConfig.title}</h3>
+        ${modalConfig.svg ? modalConfig.svg : '<div class="empty" style="padding:20px;">Sem esquema visual.</div>'}
+        <button class="btn btn-outline" style="width:100%; margin-top:15px;" onclick="closeModal()">Fechar</button>
+      </div>
+    </div>`;
+  }
+
+  if (modalConfig && modalConfig.type === 'printTrainingChoice') {
+    return `<div class="modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="modal-card" style="padding:24px 20px;">
+        <h3 style="margin-top:0; color:var(--gold); margin-bottom:8px;">Imprimir Treino</h3>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:20px; line-height:1.4;">O que pretendes incluir no relatório PDF?</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn-gold" onclick="closeModal(); exportTrainingPDF('${modalConfig.trId}', 'full')">📑 Relatório Completo (Com Presenças)</button>
+          <button class="btn btn-outline" style="border-color:var(--gold); color:var(--gold);" onclick="closeModal(); exportTrainingPDF('${modalConfig.trId}', 'plan')">⚽ Só Plano & Exercícios</button>
+          <button class="btn btn-ghost" style="margin-top:10px;" onclick="closeModal()">Cancelar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
   if(modalConfig.type === 'scouting') {
     let s = state.schedule.find(x => x.id === modalConfig.schId);
     if (!s) {
@@ -104,7 +129,7 @@ function renderModalHTML(){
      state.enableVideos = true;
      state.enableBirthdays = true;
 
-     window.settingsTab = window.settingsTab !== undefined ? window.settingsTab : 'identidade';
+     window.settingsTab = window.settingsTab !== undefined ? window.settingsTab : null;
 
      const makeAccordion = (id, icon, title, content) => {
          const isOpen = window.settingsTab === id;
@@ -551,8 +576,7 @@ function renderHome(){
 }
 
 function renderJogoSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='jogo'?'active':''}" onclick="navigateToTab('jogo')">${t('match_curr')}</div><div class="seg-btn ${currentTab==='jogos'?'active':''}" onclick="navigateToTab('jogos')">${t('res_title')}</div></div>`; }
-function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='calendario'?'active':''}" onclick="navigateToTab('calendario')">${t('sch_title')}</div><div class="seg-btn ${currentTab==='treinos'?'active':''}" onclick="navigateToTab('treinos')">${t('tr_title')}</div>${state.enableDiary ? `<div class="seg-btn ${currentTab==='diario'?'active':''}" onclick="navigateToTab('diario')">${t('diary_title')}</div>` : ''}</div>`; }
-function renderStratSubHeader() { 
+function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='semana'?'active':''}" onclick="navigateToTab('semana')">Semana</div><div class="seg-btn ${currentTab==='calendario'?'active':''}" onclick="navigateToTab('calendario')">${t('sch_title')}</div><div class="seg-btn ${currentTab==='treinos'?'active':''}" onclick="navigateToTab('treinos')">${t('tr_title')}</div>${state.enableDiary ? `<div class="seg-btn ${currentTab==='diario'?'active':''}" onclick="navigateToTab('diario')">${t('diary_title')}</div>` : ''}</div>`; }function renderStratSubHeader() { 
   return `<div class="seg" style="margin-bottom:14px;">
     <div class="seg-btn ${currentTab==='tatica'?'active':''}" onclick="navigateToTab('tatica')">${t('tac_title')}</div>
     <div class="seg-btn ${currentTab==='caderno'?'active':''}" onclick="navigateToTab('caderno')">📋 Minhas Jogadas</div>
@@ -574,17 +598,15 @@ function renderJogo(){
   const isSingleHalf = m.singleHalf || m.numberOfHalves === 1;
   const needsLineup = state.trackSubs && (!m.lineup || m.lineup.length === 0);
 
-  // A MAGIA DO ALOQUETE
   const isUnlocked = !!m.actionsUnlocked;
   const showMinInput = isManualMode || isUnlocked;
 
+  // 1. PAINEL DINÂMICO (Golos, Cartões, Subs, Capitão)
   let dynamicPanel = '';
-  
   if(pendingCaptain){
     let captainChips = eligiblePlayers().length ? eligiblePlayers().map(p=>`<div class="chip chip-sm ${m.capitao===p.id?'active-green':''}" onclick="setCaptain('${m.id}','${p.id}')">${playerLabel(p)}</div>`).join('') : `<div class="empty" style="grid-column:1/-1;">${t('pl_none')}</div>`;
     dynamicPanel = `<div class="panel" style="border-color:var(--gold);"><div class="panel-title" style="color:var(--gold);">${t('match_cap')}</div><div class="grid-btns cols-4">${captainChips}</div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="pendingCaptain=false; render()">${t('cancel')}</button></div>`;
   } 
-  // 👇 A MAGIA ACONTECE AQUI! O MEIO-CAMPO PASSA A BOLA AO ESPECIALISTA 👇
   else if(pending && (pending.kind === 'scored' || pending.kind === 'conceded')){
     if (typeof window.getGoalInputPanelHTML === 'function') {
         dynamicPanel = window.getGoalInputPanelHTML(m, isManualMode);
@@ -592,7 +614,6 @@ function renderJogo(){
         dynamicPanel = '<div class="panel"><div class="empty">Erro: Função de golos não encontrada.</div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="pending=null; render()">Cancelar</button></div>';
     }
   }
-  // 👆 FIM DA CHAMADA AO ESPECIALISTA 👆
   else if(pendingCard && !pendingCard.half){
     dynamicPanel = `<div class="panel"><div class="panel-title">${t('match_conc_half')}</div><div class="grid-btns"><div class="chip" onclick="pendingCard.half=1; render()">${t('match_half1')}</div><div class="chip" onclick="pendingCard.half=2; render()">${t('match_half2')}</div></div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="pendingCard=null; render()">${t('cancel')}</button></div>`;
   } else if(pendingCard){
@@ -608,10 +629,19 @@ function renderJogo(){
      const onPitchPlayers = sortPlayerObjs(onPitchIds.map(id => state.roster.find(p=>p.id===id)).filter(Boolean));
      const onBench = eligiblePlayers().filter(p => !onPitchIds.includes(p.id));
 
+     let subMinInputVal = '';
+     const subMinEl = document.getElementById('manual-sub-min');
+     if (subMinEl) subMinInputVal = subMinEl.value;
+
+     let subMinField = '';
+     if (!isHT && showMinInput) {
+         subMinField = `<div class="field" style="margin-bottom:10px;"><label>Minuto</label><input type="number" id="manual-sub-min" placeholder="Ex: 22" value="${subMinInputVal}" style="text-align:center; font-weight:bold;"></div>`;
+     }
+
      dynamicPanel = `
         <div class="panel" style="border-color:var(--gold);">
-           <div class="panel-title" style="color:var(--gold);">${t('match_sub_title')} ${isHT ? `(${t('match_ht')})` : ''}</div>
-           ${(!isHT && showMinInput) ? `<div class="field" style="margin-bottom:10px;"><label>Minuto</label><input type="number" id="manual-sub-min" placeholder="Ex: 22" value="${document.getElementById('manual-sub-min')?.value || ''}" style="text-align:center; font-weight:bold;"></div>` : ''}
+           <div class="panel-title" style="color:var(--gold);">${t('match_sub_title')} ${isHT ? '('+t('match_ht')+')' : ''}</div>
+           ${subMinField}
            <div style="display:flex; gap:10px;">
              <div style="flex:1;">
                <div style="font-size:10px; color:var(--red); text-transform:uppercase; font-weight:600;">${t('match_sub_out')}</div>
@@ -628,69 +658,196 @@ function renderJogo(){
            </div>
            <div style="display:flex; gap:10px; margin-top:12px;">
              <button class="btn btn-outline" style="padding:8px;" onclick="pendingSub=null; render()">${t('cancel')}</button>
-             <button class="btn btn-gold" style="padding:8px;" ${(!pendingSub.outId || !pendingSub.inId) ? 'disabled' : ''} onclick="confirmSub('${m.id}', document.getElementById('manual-sub-min')?.value)">${t('confirm')}</button>
+             <button class="btn btn-gold" style="padding:8px;" ${(!pendingSub.outId || !pendingSub.inId) ? 'disabled' : ''} onclick="const el = document.getElementById('manual-sub-min'); confirmSub('${m.id}', el ? el.value : '')">${t('confirm')}</button>
            </div>
         </div>
      `;
   }
 
+  // 2. PAINEL DA EQUIPA INICIAL
   let lineupPanel = '';
   if(needsLineup && !isGameActive) {
      lineupPanel = `<div class="panel" style="border-color:var(--gold);"><div class="panel-title" style="color:var(--gold);">${t('match_start_xi')} (${pendingLineupSet.length}/${state.tacticFormat})</div><div class="grid-btns cols-4">${eligiblePlayers().map(p => `<div class="chip chip-sm ${(pendingLineupSet).includes(p.id) ? 'active-green' : ''}" onclick="togglePendingLineup('${p.id}')">${playerLabel(p)}</div>`).join('')}</div><button class="btn btn-gold" style="width:100%; margin-top:10px;" ${pendingLineupSet.length !== state.tacticFormat ? 'disabled':''} onclick="confirmLineup('${m.id}')">${t('match_conf_xi')}</button></div>`;
   } else if (state.trackSubs && m.lineup && m.lineup.length > 0) {
-     lineupPanel = `<div style="display:flex; gap:8px; justify-content:center; margin-top:12px; margin-bottom:8px;">
-       ${!isGameActive && (!isMatchEnded || isUnlocked) ? `<button class="card-mini-btn" style="border:1px solid var(--muted); color:var(--muted); background:transparent;" onclick="window.editLineup('${m.id}')">✏️ Alterar Equipa Inicial</button>` : ''}
-       <button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); background:transparent;" onclick="window.openMatchTacticalBoard('${m.id}')">📋 Esquema Tático do Jogo</button>
-     </div>`;
+     let editXiBtn = (!isGameActive && (!isMatchEnded || isUnlocked)) ? `<button class="card-mini-btn" style="border:1px solid var(--muted); color:var(--muted); background:transparent;" onclick="window.editLineup('${m.id}')">✏️ Alterar Equipa Inicial</button>` : '';
+     lineupPanel = `<div style="display:flex; gap:8px; justify-content:center; margin-top:12px; margin-bottom:8px;">${editXiBtn}<button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); background:transparent;" onclick="window.openMatchTacticalBoard('${m.id}')">📋 Esquema Tático do Jogo</button></div>`;
   }
+
+  // 3. PAINEL DE AVALIAÇÕES (RATINGS)
   let ratingsPanel = '';
   if(pendingRatings){
-      ratingsPanel = `<div style="margin-bottom:12px; padding:10px; background:var(--surface-2); border-radius:8px; border:1px solid var(--gold);"><div class="panel-title" style="color:var(--gold); margin-bottom:8px;">${t('match_rate_pls')}</div><div style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;">${eligiblePlayers().map(p => { const r = (m.ratings && m.ratings[p.id]) || 0; let starsHtml = ''; for(let i=1; i<=5; i++){ starsHtml += `<span style="font-size:24px; line-height:1; cursor:pointer; margin:0 2px; color:${i<=r ? 'var(--gold)' : 'var(--line)'};" onclick="setRating('${m.id}', '${p.id}', ${i})">★</span>`; } return `<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid var(--line);"><span style="font-size:13px;">${playerLabel(p)}</span><div style="display:flex; align-items:center;">${starsHtml}</div></div>`; }).join('')}</div></div>`;
-  } else if (isMatchEnded) { ratingsPanel = `<button class="btn btn-outline" style="width:100%; padding: 10px; font-size:12px; margin-bottom:12px;" onclick="pendingRatings=true; render()">${t('match_rate_edit')}</button>`; }
+      ratingsPanel = `<div style="margin-bottom:12px; padding:10px; background:var(--surface-2); border-radius:8px; border:1px solid var(--gold);"><div class="panel-title" style="color:var(--gold); margin-bottom:8px;">${t('match_rate_pls')}</div><div style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;">${eligiblePlayers().map(p => { const r = (m.ratings && m.ratings[p.id]) || 0; let starsHtml = ''; for(let i=1; i<=5; i++){ starsHtml += `<span style="font-size:24px; line-height:1; cursor:pointer; margin:0 2px; color:${i<=r ? 'var(--gold)' : 'var(--line)'};" onclick="setRating('${m.id}', '${p.id}',${i})">★</span>`; } return `<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid var(--line);"><span style="font-size:13px;">${playerLabel(p)}</span><div style="display:flex; align-items:center;">${starsHtml}</div></div>`; }).join('')}</div></div>`;
+  } else if (isMatchEnded) { 
+      ratingsPanel = `<button class="btn btn-outline" style="width:100%; padding: 10px; font-size:12px; margin-bottom:12px;" onclick="pendingRatings=true; render()">${t('match_rate_edit')}</button>`; 
+  }
 
-  let finalBtnLabel = pendingRatings ? t('match_save_rate') : (isMatchEnded ? t('match_save_rep') : t('match_save_btn'));
-  let finalBtnStyle = pendingRatings ? 'btn-gold' : 'btn-ghost';
-  
-  return `
-    ${topbarHtml(t('hub_match_title'))}
-    ${renderJogoSubHeader()}
-    <div class="card chrono-card">
-      <div class="chrono-time" id="live-timer">${isManualMode ? 'HISTÓRICO' : formatMatchTime(window.getMatchDisplayTimeMs(m))}</div>
-      ${(!m.timeline || !m.timeline.kickoff) ? (!needsLineup ? (!isManualMode ? `<button class="btn btn-green" style="padding:8px 20px; font-size:12px; margin: 10px auto 0; display: block;" onclick="askConfirm('${t('msg_ko')}', ()=>setMatchTimeMark('${m.id}','kickoff'), 'btn-green')">${t('match_kickoff')}</button><button class="btn btn-outline" style="padding:6px 16px; font-size:11px; margin: 10px auto 0; display: block; border-style:dashed;" onclick="askConfirm('Tens a certeza que queres registar este jogo em Modo Histórico? O cronómetro não será utilizado.', ()=>enableManualMode('${m.id}'), 'btn-gold')">📝 Registar Jogo Histórico (Sem Relógio)</button>` : `<div style="font-size:11px; color:var(--gold); text-transform:uppercase; margin-top:10px; font-weight:700;">📝 Modo Histórico Ativo</div>`) : '') : ''}
-       ${(m.timeline && m.timeline.kickoff && !m.timeline.halftime && !m.timeline.fullTime) ? `<div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">${m.timer.isRunning ? `<button class="btn btn-outline" style="padding:8px 20px; font-size:12px; flex:none; border-color:var(--muted); color:var(--muted);" onclick="pauseMatchTimer('${m.id}')">${t('match_pause')}</button>` : `<button class="btn btn-gold" style="padding:8px 20px; font-size:12px; flex:none;" onclick="resumeMatchTimer('${m.id}')">${t('match_resume')}</button>`}${isSingleHalf ? `<button class="btn btn-red" style="padding:8px 20px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ft')}', ()=>setMatchTimeMark('${m.id}','fullTime'), 'btn-red')">${t('match_ft')}</button>` : `<button class="btn btn-ghost" style="padding:8px 20px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ht')}', ()=>setMatchTimeMark('${m.id}','halftime'), 'btn-gold')">${t('match_ht')}</button>`}</div>` : ''}
-       ${(m.timeline && m.timeline.halftime && !m.timeline.secondHalfStart) ? `<button class="btn btn-green" style="padding:8px 20px; font-size:12px; margin: 10px auto 0; display: block;" onclick="askConfirm('${t('msg_2nd')}', ()=>setMatchTimeMark('${m.id}','secondHalfStart'), 'btn-green')">${t('match_2nd')}</button>` : ''}
-       ${(m.timeline && m.timeline.secondHalfStart && !m.timeline.fullTime) ? `<div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">${m.timer.isRunning ? `<button class="btn btn-outline" style="padding:8px 12px; font-size:12px; flex:none; border-color:var(--muted); color:var(--muted);" onclick="pauseMatchTimer('${m.id}')">${t('match_pause')}</button>` : `<button class="btn btn-gold" style="padding:8px 12px; font-size:12px; flex:none;" onclick="resumeMatchTimer('${m.id}')">${t('match_resume')}</button>`}<button class="btn btn-red" style="padding:8px 12px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ft')}', ()=>setMatchTimeMark('${m.id}','fullTime'), 'btn-red')">${t('match_ft')}</button></div>` : ''}
-       ${(isMatchEnded && !m.finished) ? `<div style="font-size:11px; color:var(--red); text-transform:uppercase; margin-top:10px; font-weight:700; letter-spacing: 0.05em;">${t('match_ended')}</div>` : ''}
-    </div>
-    
-    <div class="scoreboard">
-      <div class="opponent" style="margin-bottom:4px;"><div style="font-size:15px;">${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home' ? `${getMyClub()} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${m.opponent}` : `${m.opponent} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${getMyClub()}`} <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span></div><span>${m.date}</span></div>
-      ${m.capitao ? `<div style="font-size:11px; color:var(--muted); margin-bottom:12px; text-transform:uppercase; font-weight:600; display:flex; align-items:center; gap:8px;"><span>© Capitão: <span style="color:var(--green);">${playerName(m.capitao)}</span></span>${(!isMatchEnded || isUnlocked) ? `<button style="background:none; border:1px solid var(--line); color:var(--chalk); border-radius:4px; padding:2px 6px; font-size:9px; cursor:pointer;" onclick="pendingCaptain=true; render()">${t('match_cap_change')}</button>`:''}</div>` : ((!isMatchEnded || isUnlocked) ? `<div style="margin-bottom:12px;"><button class="card-mini-btn yellow" style="border-color:var(--gold); color:var(--gold);" onclick="pendingCaptain=true; render()">${t('match_cap_btn')}</button></div>` : '')}
-      <div class="score-row"><div class="score-block scored"><div class="score-num mono">${scored}</div><div class="score-label">${t('match_scored')}</div></div><div class="score-sep">–</div><div class="score-block conceded"><div class="score-num mono">${conceded}</div><div class="score-label">${t('match_conc')}</div></div></div>
+  // 4. CONFRONTO DIRETO (H2H)
+  let h2hHtml = '';
+  if(m.opponent && m.opponent.trim() !== '') {
+      const oppQuery = m.opponent.trim().toLowerCase();
+      const h2hMatches = (state.matches || []).filter(x => x.finished && x.id !== m.id && (x.opponent||'').trim().toLowerCase() === oppQuery).sort((a,b) => new Date(b.date) - new Date(a.date));
+      if(h2hMatches.length > 0) {
+          let w=0, d=0, l=0;
+          h2hMatches.forEach(x => {
+              const s = (x.goals||[]).filter(g=>g.type==='scored').length;
+              const c = (x.goals||[]).filter(g=>g.type==='conceded').length;
+              if(s>c) w++; else if(s===c) d++; else l++;
+          });
+          
+          let historyRows = '';
+          h2hMatches.slice(0, 3).forEach(x => {
+               const s = (x.goals||[]).filter(g=>g.type==='scored').length;
+               const c = (x.goals||[]).filter(g=>g.type==='conceded').length;
+               const res = s > c ? 'V' : (s === c ? 'E' : 'D');
+               const color = res === 'V' ? 'var(--green)' : (res === 'E' ? 'var(--yellow)' : 'var(--red)');
+               const isHome = x.location === 'casa';
+               historyRows += `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--line); font-size:11px;">
+                 <span style="color:var(--muted);">${x.date.split('-').reverse().join('/')} <span style="font-size:9px;">(${isHome?'CASA':'FORA'})</span></span>
+                 <span style="color:${color}; font-weight:bold; font-family:monospace; font-size:13px;">${res} ${s}-${c}</span>
+               </div>`;
+          });
+          
+          let extraTxt = h2hMatches.length > 3 ? `<div style="font-size:9px; color:var(--muted); text-align:center; margin-top:6px;">+ ${h2hMatches.length - 3} jogo(s) anterior(es)</div>` : '';
+
+          h2hHtml = `
+          <div style="background:var(--surface-2); border-radius:8px; padding:10px 12px; margin:14px 0 12px; text-align:left; border:1px solid var(--line);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
+                  <span style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">⚔️ Histórico vs ${m.opponent}</span>
+                  <span style="font-size:11px; font-weight:bold; color:var(--chalk);">${w}V ${d}E ${l}D</span>
+              </div>
+              <div>${historyRows}</div>
+              ${extraTxt}
+          </div>`;
+      }
+  }
+
+  // 5. BOTÕES DO CRONÓMETRO E RELÓGIO
+  let matchControlsHtml = '';
+  if (!m.timeline || !m.timeline.kickoff) {
+      if (!needsLineup) {
+          if (!isManualMode) {
+              matchControlsHtml = `
+                  <button class="btn btn-green" style="padding:8px 20px; font-size:12px; margin: 10px auto 0; display: block;" onclick="askConfirm('${t('msg_ko')}', ()=>setMatchTimeMark('${m.id}','kickoff'), 'btn-green')">${t('match_kickoff')}</button>
+                  <button class="btn btn-outline" style="padding:6px 16px; font-size:11px; margin: 10px auto 0; display: block; border-style:dashed;" onclick="askConfirm('Tens a certeza que queres registar este jogo em Modo Histórico? O cronómetro não será utilizado.', ()=>enableManualMode('${m.id}'), 'btn-gold')">📝 Registar Jogo Histórico (Sem Relógio)</button>
+              `;
+          } else {
+              matchControlsHtml = `<div style="font-size:11px; color:var(--gold); text-transform:uppercase; margin-top:10px; font-weight:700;">📝 Modo Histórico Ativo</div>`;
+          }
+      }
+  } else if (m.timeline.kickoff && !m.timeline.halftime && !m.timeline.fullTime) {
+      let playPauseBtn = m.timer.isRunning 
+          ? `<button class="btn btn-outline" style="padding:8px 20px; font-size:12px; flex:none; border-color:var(--muted); color:var(--muted);" onclick="pauseMatchTimer('${m.id}')">${t('match_pause')}</button>` 
+          : `<button class="btn btn-gold" style="padding:8px 20px; font-size:12px; flex:none;" onclick="resumeMatchTimer('${m.id}')">${t('match_resume')}</button>`;
+      let htFtBtn = isSingleHalf 
+          ? `<button class="btn btn-red" style="padding:8px 20px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ft')}', ()=>setMatchTimeMark('${m.id}','fullTime'), 'btn-red')">${t('match_ft')}</button>` 
+          : `<button class="btn btn-ghost" style="padding:8px 20px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ht')}', ()=>setMatchTimeMark('${m.id}','halftime'), 'btn-gold')">${t('match_ht')}</button>`;
+      matchControlsHtml = `<div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">${playPauseBtn}${htFtBtn}</div>`;
+  } else if (m.timeline.halftime && !m.timeline.secondHalfStart) {
+      matchControlsHtml = `<button class="btn btn-green" style="padding:8px 20px; font-size:12px; margin: 10px auto 0; display: block;" onclick="askConfirm('${t('msg_2nd')}', ()=>setMatchTimeMark('${m.id}','secondHalfStart'), 'btn-green')">${t('match_2nd')}</button>`;
+  } else if (m.timeline.secondHalfStart && !m.timeline.fullTime) {
+      let playPauseBtn = m.timer.isRunning 
+          ? `<button class="btn btn-outline" style="padding:8px 12px; font-size:12px; flex:none; border-color:var(--muted); color:var(--muted);" onclick="pauseMatchTimer('${m.id}')">${t('match_pause')}</button>` 
+          : `<button class="btn btn-gold" style="padding:8px 12px; font-size:12px; flex:none;" onclick="resumeMatchTimer('${m.id}')">${t('match_resume')}</button>`;
+      matchControlsHtml = `<div style="display:flex; justify-content:center; gap:8px; margin-top:10px;">${playPauseBtn}<button class="btn btn-red" style="padding:8px 12px; font-size:12px; flex:none;" onclick="askConfirm('${t('msg_ft')}', ()=>setMatchTimeMark('${m.id}','fullTime'), 'btn-red')">${t('match_ft')}</button></div>`;
+  } else if (isMatchEnded && !m.finished) {
+      matchControlsHtml = `<div style="font-size:11px; color:var(--red); text-transform:uppercase; margin-top:10px; font-weight:700; letter-spacing: 0.05em;">${t('match_ended')}</div>`;
+  }
+
+  // 6. BOTÕES DE ACÇÃO (Golos, Cartões, Subs)
+  let actionButtonsHtml = '';
+  if (!isMatchEnded || isUnlocked) {
+      let disabledAttr = (!isGameActive || pending || pendingCard || pendingCaptain || pendingRatings || pendingSub) ? 'disabled' : '';
       
-      ${(!isMatchEnded || isUnlocked) ? `
-         <div class="btn-row">
-           <button class="btn btn-gold" onclick="pending={kind:'scored', half: window.resolveEventHalf(getActiveMatch())}; render();" ${(!isGameActive||pending||pendingCard||pendingCaptain||pendingRatings||pendingSub)?'disabled':''}>${t('match_add_goal')}</button>
-           <button class="btn btn-red" onclick="const h=window.resolveEventHalf(getActiveMatch()); if(h){ pending={kind:'conceded', half:h}; render(); } else { pending={kind:'conceded', half:null}; render(); }" ${(!isGameActive||pending||pendingCard||pendingCaptain||pendingRatings||pendingSub)?'disabled':''}>${t('match_add_conc')}</button>
-         </div>
-         ${isGameActive ? `
+      let subBtnHtml = '';
+      if (state.trackSubs) {
+          subBtnHtml = `<button class="card-mini-btn" style="border:1px solid var(--chalk); color:var(--chalk);" onclick="pendingSub={outId:null, inId:null, half: window.resolveEventHalf(getActiveMatch())}; render()" ${disabledAttr}>${t('match_sub_title')}</button>`;
+      }
+
+      let extraBtnsHtml = '';
+      if (isGameActive) {
+          extraBtnsHtml = `
            <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
-             <button class="card-mini-btn yellow" onclick="pendingCard={color:'Amarelo', half: window.resolveEventHalf(getActiveMatch())}; render()" ${(pending||pendingCard||pendingCaptain||pendingRatings||pendingSub)?'disabled':''}>${t('match_yellow')}</button>
-             <button class="card-mini-btn red" onclick="pendingCard={color:'Vermelho', half: window.resolveEventHalf(getActiveMatch())}; render()" ${(pending||pendingCard||pendingCaptain||pendingRatings||pendingSub)?'disabled':''}>${t('match_red')}</button>
-             ${state.trackSubs ? `<button class="card-mini-btn" style="border:1px solid var(--chalk); color:var(--chalk);" onclick="pendingSub={outId:null, inId:null, half: window.resolveEventHalf(getActiveMatch())}; render()" ${(pending||pendingCard||pendingCaptain||pendingRatings||pendingSub)?'disabled':''}>${t('match_sub_title')}</button>` : ''}
+             <button class="card-mini-btn yellow" onclick="pendingCard={color:'Amarelo', half: window.resolveEventHalf(getActiveMatch())}; render()" ${disabledAttr}>${t('match_yellow')}</button>
+             <button class="card-mini-btn red" onclick="pendingCard={color:'Vermelho', half: window.resolveEventHalf(getActiveMatch())}; render()" ${disabledAttr}>${t('match_red')}</button>
+             ${subBtnHtml}
            </div>
-         ` : ''}
-      ` : `
+          `;
+      }
+
+      actionButtonsHtml = `
+         <div class="btn-row">
+           <button class="btn btn-gold" onclick="pending={kind:'scored', half: window.resolveEventHalf(getActiveMatch())}; render();" ${disabledAttr}>${t('match_add_goal')}</button>
+           <button class="btn btn-red" onclick="const h=window.resolveEventHalf(getActiveMatch()); if(h){ pending={kind:'conceded', half:h}; render(); } else { pending={kind:'conceded', half:null}; render(); }" ${disabledAttr}>${t('match_add_conc')}</button>
+         </div>
+         ${extraBtnsHtml}
+      `;
+  } else {
+      actionButtonsHtml = `
          <div style="margin-top:16px; padding:10px; border-radius:8px; background:var(--surface-2); font-size:11px; text-align:center; color:var(--gold); text-transform:uppercase; font-weight:700; letter-spacing:0.05em; cursor:pointer; border:1px solid var(--gold); box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="const am = getActiveMatch(); if(am){am.actionsUnlocked=true; render();}">
             🔓 Desbloquear Ações de Jogo
          </div>
-      `}
+      `;
+  }
+
+  // 7. CAPITÃO DA EQUIPA
+  let captainHtml = '';
+  if (m.capitao) {
+      let capChangeBtn = (!isMatchEnded || isUnlocked) ? `<button style="background:none; border:1px solid var(--line); color:var(--chalk); border-radius:4px; padding:2px 6px; font-size:9px; cursor:pointer;" onclick="pendingCaptain=true; render()">${t('match_cap_change')}</button>` : '';
+      captainHtml = `<div style="font-size:11px; color:var(--muted); margin-bottom:12px; text-transform:uppercase; font-weight:600; display:flex; align-items:center; gap:8px;"><span>© Capitão: <span style="color:var(--green);">${playerName(m.capitao)}</span></span>${capChangeBtn}</div>`;
+  } else if (!isMatchEnded || isUnlocked) {
+      captainHtml = `<div style="margin-bottom:12px;"><button class="card-mini-btn yellow" style="border-color:var(--gold); color:var(--gold);" onclick="pendingCaptain=true; render()">${t('match_cap_btn')}</button></div>`;
+  }
+
+  // 8. TÍTULO DO ADVERSÁRIO E LOCAL
+  let oppHtml = locLabel.toLowerCase() === 'casa' || locLabel.toLowerCase() === 'home' 
+      ? `${getMyClub()} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${m.opponent}` 
+      : `${m.opponent} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${getMyClub()}`;
+
+  let finalBtnLabel = pendingRatings ? t('match_save_rate') : (isMatchEnded ? t('match_save_rep') : t('match_save_btn'));
+  let finalBtnStyle = pendingRatings ? 'btn-gold' : 'btn-ghost';
+
+  // O RETORNO FINAL COMPLETAMENTE LIMPO (Sem blocos aninhados que confundem o VS Code!)
+  return `
+    ${topbarHtml(t('hub_match_title'))}
+    ${renderJogoSubHeader()}
+    
+    <div class="card chrono-card">
+      <div class="chrono-time" id="live-timer">${isManualMode ? 'HISTÓRICO' : formatMatchTime(window.getMatchDisplayTimeMs(m))}</div>
+      ${matchControlsHtml}
+    </div>
+    
+    <div class="scoreboard">
+      <div class="opponent" style="margin-bottom:4px;">
+        <div style="font-size:15px;">
+          ${oppHtml}
+          <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span>
+        </div>
+        <span>${m.date}</span>
+      </div>
       
+      ${captainHtml}
+      
+      <div class="score-row">
+        <div class="score-block scored"><div class="score-num mono">${scored}</div><div class="score-label">${t('match_scored')}</div></div>
+        <div class="score-sep">–</div>
+        <div class="score-block conceded"><div class="score-num mono">${conceded}</div><div class="score-label">${t('match_conc')}</div></div>
+      </div>      
+      
+      ${actionButtonsHtml}
       ${dynamicPanel}
       ${lineupPanel}
     </div>
+
     <div class="goal-list" style="border-top:none;">${matchNarrativeHtml(m, !isUnlocked && m.finished)}</div>
-    <div class="card" style="margin-top:16px;">${ratingsPanel}<div class="field" style="margin-bottom:0;"><label>${t('match_notes')}</label><textarea id="notes-input" placeholder="${t('match_notes_ph')}" onchange="updateMatchNotes('${m.id}', this.value)">${m.notes || ''}</textarea></div></div>
+    
+    <div class="card" style="margin-top:16px;">
+      ${ratingsPanel}
+      <div class="field" style="margin-bottom:0;">
+        <label>${t('match_notes')}</label>
+        <textarea id="notes-input" placeholder="${t('match_notes_ph')}" onchange="updateMatchNotes('${m.id}', this.value)">${m.notes || ''}</textarea>
+      </div>
+    </div>
+    
     <button class="btn ${finalBtnStyle}" style="width:100%; margin-top:6px;" onclick="uiFinishMatch()">${finalBtnLabel}</button>
   `;
 }
@@ -872,7 +1029,7 @@ function render(){
       nav.style.display = 'flex'; /* Barra sempre visível */
       if(currentHub === 'home'){ app.innerHTML = renderHome(); } 
       else { 
-          if(currentTab==='jogo') app.innerHTML = renderJogo(); else if(currentTab==='jogos') app.innerHTML = renderJogos(); else if(currentTab==='calendario') app.innerHTML = renderCalendario(); else if(currentTab==='treinos') app.innerHTML = renderTreinos(); else if(currentTab==='diario') app.innerHTML = renderDiario(); else if(currentTab==='tatica') { app.innerHTML = renderTatica(); setTimeout(initTacticCanvas, 0); } else if(currentTab==='caderno') app.innerHTML = renderCaderno(); else if(currentTab==='videos') app.innerHTML = renderVideos(); else if(currentTab==='plantel') app.innerHTML = renderPlantel(); else if(currentTab==='stats') app.innerHTML = renderStats(); else if(currentTab==='classificacoes') app.innerHTML = renderClassificacoes(); else if(currentTab==='caixinha') app.innerHTML = renderCaixinha(); 
+          if(currentTab==='jogo') app.innerHTML = renderJogo(); else if(currentTab==='jogos') app.innerHTML = renderJogos(); else if(currentTab==='semana') app.innerHTML = renderMicrociclo(); else if(currentTab==='calendario') app.innerHTML = renderCalendario(); else if(currentTab==='treinos') app.innerHTML = renderTreinos(); else if(currentTab==='diario') app.innerHTML = renderDiario(); else if(currentTab==='tatica') { app.innerHTML = renderTatica(); setTimeout(initTacticCanvas, 0); } else if(currentTab==='caderno') app.innerHTML = renderCaderno(); else if(currentTab==='videos') app.innerHTML = renderVideos(); else if(currentTab==='plantel') app.innerHTML = renderPlantel(); else if(currentTab==='stats') app.innerHTML = renderStats(); else if(currentTab==='classificacoes') app.innerHTML = renderClassificacoes(); else if(currentTab==='caixinha') app.innerHTML = renderCaixinha(); 
       }
       
       if (typeof manageWakeLock === 'function') manageWakeLock();

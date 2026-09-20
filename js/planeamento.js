@@ -280,25 +280,135 @@ function renderCalendario(){
     if(schForm.numberOfHalves === undefined) schForm.numberOfHalves = 2;
     if(schForm.halfDuration === undefined) schForm.halfDuration = state.defaultHalfDuration || 30;
     if(!schForm.games || schForm.games.length===0) schForm.games = [{id: uid(), phase: '', matchday: '', opp: '', date: schForm.date, time: '09:00'}];
+    
+    let batchHtml = '';
+    if (schForm.isBatch) {
+        batchHtml = `<div class="card"><div class="field"><label>${t('sch_tour_name')}</label><input type="text" placeholder="${t('sch_tour_ph')}" value="${schForm.tournamentName||''}" oninput="schForm.tournamentName=this.value"></div>
+        <div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>Nº de Partes</label><div class="seg" style="margin-top:0;"><div class="seg-btn ${schForm.numberOfHalves===1?'active':''}" onclick="schForm.numberOfHalves=1; render()">1 Parte</div><div class="seg-btn ${schForm.numberOfHalves!==1?'active':''}" onclick="schForm.numberOfHalves=2; render()">2 Partes</div></div></div><div class="field" style="margin-bottom:0;"><label>Tempo/Parte (Min)</label><input type="number" value="${schForm.halfDuration}" oninput="schForm.halfDuration=parseInt(this.value, 10)||30"></div></div>
+        <div class="field" style="margin-top:12px;"><label>${t('sch_loc_gen')}</label><div class="seg"><div class="seg-btn ${schForm.loc==='casa'?'active':''}" onclick="schForm.loc='casa'; render()">${t('match_home')}</div><div class="seg-btn ${schForm.loc==='fora'?'active':''}" onclick="schForm.loc='fora'; render()">${t('match_away')}</div></div></div></div><div class="section-title">${t('sch_tour_games')}</div>
+        ${schForm.games.map((g, i) => `<div class="card" style="background:var(--surface-2); border-color:var(--gold-dim); margin-bottom:8px; padding:12px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><b style="font-size:13px; color:var(--gold);">${t('sch_game')}${i+1}</b><button class="quick-del" onclick="uiRemoveTournamentGame('${g.id}')">✕</button></div><div class="grid-btns" style="margin-bottom:8px;"><div class="field" style="margin-bottom:0;"><input type="text" placeholder="${t('sch_phase_ph')}" value="${g.phase}" oninput="uiUpdateTournamentGame('${g.id}', 'phase', this.value)"></div><div class="field" style="margin-bottom:0;"><input type="text" placeholder="${t('sch_matchday_ph')}" value="${g.matchday}" oninput="uiUpdateTournamentGame('${g.id}', 'matchday', this.value)"></div></div><div class="field" style="margin-bottom:8px;"><input type="text" placeholder="${t('sch_opp')}" value="${g.opp}" oninput="uiUpdateTournamentGame('${g.id}', 'opp', this.value)"></div><div class="grid-btns"><div class="field" style="margin-bottom:0;"><input type="date" value="${g.date}" oninput="uiUpdateTournamentGame('${g.id}', 'date', this.value)"></div><div class="field" style="margin-bottom:0;"><input type="time" value="${g.time}" oninput="uiUpdateTournamentGame('${g.id}', 'time', this.value)"></div></div></div>`).join('')}<button class="btn btn-outline" style="width:100%; margin-bottom:16px; border-style:dashed;" onclick="uiAddTournamentGame()">${t('sch_add_game')}</button>`;
+    } else {
+        batchHtml = `<div class="card"><div class="field"><label>${t('sch_opp')}</label><input id="sch-opp" type="text" placeholder="${t('sch_opp_ph')}" value="${schForm.opp}" oninput="schForm.opp=this.value"></div><div class="grid-btns"><div class="field"><label>${t('sch_date')}</label><input id="sch-date" type="date" value="${schForm.date}" oninput="schForm.date=this.value"></div><div class="field"><label>${t('sch_time')}</label><input id="sch-time" type="time" value="${schForm.time}" oninput="schForm.time=this.value"></div></div>
+        <div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>Nº de Partes</label><div class="seg" style="margin-top:0;"><div class="seg-btn ${schForm.numberOfHalves===1?'active':''}" onclick="schForm.numberOfHalves=1; render()">1 Parte</div><div class="seg-btn ${schForm.numberOfHalves!==1?'active':''}" onclick="schForm.numberOfHalves=2; render()">2 Partes</div></div></div><div class="field" style="margin-bottom:0;"><label>Tempo/Parte (Min)</label><input type="number" value="${schForm.halfDuration}" oninput="schForm.halfDuration=parseInt(this.value, 10)||30"></div></div>
+        <div class="field" style="margin-top:12px;"><label>${t('sch_loc_gen')}</label><div class="seg"><div class="seg-btn ${schForm.loc==='casa'?'active':''}" onclick="schForm.loc='casa'; render()">${t('match_home')}</div><div class="seg-btn ${schForm.loc==='fora'?'active':''}" onclick="schForm.loc='fora'; render()">${t('match_away')}</div></div></div><div class="field" style="margin-bottom: ${schForm.type!=='amigavel' ? '12px' : '0'};"><label>${t('sch_type')}</label><div class="seg"><div class="seg-btn ${schForm.type==='amigavel'?'active':''}" onclick="schForm.type='amigavel'; render()">${t('sch_friendly')}</div><div class="seg-btn ${schForm.type==='campeonato'?'active':''}" onclick="schForm.type='campeonato'; render()">${t('sch_champ')}</div><div class="seg-btn ${schForm.type==='torneio'?'active':''}" onclick="schForm.type='torneio'; render()">${t('sch_tour')}</div></div></div>${schForm.type === 'torneio' ? `<div class="field" style="margin-bottom:12px;"><label>${t('sch_tour_name')}</label><input type="text" placeholder="${t('sch_tour_ph')}" value="${schForm.tournamentName||''}" oninput="schForm.tournamentName=this.value"></div>` : ''}${schForm.type === 'torneio' || schForm.type === 'campeonato' ? `<div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>${t('sch_phase')}</label><input type="text" placeholder="${t('sch_phase_ph')}" value="${schForm.phase||''}" oninput="schForm.phase=this.value"></div><div class="field" style="margin-bottom:0;"><label>${t('sch_matchday')}</label><input type="text" placeholder="${t('sch_matchday_ph')}" value="${schForm.matchday||''}" oninput="schForm.matchday=this.value"></div></div>` : ''}</div>`;
+    }
+
     return `${topbarHtml(editingSchId ? t('sch_edit') : t('sch_title'))}${renderPlanSubHeader()}
       ${!editingSchId ? `<div class="seg" style="margin-bottom:16px;"><div class="seg-btn ${!schForm.isBatch?'active':''}" onclick="schForm.isBatch=false; render()">${t('sch_single')}</div><div class="seg-btn ${schForm.isBatch?'active':''}" onclick="schForm.isBatch=true; render()">${t('sch_multi')}</div></div>` : ''}
-      ${schForm.isBatch ? `<div class="card"><div class="field"><label>${t('sch_tour_name')}</label><input type="text" placeholder="${t('sch_tour_ph')}" value="${schForm.tournamentName||''}" oninput="schForm.tournamentName=this.value"></div>
-      <div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>Nº de Partes</label><div class="seg" style="margin-top:0;"><div class="seg-btn ${schForm.numberOfHalves===1?'active':''}" onclick="schForm.numberOfHalves=1; render()">1 Parte</div><div class="seg-btn ${schForm.numberOfHalves!==1?'active':''}" onclick="schForm.numberOfHalves=2; render()">2 Partes</div></div></div><div class="field" style="margin-bottom:0;"><label>Tempo/Parte (Min)</label><input type="number" value="${schForm.halfDuration}" oninput="schForm.halfDuration=parseInt(this.value, 10)||30"></div></div>
-      <div class="field" style="margin-top:12px;"><label>${t('sch_loc_gen')}</label><div class="seg"><div class="seg-btn ${schForm.loc==='casa'?'active':''}" onclick="schForm.loc='casa'; render()">${t('match_home')}</div><div class="seg-btn ${schForm.loc==='fora'?'active':''}" onclick="schForm.loc='fora'; render()">${t('match_away')}</div></div></div></div><div class="section-title">${t('sch_tour_games')}</div>
-      ${schForm.games.map((g, i) => `<div class="card" style="background:var(--surface-2); border-color:var(--gold-dim); margin-bottom:8px; padding:12px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><b style="font-size:13px; color:var(--gold);">${t('sch_game')} ${i+1}</b><button class="quick-del" onclick="uiRemoveTournamentGame('${g.id}')">✕</button></div><div class="grid-btns" style="margin-bottom:8px;"><div class="field" style="margin-bottom:0;"><input type="text" placeholder="${t('sch_phase_ph')}" value="${g.phase}" oninput="uiUpdateTournamentGame('${g.id}', 'phase', this.value)"></div><div class="field" style="margin-bottom:0;"><input type="text" placeholder="${t('sch_matchday_ph')}" value="${g.matchday}" oninput="uiUpdateTournamentGame('${g.id}', 'matchday', this.value)"></div></div><div class="field" style="margin-bottom:8px;"><input type="text" placeholder="${t('sch_opp')}" value="${g.opp}" oninput="uiUpdateTournamentGame('${g.id}', 'opp', this.value)"></div><div class="grid-btns"><div class="field" style="margin-bottom:0;"><input type="date" value="${g.date}" oninput="uiUpdateTournamentGame('${g.id}', 'date', this.value)"></div><div class="field" style="margin-bottom:0;"><input type="time" value="${g.time}" oninput="uiUpdateTournamentGame('${g.id}', 'time', this.value)"></div></div></div>`).join('')}<button class="btn btn-outline" style="width:100%; margin-bottom:16px; border-style:dashed;" onclick="uiAddTournamentGame()">${t('sch_add_game')}</button>` : `<div class="card"><div class="field"><label>${t('sch_opp')}</label><input id="sch-opp" type="text" placeholder="${t('sch_opp_ph')}" value="${schForm.opp}" oninput="schForm.opp=this.value"></div><div class="grid-btns"><div class="field"><label>${t('sch_date')}</label><input id="sch-date" type="date" value="${schForm.date}" oninput="schForm.date=this.value"></div><div class="field"><label>${t('sch_time')}</label><input id="sch-time" type="time" value="${schForm.time}" oninput="schForm.time=this.value"></div></div>
-      <div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>Nº de Partes</label><div class="seg" style="margin-top:0;"><div class="seg-btn ${schForm.numberOfHalves===1?'active':''}" onclick="schForm.numberOfHalves=1; render()">1 Parte</div><div class="seg-btn ${schForm.numberOfHalves!==1?'active':''}" onclick="schForm.numberOfHalves=2; render()">2 Partes</div></div></div><div class="field" style="margin-bottom:0;"><label>Tempo/Parte (Min)</label><input type="number" value="${schForm.halfDuration}" oninput="schForm.halfDuration=parseInt(this.value, 10)||30"></div></div>
-      <div class="field" style="margin-top:12px;"><label>${t('sch_loc_gen')}</label><div class="seg"><div class="seg-btn ${schForm.loc==='casa'?'active':''}" onclick="schForm.loc='casa'; render()">${t('match_home')}</div><div class="seg-btn ${schForm.loc==='fora'?'active':''}" onclick="schForm.loc='fora'; render()">${t('match_away')}</div></div></div><div class="field" style="margin-bottom: ${schForm.type!=='amigavel' ? '12px' : '0'};"><label>${t('sch_type')}</label><div class="seg"><div class="seg-btn ${schForm.type==='amigavel'?'active':''}" onclick="schForm.type='amigavel'; render()">${t('sch_friendly')}</div><div class="seg-btn ${schForm.type==='campeonato'?'active':''}" onclick="schForm.type='campeonato'; render()">${t('sch_champ')}</div><div class="seg-btn ${schForm.type==='torneio'?'active':''}" onclick="schForm.type='torneio'; render()">${t('sch_tour')}</div></div></div>${schForm.type === 'torneio' ? `<div class="field" style="margin-bottom:12px;"><label>${t('sch_tour_name')}</label><input type="text" placeholder="${t('sch_tour_ph')}" value="${schForm.tournamentName||''}" oninput="schForm.tournamentName=this.value"></div>` : ''}${schForm.type === 'torneio' || schForm.type === 'campeonato' ? `<div class="grid-btns"><div class="field" style="margin-bottom:0;"><label>${t('sch_phase')}</label><input type="text" placeholder="${t('sch_phase_ph')}" value="${schForm.phase||''}" oninput="schForm.phase=this.value"></div><div class="field" style="margin-bottom:0;"><label>${t('sch_matchday')}</label><input type="text" placeholder="${t('sch_matchday_ph')}" value="${schForm.matchday||''}" oninput="schForm.matchday=this.value"></div></div>` : ''}</div>`}
+      ${batchHtml}
       <button class="btn btn-gold" style="width:100%; margin-bottom:10px;" onclick="uiSaveSchedule()">${t('sch_save')}</button><button class="btn btn-outline" style="width:100%;" onclick="schedulingNew=false; editingSchId=null; render()">${t('cancel')}</button>`;
   }
   
   const currentSch = state.schedule.filter(s => (s.season || state.currentSeason) === state.currentSeason);
   
-  return `${topbarHtml(t('hub_plan_title'))}${renderPlanSubHeader()}<button class="btn btn-gold" style="width:100%; margin-bottom:14px;" onclick="schForm={isBatch:false, opp:'', date:'', time:'09:00', type:'amigavel', loc:'casa', phase:'', matchday:'', tournamentName:'', games:[], numberOfHalves: 2, halfDuration: state.defaultHalfDuration||30 }; editingSchId=null; schedulingNew=true; render()">${t('sch_new')}</button>${currentSch.length ? currentSch.map(s => { const open = expandedSchedule === s.id; const locLabel = s.location === 'casa' ? t('match_home') : t('match_away'); return `<div class="card match-item" onclick="if(!event.target.closest('button') && !event.target.closest('.chip')) { expandedSchedule = expandedSchedule==='${s.id}' ? null : '${s.id}'; render(); }"><div class="match-head-row"><div class="match-head" style="flex:1;"><div><div class="opp">${s.type==='torneio'?`<span style="color:var(--gold); font-size:11px; display:block; text-transform:uppercase; margin-bottom:2px;">🏆 ${s.tournamentName}${s.phase?' - '+s.phase:''}${s.matchday?' (Jornada '+s.matchday+')':''}</span>`:''}${s.type==='campeonato'&&s.phase?`<span style="color:var(--gold); font-size:11px; display:block; text-transform:uppercase; margin-bottom:2px;">🏆 ${s.phase}${s.matchday?' (Jornada '+s.matchday+')':''}</span>`:''}${s.opponent} <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span></div><div class="date">${s.date.split('-').reverse().join('/')} às ${s.time} | ${s.numberOfHalves || 2}P de ${s.halfDuration || state.defaultHalfDuration || 30}'</div></div></div><div style="display:flex; gap:6px;"><button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); editSchedule('${s.id}')" title="${t('edit')}"><svg style="width:16px; height:16px; transform:translateY(2px);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); duplicateSchedule('${s.id}')" title="Duplicar">📑</button><button class="quick-del" style="color:var(--gold);" onclick="event.stopPropagation(); startScheduledMatch('${s.id}')" title="Iniciar">▶</button><button class="quick-del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_sch')}', () => deleteSchedule('${s.id}'))" title="${t('del')}">🗑</button></div></div>${open ? `<div class="goal-list">
-    <div class="panel-title" style="margin-bottom:8px;">🏃 ${t('sch_callup')} (${s.callup.length})</div>
-    <div class="grid-btns cols-4">${eligiblePlayers().map(p=>`<div class="chip chip-sm ${s.callup.includes(p.id)?'active-green':''}" onclick="event.stopPropagation(); window.toggleCallup('${s.id}', '${p.id}')">${playerLabel(p)}</div>`).join('')}</div>
-    <div class="panel-title" style="margin-top:12px; margin-bottom:8px; color:var(--gold);">👔 Equipa Técnica Presença</div>
-    <div class="grid-btns cols-4">${(state.staff || []).map(st => `<div class="chip chip-sm ${(s.staffCallup || []).includes(st.id)?'active-green':''}" onclick="event.stopPropagation(); window.toggleStaffCallup('${s.id}', '${st.id}')">${st.name}</div>`).join('')}</div>
-    <div class="btn-row" style="margin-top:12px;"><button class="btn btn-green" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.copyCallup('${s.id}')">Enviar WhatsApp 📋</button><button class="btn btn-outline" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.exportCallupPDF('${s.id}')">📄 Imprimir PDF</button><button class="btn btn-ghost" style="font-size:11px; padding:10px; color:var(--gold); border:1px solid var(--gold-dim);" onclick="event.stopPropagation(); window.openScouting('${s.id}')">👁️ Scouting</button>${s.scouting ? `<button class="btn btn-outline" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.exportScoutingPDF('${s.id}')">📄 PDF Scouting</button>` : ''}<button class="btn btn-ghost" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); startScheduledMatch('${s.id}')">${t('sch_start')}</button></div></div>` : ''}</div>`; }).join('') : `<div class="empty">${t('sch_none')}</div>`}`;
+  let html = `${topbarHtml(t('hub_plan_title'))}${renderPlanSubHeader()}<button class="btn btn-gold" style="width:100%; margin-bottom:14px;" onclick="schForm={isBatch:false, opp:'', date:'', time:'09:00', type:'amigavel', loc:'casa', phase:'', matchday:'', tournamentName:'', games:[], numberOfHalves: 2, halfDuration: state.defaultHalfDuration||30 }; editingSchId=null; schedulingNew=true; render()">${t('sch_new')}</button>`;
+  
+  if(currentSch.length === 0) {
+      html += `<div class="empty">${t('sch_none')}</div>`;
+      return html;
+  }
+
+  const schCards = currentSch.map(s => { 
+      const open = expandedSchedule === s.id; 
+      const locLabel = s.location === 'casa' ? t('match_home') : t('match_away'); 
+
+      // ⚔️ MAGIA DO CONFRONTO DIRETO (Agora super limpa e formatada) ⚔️
+      let h2hHtml = '';
+      if(s.opponent && s.opponent.trim() !== '') {
+          const oppQuery = s.opponent.trim().toLowerCase();
+          const h2hMatches = (state.matches || []).filter(x => x.finished && (x.opponent||'').trim().toLowerCase() === oppQuery).sort((a,b) => new Date(b.date) - new Date(a.date));
+          
+          if(h2hMatches.length > 0) {
+              let w=0, d=0, l=0;
+              h2hMatches.forEach(x => {
+                  const sc = (x.goals||[]).filter(g=>g.type==='scored').length;
+                  const co = (x.goals||[]).filter(g=>g.type==='conceded').length;
+                  if(sc>co) w++; else if(sc===co) d++; else l++;
+              });
+              
+              let historyRows = '';
+              h2hMatches.slice(0, 3).forEach(x => {
+                   const sc = (x.goals||[]).filter(g=>g.type==='scored').length;
+                   const co = (x.goals||[]).filter(g=>g.type==='conceded').length;
+                   const res = sc > co ? 'V' : (sc === co ? 'E' : 'D');
+                   const color = res === 'V' ? 'var(--green)' : (res === 'E' ? 'var(--yellow)' : 'var(--red)');
+                   const isHome = x.location === 'casa';
+                   historyRows += `
+                   <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--line); font-size:11px;">
+                     <span style="color:var(--muted);">${x.date.split('-').reverse().join('/')} <span style="font-size:9px;">(${isHome?'CASA':'FORA'})</span></span>
+                     <span style="color:${color}; font-weight:bold; font-family:monospace; font-size:13px;">${res} ${sc}-${co}</span>
+                   </div>`;
+              });
+              
+              let extraTxt = h2hMatches.length > 3 ? `<div style="font-size:9px; color:var(--muted); text-align:center; margin-top:6px;">+ ${h2hMatches.length - 3} jogo(s) anterior(es)</div>` : '';
+
+              const isH2HOpen = window.expandedH2H === s.id;
+              const bgStyle = isH2HOpen ? 'var(--surface)' : 'transparent';
+              const borderStyle = isH2HOpen ? '1px solid var(--line)' : 'none';
+              const arrowDir = isH2HOpen ? '▼' : '▶';
+
+              h2hHtml = `
+              <div style="margin-bottom:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+                  <div style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${bgStyle}; border-bottom:${borderStyle};" onclick="event.stopPropagation(); window.expandedH2H = (window.expandedH2H === '${s.id}' ? null : '${s.id}'); render();">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                          <span style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase;">⚔️ Histórico vs ${s.opponent}</span>
+                          <span style="font-size:10px; font-weight:bold; color:var(--chalk); background:var(--surface); padding:2px 6px; border-radius:4px;">${w}V ${d}E ${l}D</span>
+                      </div>
+                      <span style="color:var(--gold); font-size:12px; transition:transform 0.2s;">${arrowDir}</span>
+                  </div>`;
+                  
+              if (isH2HOpen) {
+                  h2hHtml += `<div style="padding:12px; animation: fadeIn 0.2s ease-in-out;">${historyRows}${extraTxt}</div>`;
+              }
+              h2hHtml += `</div>`;
+          }
+      }
+
+      let typeLabel = '';
+      if (s.type === 'torneio') {
+          typeLabel = `<span style="color:var(--gold); font-size:11px; display:block; text-transform:uppercase; margin-bottom:2px;">🏆 ${s.tournamentName}${s.phase?' - '+s.phase:''}${s.matchday?' (Jornada '+s.matchday+')':''}</span>`;
+      } else if (s.type === 'campeonato' && s.phase) {
+          typeLabel = `<span style="color:var(--gold); font-size:11px; display:block; text-transform:uppercase; margin-bottom:2px;">🏆 ${s.phase}${s.matchday?' (Jornada '+s.matchday+')':''}</span>`;
+      }
+
+      return `
+      <div class="card match-item" onclick="if(!event.target.closest('button') && !event.target.closest('.chip')) { expandedSchedule = expandedSchedule==='${s.id}' ? null : '${s.id}'; render(); }">
+        <div class="match-head-row">
+            <div class="match-head" style="flex:1;">
+                <div>
+                    <div class="opp">
+                        ${typeLabel}
+                        ${s.opponent} <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span>
+                    </div>
+                    <div class="date">${s.date.split('-').reverse().join('/')} às ${s.time} | ${s.numberOfHalves || 2}P de ${s.halfDuration || state.defaultHalfDuration || 30}'</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); editSchedule('${s.id}')" title="${t('edit')}"><svg style="width:16px; height:16px; transform:translateY(2px);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); duplicateSchedule('${s.id}')" title="Duplicar">📑</button>
+                <button class="quick-del" style="color:var(--gold);" onclick="event.stopPropagation(); startScheduledMatch('${s.id}')" title="Iniciar">▶</button>
+                <button class="quick-del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_sch')}', () => deleteSchedule('${s.id}'))" title="${t('del')}">🗑</button>
+            </div>
+        </div>
+        ${open ? `<div class="goal-list" style="margin-top:12px;">
+            ${h2hHtml}
+            <div class="panel-title" style="margin-bottom:8px;">🏃 ${t('sch_callup')} (${s.callup.length})</div>
+            <div class="grid-btns cols-4">${eligiblePlayers().map(p=>`<div class="chip chip-sm ${s.callup.includes(p.id)?'active-green':''}" onclick="event.stopPropagation(); window.toggleCallup('${s.id}', '${p.id}')">${playerLabel(p)}</div>`).join('')}</div>
+            <div class="panel-title" style="margin-top:12px; margin-bottom:8px; color:var(--gold);">👔 Equipa Técnica Presença</div>
+            <div class="grid-btns cols-4">${(state.staff || []).map(st => `<div class="chip chip-sm ${(s.staffCallup || []).includes(st.id)?'active-green':''}" onclick="event.stopPropagation(); window.toggleStaffCallup('${s.id}', '${st.id}')">${st.name}</div>`).join('')}</div>
+            <div class="btn-row" style="margin-top:12px;">
+                <button class="btn btn-green" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.copyCallup('${s.id}')">Enviar WhatsApp 📋</button>
+                <button class="btn btn-outline" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.exportCallupPDF('${s.id}')">📄 Imprimir PDF</button>
+                <button class="btn btn-ghost" style="font-size:11px; padding:10px; color:var(--gold); border:1px solid var(--gold-dim);" onclick="event.stopPropagation(); window.openScouting('${s.id}')">👁️ Scouting</button>
+                ${s.scouting ? `<button class="btn btn-outline" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); window.exportScoutingPDF('${s.id}')">📄 PDF Scouting</button>` : ''}
+                <button class="btn btn-ghost" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); startScheduledMatch('${s.id}')">${t('sch_start')}</button>
+            </div>
+        </div>` : ''}
+      </div>`; 
+  }).join('');
+  
+  html += schCards;
+  return html;
 }
 window.uiSaveTraining = function() {
   if (!trainingForm) return;
@@ -381,7 +491,6 @@ window.editTraining = function(trId) {
   const tr = state.trainings.find(t => t.id === trId);
   if (!tr) return;
   
-  // Normaliza o objeto para garantir que treinos antigos abrem sem falhas
   trainingForm = {
     id: tr.id,
     date: tr.date,
@@ -389,6 +498,7 @@ window.editTraining = function(trId) {
     plan: tr.plan || tr.notes || '',
     obs: tr.obs || '',
     notes: tr.plan || tr.notes || '',
+    exercises: tr.exercises ? JSON.parse(JSON.stringify(tr.exercises)) : [], // CORREÇÃO: Agora os exercícios já vêm para a edição!
     absences: Array.isArray(tr.absences) 
       ? tr.absences.reduce((acc, id) => { acc[id] = 'injustificada'; return acc; }, {}) 
       : (tr.absences ? { ...tr.absences } : {}),
@@ -425,6 +535,11 @@ function renderTreinos(){
 
     const baseDuration = parseInt(trainingForm.duration, 10) || 90;
 
+    // Lógica: Arranca SEMPRE fechado por defeito. O utilizador abre apenas se quiser.
+    if (trainingForm.showPlan === undefined) {
+        trainingForm.showPlan = false;
+    }
+
     return `${topbarHtml(trainingForm.id ? '✏️ Editar Treino' : t('tr_new'))}${renderPlanSubHeader()}
       <div class="card">
         <div class="grid-btns">
@@ -432,53 +547,62 @@ function renderTreinos(){
           <div class="field" style="margin-bottom:0;"><label>Duração Total (Min)</label><input id="tr-duration-input" type="number" inputmode="numeric" pattern="[0-9]*" min="15" max="300" step="5" placeholder="Ex: 90" value="${trainingForm.duration || 90}" onclick="this.select()" oninput="trainingForm.duration=parseInt(this.value,10)||'';"></div>
         </div>
 
-        <!-- BOTÃO LIMPO DE IMPORTAÇÃO E GESTÃO DE TEMPO -->
-        <div style="margin-top:14px; border-top:1px dashed var(--line); padding-top:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase; margin:0;">🏋️ Exercícios do Caderno</label>
-            <button class="btn btn-gold" style="flex:none; width:auto; font-size:10px; padding:4px 10px;" onclick="openExerciseSelectorModal()">Importar Exercício</button>
-          </div>
-
-          ${(() => {
-            const sumExercises = (trainingForm.exercises || []).reduce((acc, ex) => acc + (parseInt(ex.duration, 10) || 15), 0);
-            const diff = baseDuration - sumExercises;
-            let tempoInfo = sumExercises > 0 
-                ? (diff > 0 ? `<span style="color:var(--gold);">⏳ Faltam preencher ${diff} min</span>` : (diff < 0 ? `<span style="color:var(--red);">⚠️ Excede ${Math.abs(diff)} min do total!</span>` : `<span style="color:var(--green);">✅ Tempo exato da Sessão</span>`))
-                : `<span style="color:var(--muted);">Gere os minutos importados</span>`;
-
-            return `<div style="font-size:11px; margin-bottom:10px; font-weight:bold; background:var(--surface-2); padding:6px 10px; border-radius:6px; border:1px solid var(--line);">${tempoInfo}</div>`;
-          })()}
-
-          ${(trainingForm.exercises && trainingForm.exercises.length > 0) ? `
-            <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-              ${trainingForm.exercises.map((ex, idx) => `
-                <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
-                  <div style="flex:1;">
-                    <div style="font-size:12px; font-weight:bold; color:var(--chalk);">${idx + 1}. ${ex.name}</div>
-                    <div style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:6px; margin-top:2px;">
-                      <span>Duração:</span>
-                      <input type="number" min="1" max="180" value="${ex.duration}" style="width:45px; padding:2px 4px; font-size:11px; text-align:center; background:var(--surface-2); border:1px solid var(--gold); color:var(--gold); font-weight:bold; border-radius:4px;" onchange="updateExerciseDurationInTraining(${idx}, this.value)">
-                      <span>Min</span>
-                    </div>
-                  </div>
-                  <div style="display:flex; gap:4px; align-items:center;">
-                    <button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); font-size:9px; padding:3px 6px;" onclick="event.stopPropagation(); viewExerciseScheme('${ex.notebookId}')">👁️ Ver</button>
-                    <button class="quick-del" style="color:var(--red); font-size:14px; padding:2px 6px;" onclick="event.preventDefault(); event.stopPropagation(); removeExerciseFromTraining(${idx})">✕</button>
-                  </div>
-                </div>
-              `).join('')}
+        <!-- ACORDEÃO: PLANO E EXERCÍCIOS -->
+        <div style="margin-top:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+            <div style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${trainingForm.showPlan ? 'var(--surface)' : 'transparent'}; border-bottom:${trainingForm.showPlan ? '1px solid var(--line)' : 'none'};" onclick="trainingForm.showPlan = !trainingForm.showPlan; render();">
+                <span style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase;">📋 Plano & Exercícios</span>
+                <span style="color:var(--gold); font-size:12px; transition:transform 0.2s;">${trainingForm.showPlan ? '▼' : '▶'}</span>
             </div>
-          ` : `<div style="font-size:10px; color:var(--muted); margin-top:4px;">Nenhum exercício importado para esta sessão.</div>`}
-        </div>
+            
+            ${trainingForm.showPlan ? `
+            <div style="padding:12px; animation: fadeIn 0.2s ease-in-out;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:11px; color:var(--chalk); font-weight:bold; text-transform:uppercase; margin:0;">🏋️ Exercícios do Caderno</label>
+                  <button class="btn btn-gold" style="flex:none; width:auto; font-size:10px; padding:4px 8px;" onclick="openExerciseSelectorModal()">➕ Importar</button>
+                </div>
 
-        <div class="field" style="margin-top:12px; margin-bottom:10px;">
-          <label>🏋️‍♂️ Plano de Treino (Gerado/Editável)</label>
-          <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
-        </div>
+                ${(() => {
+                  const sumExercises = (trainingForm.exercises || []).reduce((acc, ex) => acc + (parseInt(ex.duration, 10) || 15), 0);
+                  const diff = baseDuration - sumExercises;
+                  let tempoInfo = sumExercises > 0 
+                      ? (diff > 0 ? `<span style="color:var(--gold);">⏳ Faltam preencher ${diff} min</span>` : (diff < 0 ? `<span style="color:var(--red);">⚠️ Excede ${Math.abs(diff)} min do total!</span>` : `<span style="color:var(--green);">✅ Tempo exato da Sessão</span>`))
+                      : `<span style="color:var(--muted);">Gere os minutos importados</span>`;
 
-        <div class="field" style="margin-bottom:0;">
-          <label>📝 Observações</label>
-          <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
+                  return `<div style="font-size:11px; margin-bottom:10px; font-weight:bold; background:var(--bg); padding:6px 10px; border-radius:6px; border:1px solid var(--line);">${tempoInfo}</div>`;
+                })()}
+
+                ${(trainingForm.exercises && trainingForm.exercises.length > 0) ? `
+                  <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+                    ${trainingForm.exercises.map((ex, idx) => `
+                      <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="flex:1;">
+                          <div style="font-size:12px; font-weight:bold; color:var(--chalk);">${idx + 1}.${ex.name}</div>
+                          <div style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:6px; margin-top:2px;">
+                            <span>Duração:</span>
+                            <input type="number" min="1" max="180" value="${ex.duration}" style="width:45px; padding:2px 4px; font-size:11px; text-align:center; background:var(--surface-2); border:1px solid var(--gold); color:var(--gold); font-weight:bold; border-radius:4px;" onchange="updateExerciseDurationInTraining(${idx}, this.value)">
+                            <span>Min</span>
+                          </div>
+                        </div>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                          <button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); font-size:9px; padding:3px 6px;" onclick="event.stopPropagation(); viewExerciseScheme('${ex.notebookId}')">👁️ Ver</button>
+                          <button class="quick-del" style="color:var(--red); font-size:14px; padding:2px 6px;" onclick="event.preventDefault(); event.stopPropagation(); removeExerciseFromTraining(${idx})">✕</button>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : `<div style="font-size:10px; color:var(--muted); margin-top:4px;">Nenhum exercício importado para esta sessão.</div>`}
+
+                <div class="field" style="margin-top:12px; margin-bottom:10px;">
+                  <label>🏋️‍♂️ Plano de Treino (Gerado/Editável)</label>
+                  <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
+                </div>
+
+                <div class="field" style="margin-bottom:0;">
+                  <label>📝 Observações</label>
+                  <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
+                </div>
+            </div>
+            ` : ''}
         </div>
       </div>
 
@@ -543,7 +667,7 @@ function renderTreinos(){
           </div>
           <div style="display:flex; gap:6px; align-items:center;">
             ${!isCompleted ? `<button class="btn btn-green" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); quickCompleteTraining('${tr.id}')">🟢 Concluir</button>` : ''}
-            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); exportTrainingPDF('${tr.id}')">📄 PDF</button>
+            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); modalConfig={type:'printTrainingChoice', trId:'${tr.id}'}; document.getElementById('modal-root').innerHTML = renderModalHTML();">📄 PDF</button>
             <button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); editTraining('${tr.id}')" title="Editar">✏️</button>
             <button class="quick-del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_tr')}', ()=>deleteTraining('${tr.id}'))">🗑</button>
           </div>
@@ -777,10 +901,219 @@ window.removeExerciseFromTraining = function(index) {
 };
 
 window.viewExerciseScheme = function(notebookId) {
-    const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
-    if (!play) {
-        showToast('Esquema tático não encontrado.');
-        return;
+  const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
+  if (!play) {
+    if (typeof showToast === 'function') showToast('Esquema tático não encontrado.');
+    return;
+  }
+  
+  // Usamos o campo gerado para o PDF, mas mostramos no ecrã!
+  const svgHTML = window.buildExerciseTacticalPitchSVG ? window.buildExerciseTacticalPitchSVG(notebookId) : '';
+  
+  modalConfig = { 
+    type: 'viewExerciseClean', 
+    title: play.name,
+    svg: svgHTML 
+  };
+  
+  const root = document.getElementById('modal-root');
+  if (root) root.innerHTML = renderModalHTML();
+};
+
+// ==========================================
+// MÓDULO DO MICROCICLO SEMANAL
+// ==========================================
+window.microcycleDate = new Date();
+
+window.getMonday = function(d) {
+    let date = new Date(d);
+    let day = date.getDay();
+    let diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.setDate(diff));
+};
+
+window.changeMicrocycleWeek = function(offset) {
+    window.microcycleDate.setDate(window.microcycleDate.getDate() + (offset * 7));
+    render();
+};
+
+window.exportMicrocyclePDF = function() {
+    if(!window.microcycleDate) window.microcycleDate = new Date();
+    const mon = window.getMonday(window.microcycleDate);
+    const days = [];
+    for(let i=0; i<7; i++) {
+        let d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        days.push(d);
     }
-    loadTacticalPlay(notebookId);
+
+    const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+    let monStr = days[0].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+    let sunStr = days[6].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+
+    let daysHtml = '';
+    days.forEach((d, idx) => {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateIso = `${yyyy}-${mm}-${dd}`;
+        const dayStr = `${dd}/${mm}`;
+
+        const trs = (state.trainings || []).filter(t => t.date === dateIso);
+        const schs = (state.schedule || []).filter(s => s.date === dateIso);
+        const mats = (state.matches || []).filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
+
+        let eventsHtml = '';
+        if(trs.length === 0 && schs.length === 0 && mats.length === 0) {
+            eventsHtml = `<div style="color:#6B7280; font-size:12px; font-weight:bold; padding:8px 0;">🛋️ Folga / Recuperação</div>`;
+        } else {
+            trs.forEach(tr => {
+                let dur = tr.duration || 90;
+                eventsHtml += `
+                <div style="border-left:4px solid #10B981; background:#F9FAFB; padding:10px; margin-bottom:8px; border-radius:4px; border-top:1px solid #E5E7EB; border-right:1px solid #E5E7EB; border-bottom:1px solid #E5E7EB;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="color:#10B981; font-weight:bold; font-size:12px; text-transform:uppercase;">🏋️ Treino</span>
+                        <span style="color:#6B7280; font-weight:bold; font-size:12px;">${dur} Min</span>
+                    </div>
+                    ${tr.plan ? `<div style="font-size:11px; color:#374151; white-space:pre-wrap; line-height:1.4;">${tr.plan}</div>` : ''}
+                </div>`;
+            });
+            [...schs, ...mats].forEach(m => {
+                let isHome = m.location === 'casa';
+                eventsHtml += `
+                <div style="border-left:4px solid #D9A441; background:#FFFBEB; padding:10px; margin-bottom:8px; border-radius:4px; border-top:1px solid #FEF3C7; border-right:1px solid #FEF3C7; border-bottom:1px solid #FEF3C7;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="color:#D9A441; font-weight:bold; font-size:12px; text-transform:uppercase;">⚽ Jogo</span>
+                        <span style="color:#6B7280; font-weight:bold; font-size:12px;">${isHome ? 'CASA' : 'FORA'}</span>
+                    </div>
+                    <div style="font-size:13px; color:#111827; font-weight:bold;">vs ${m.opponent}</div>
+                    <div style="font-size:11px; color:#6B7280; margin-top:2px;">${m.type === 'amigavel' ? 'Amigável' : (m.type==='campeonato' ? 'Campeonato' : 'Torneio')}</div>
+                </div>`;
+            });
+        }
+
+        daysHtml += `
+        <div style="page-break-inside:avoid; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0E211A; padding-bottom:4px; margin-bottom:8px;">
+                <span style="font-size:14px; font-weight:800; color:#0E211A; text-transform:uppercase;">${dayNames[idx]}</span>
+                <span style="font-size:12px; color:#4B5563; font-weight:bold;">${dayStr}</span>
+            </div>
+            ${eventsHtml}
+        </div>`;
+    });
+
+    let html = `
+    <div class="print-card" style="padding:24px; font-family:-apple-system, sans-serif;">
+        <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:24px;">
+            <div>
+                <h1 style="font-size:20px; margin:0; text-transform:uppercase; color:#0E211A; font-weight:800;">MICROCICLO SEMANAL</h1>
+                <p style="font-size:16px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Semana: ${monStr} a ${sunStr}</p>
+                <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${state.currentSeason}</b></p>
+            </div>
+            ${getClubLogoHtml()}
+        </div>
+        ${daysHtml}
+        <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <div style="font-size:10px; color:#6B7280;">• Planeamento Semanal — Coachfolio v3.5</div>
+            <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
+        </div>
+    </div>`;
+
+    document.getElementById('print-area').innerHTML = html;
+    window.openSafePrintModal();
+};
+
+window.renderMicrociclo = function() {
+    if(!window.microcycleDate) window.microcycleDate = new Date();
+    const mon = window.getMonday(window.microcycleDate);
+    const days = [];
+    for(let i=0; i<7; i++) {
+        let d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        days.push(d);
+    }
+
+    const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+    let html = `${topbarHtml('Microciclo Semanal')}${renderPlanSubHeader()}`;
+
+    let monStr = days[0].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+    let sunStr = days[6].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+    
+    html += `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-2); padding:10px; border-radius:8px; margin-bottom:14px; border:1px solid var(--line);">
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="changeMicrocycleWeek(-1)">⬅️</button>
+        <div style="text-align:center;">
+            <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">Semana de Trabalho</div>
+            <div style="font-size:13px; color:var(--gold); font-weight:bold; margin-top:2px;">${monStr} a ${sunStr}</div>
+        </div>
+        <button class="btn btn-outline" style="padding:6px 12px;" onclick="changeMicrocycleWeek(1)">➡️</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+    `;
+
+    days.forEach((d, idx) => {
+        // Criar a data ISO manual para evitar conflitos de fuso horário
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateIso = `${yyyy}-${mm}-${dd}`;
+        const dayStr = `${dd}/${mm}`;
+
+        // Cruzar Treinos e Jogos daquela data
+        const trs = (state.trainings || []).filter(t => t.date === dateIso);
+        const schs = (state.schedule || []).filter(s => s.date === dateIso);
+        const mats = (state.matches || []).filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
+
+        let eventsHtml = '';
+        if(trs.length === 0 && schs.length === 0 && mats.length === 0) {
+            eventsHtml = `<div style="color:var(--muted); font-size:11px; font-weight:bold; display:flex; align-items:center; gap:6px; padding:6px 0;">🛋️ Folga / Recuperação</div>`;
+        } else {
+            trs.forEach(tr => {
+                let dur = tr.duration || 90;
+                let isDone = (tr.status === undefined || tr.status === 'completed');
+                eventsHtml += `<div style="background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--green); padding:8px 10px; border-radius:6px; margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <div style="font-size:11px; color:var(--green); font-weight:bold; text-transform:uppercase;">🏋️ Treino ${isDone ? '🟢' : '🟡'}</div>
+                      <div style="font-size:11px; color:var(--muted); font-weight:bold;">${dur}'</div>
+                    </div>
+                    ${tr.plan ? `<div style="font-size:10px; color:var(--chalk); margin-top:6px; white-space:pre-wrap; overflow-wrap:break-word;">${tr.plan}</div>` : ''}
+                </div>`;
+            });
+            [...schs, ...mats].forEach(m => {
+                let isHome = m.location === 'casa';
+                let isDone = m.finished ? '🟢' : '🟡';
+                eventsHtml += `<div style="background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--gold); padding:8px 10px; border-radius:6px; margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between;">
+                       <div style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase;">⚽ Jogo ${isDone}</div>
+                       <div style="font-size:11px; color:var(--muted); font-weight:bold;">${isHome ? 'CASA' : 'FORA'}</div>
+                    </div>
+                    <div style="font-size:12px; color:var(--chalk); margin-top:4px; font-weight:bold;">vs ${m.opponent}</div>
+                    <div style="font-size:10px; color:var(--muted); margin-top:2px;">${m.type === 'amigavel' ? 'Amigável' : (m.type==='campeonato' ? 'Campeonato' : 'Torneio')}</div>
+                </div>`;
+            });
+        }
+
+        const todayIso = new Date().toISOString().slice(0,10);
+        const isToday = dateIso === todayIso;
+        const borderCol = isToday ? 'border:1px solid var(--gold);' : 'border:1px solid var(--line);';
+
+        html += `
+        <div class="card" style="padding:10px; margin-bottom:0; ${borderCol}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; border-bottom:1px solid var(--line); padding-bottom:6px;">
+                <span style="font-size:11px; font-weight:bold; color:${isToday ? 'var(--gold)' : 'var(--chalk)'}; text-transform:uppercase;">${dayNames[idx]} ${isToday ? '(Hoje)' : ''}</span>
+                <span style="font-size:10px; color:var(--muted); font-weight:bold;">${dayStr}</span>
+            </div>
+            ${eventsHtml}
+        </div>
+        `;
+    });
+
+    html += `
+        <div style="display:flex; gap:10px; margin-top:6px;">
+            <button class="btn btn-outline" style="flex:1; padding:10px 4px; font-size:11px;" onclick="window.microcycleDate = new Date(); render();">📅 Semana Atual</button>
+            <button class="btn btn-outline" style="flex:1; padding:10px 4px; font-size:11px; border-style:dashed;" onclick="exportMicrocyclePDF()">📄 Exportar PDF</button>
+        </div>
+    </div>`;
+    
+    return html;
 };

@@ -396,7 +396,7 @@ window.exportStatsPlayersPDF = function() {
            <th>🟥</th>
          </tr>
          ${roster.map(p => {
-             // O Segredo: Passar todos os filtros para o PDF sair igual ao que estás a ver na app!
+             // O Segredo: Passar todos os filtros para o PDF sai igual ao que estás a ver na app
              const st = calcularEstatisticaJogador(p.id, activeSeason, statsFilter, statsPhaseFilter, statsTournamentFilter);
              const isGK = p.positions && typeof p.positions === 'string' && (p.positions.toUpperCase().includes('GR') || p.positions.toUpperCase().includes('GK'));
              return `<tr>
@@ -419,7 +419,70 @@ window.exportStatsPlayersPDF = function() {
     printArea.innerHTML = html; 
     window.openSafePrintModal();
 };
-window.exportTrainingPDF = function(trId) {
+// HELPER: Constrói o desenho do campo tático para o PDF do Treino
+window.buildExerciseTacticalPitchSVG = function(notebookId) {
+  const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
+  if (!play || !play.tactics) return '';
+
+  const isHalf = !!play.halfPitch;
+  const pieceBg = state.teamColor || '#D9A441';
+  const pieceColor = typeof getContrastColor === 'function' ? getContrastColor(pieceBg) : '#000000';
+  const oppBg = state.oppColor || '#C8493F';
+  const oppColor = typeof getContrastColor === 'function' ? getContrastColor(oppBg) : '#FFFFFF';
+
+  let piecesSVG = '';
+  (play.tactics || []).forEach(p => {
+    const cx = Number.isFinite(Number(p.x)) ? Number(p.x) : 50;
+    const cy = Number.isFinite(Number(p.y)) ? Number(p.y) : 50;
+    const svgY = (cy / 100) * 75; // Converte para a escala 4:3 do SVG
+
+    if (p.kind === 'own' || p.kind === 'opp') {
+        const bg = p.kind === 'own' ? pieceBg : oppBg;
+        const fg = p.kind === 'own' ? pieceColor : oppColor;
+        const label = p.label || '';
+        piecesSVG += `<circle cx="${cx}" cy="${svgY}" r="3.5" fill="${bg}" stroke="#FFFFFF" stroke-width="0.5" /><text x="${cx}" y="${svgY + 1.2}" fill="${fg}" font-size="3" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${label}</text>`;
+    } else if (p.kind === 'ball') {
+        piecesSVG += `<circle cx="${cx}" cy="${svgY}" r="2" fill="#FFF" stroke="#000" stroke-width="0.5" />`;
+    } else {
+        let svgContent = '';
+        if (p.kind === 'cone') svgContent = `<polygon points="-3,4 3,4 1.5,-4 -1.5,-4" fill="${p.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/><ellipse cx="0" cy="4" rx="4" ry="1.5" fill="${p.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/>`;
+        else if (p.kind === 'minigoal') svgContent = `<rect x="-5" y="-3" width="10" height="6" rx="1" fill="none" stroke="#FFFFFF" stroke-width="1.5"/><line x1="-5" y1="-3" x2="5" y2="-3" stroke="#FF3B30" stroke-width="1"/>`;
+        else if (p.kind === 'pole') svgContent = `<circle cx="0" cy="0" r="2" fill="${p.color || '#FF2D55'}" stroke="#000" stroke-width="0.5"/><line x1="0" y1="0" x2="0" y2="-6" stroke="${p.color || '#FF2D55'}" stroke-width="1.5"/>`;
+        else if (p.kind === 'rope') svgContent = `<line x1="-8" y1="-3" x2="8" y2="-3" stroke="#EAB308" stroke-width="0.8"/><line x1="-8" y1="3" x2="8" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="-6" y1="-3" x2="-6" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="-2" y1="-3" x2="-2" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="2" y1="-3" x2="2" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="6" y1="-3" x2="6" y2="3" stroke="#EAB308" stroke-width="0.8"/>`;
+        piecesSVG += `<g transform="translate(${cx}, ${svgY}) scale(0.6)">${svgContent}</g>`;
+    }
+  });
+
+  let pathsSVG = '';
+  (play.tacticPaths || []).forEach(path => {
+    if (!path.points || path.points.length === 0) return;
+    const pts = path.points.map(pt => `${pt.x},${(pt.y / 100) * 75}`).join(' ');
+    pathsSVG += `<polyline points="${pts}" fill="none" stroke="${path.color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />`;
+  });
+
+  return `
+    <div style="width:100%; aspect-ratio:4/3; background:#113821; border-radius:6px; overflow:hidden; position:relative;">
+      <svg viewBox="0 0 100 75" style="width:100%; height:100%; display:block;">
+        <rect x="0" y="0" width="100" height="75" fill="#113821" />
+        <rect x="3" y="3" width="94" height="69" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        ${isHalf ? `
+            <line x1="3" y1="72" x2="97" y2="72" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <circle cx="50" cy="72" r="14" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="22" y="3" width="56" height="18" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="34" y="3" width="32" height="7" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        ` : `
+            <line x1="50" y1="3" x2="50" y2="72" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <circle cx="50" cy="37.5" r="10" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="3" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="83" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        `}
+        ${pathsSVG}
+        ${piecesSVG}
+      </svg>
+    </div>`;
+};
+
+window.exportTrainingPDF = function(trId, mode = 'full') {
   const tr = state.trainings.find(t => t.id === trId);
   if (!tr) return;
 
@@ -427,56 +490,88 @@ window.exportTrainingPDF = function(trId) {
   const duration = tr.duration || 90;
   const isCompleted = tr.status === undefined || tr.status === 'completed';
 
-  let absObj = {};
-  if (Array.isArray(tr.absences)) {
-    tr.absences.forEach(id => absObj[id] = 'injustificada');
-  } else {
-    absObj = tr.absences || {};
-  }
-
-  const allPlayers = eligiblePlayers();
+  let attendanceHtml = '';
   
-  let rowsHtml = '';
-  allPlayers.forEach((p, idx) => {
-    const reason = absObj[p.id];
-    let statusText = '<span style="color:#059669; font-weight:bold;">🟢 Presente</span>';
-    let minsCumpridos = `${duration}'`;
+  // SÓ GERA A TABELA SE FOR O MODO COMPLETO
+  if (mode === 'full') {
+      let absObj = {};
+      if (Array.isArray(tr.absences)) {
+        tr.absences.forEach(id => absObj[id] = 'injustificada');
+      } else {
+        absObj = tr.absences || {};
+      }
 
-    if (reason) {
-      if (reason === 'injustificada') statusText = '<span style="color:#DC2626; font-weight:bold;">🔴 Faltou (Injustificada)</span>';
-      else if (reason === 'justificada') statusText = '<span style="color:#D97706; font-weight:bold;">🟡 Ausente (Justificada)</span>';
-      else if (reason === 'atrasado') statusText = '<span style="color:#CA8A04; font-weight:bold;">🕐 Atrasado</span>';
-      else if (reason === 'lesao') statusText = '<span style="color:#2563EB; font-weight:bold;">🩹 Lesionado / Médico</span>';
-      else if (reason === 'castigo') statusText = '<span style="color:#DC2626; font-weight:bold;">🟥 Castigado</span>';
-      else if (reason === 'dispensado') statusText = '<span style="color:#4B5563; font-weight:bold;">⚪ Dispensado</span>';
+      const allPlayers = eligiblePlayers();
+      
+      let rowsHtml = '';
+      allPlayers.forEach((p, idx) => {
+        const reason = absObj[p.id];
+        let statusText = '<span style="color:#059669; font-weight:bold;">🟢 Presente</span>';
+        let minsCumpridos = `${duration}'`;
 
-      const customMins = tr.customMinutes && tr.customMinutes[p.id] != null ? tr.customMinutes[p.id] : 0;
-      minsCumpridos = `${customMins}' / ${duration}'`;
-    }
+        if (reason) {
+          if (reason === 'injustificada') statusText = '<span style="color:#DC2626; font-weight:bold;">🔴 Faltou (Injustificada)</span>';
+          else if (reason === 'justificada') statusText = '<span style="color:#D97706; font-weight:bold;">🟡 Ausente (Justificada)</span>';
+          else if (reason === 'atrasado') statusText = '<span style="color:#CA8A04; font-weight:bold;">🕐 Atrasado</span>';
+          else if (reason === 'lesao') statusText = '<span style="color:#2563EB; font-weight:bold;">🩹 Lesionado / Médico</span>';
+          else if (reason === 'castigo') statusText = '<span style="color:#DC2626; font-weight:bold;">🟥 Castigado</span>';
+          else if (reason === 'dispensado') statusText = '<span style="color:#4B5563; font-weight:bold;">⚪ Dispensado</span>';
 
-    let bg = idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
+          const customMins = tr.customMinutes && tr.customMinutes[p.id] != null ? tr.customMinutes[p.id] : 0;
+          minsCumpridos = `${customMins}' / ${duration}'`;
+        }
 
-    rowsHtml += `
-      <tr style="background:${bg}; border-bottom:1px solid #E5E7EB;">
-        <td style="text-align:left; font-weight:bold; padding:6px 12px; color:#111827;">${playerLabel(p)}</td>
-        <td style="text-align:center; padding:6px 0;">${statusText}</td>
-        <td style="text-align:center; font-family:monospace; font-weight:bold; color:#374151;">${minsCumpridos}</td>
-      </tr>`;
-  });
+        let bg = idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
+
+        rowsHtml += `
+          <tr style="background:${bg}; border-bottom:1px solid #E5E7EB;">
+            <td style="text-align:left; font-weight:bold; padding:6px 12px; color:#111827;">${playerLabel(p)}</td>
+            <td style="text-align:center; padding:6px 0;">${statusText}</td>
+            <td style="text-align:center; font-family:monospace; font-weight:bold; color:#374151;">${minsCumpridos}</td>
+          </tr>`;
+      });
+
+      attendanceHtml = `
+      <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px;">
+        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">
+          🏃 Controlo de Presenças & Tempo Efetivo (${allPlayers.length} Atletas)
+        </h3>
+        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <thead>
+            <tr style="background:#E5E7EB; color:#374151;">
+              <th style="text-align:left; padding:6px 12px;">Atleta</th>
+              <th style="text-align:center;">Estado da Presença</th>
+              <th style="text-align:center;">Tempo Cumprido</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>`;
+  }
 
   // BLOCO DE EXERCÍCIOS PARA O PDF
   let exercisesPdfHtml = '';
   if (tr.exercises && tr.exercises.length > 0) {
+    let exCards = tr.exercises.map((ex, idx) => {
+      const svgHTML = window.buildExerciseTacticalPitchSVG ? window.buildExerciseTacticalPitchSVG(ex.notebookId) : '';
+      return `
+        <div style="border:1px solid #D1D5DB; background:#FFF; border-radius:8px; padding:10px; page-break-inside:avoid; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:bold; color:#111827;">${idx + 1}. ${ex.name}</span>
+              <span style="font-size:10px; font-weight:bold; color:#D9A441; background:#FEF3C7; padding:2px 6px; border-radius:4px;">${ex.duration} Min</span>
+          </div>
+          ${svgHTML ? `<div style="margin-top:auto;">${svgHTML}</div>` : `<div style="font-size:10px; color:#9CA3AF; text-align:center; padding:10px;">Sem esquema visual</div>`}
+        </div>
+      `;
+    }).join('');
+
     exercisesPdfHtml = `
-      <div style="border:1px solid #E5E7EB; padding:12px; border-radius:8px; background:#F9FAFB; margin-bottom:18px; page-break-inside:avoid;">
-        <h3 style="margin:0 0 8px 0; color:#0E211A; font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:3px;">📋 Estrutura da Sessão (Exercícios)</h3>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          ${tr.exercises.map((ex, idx) => `
-            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px dashed #E5E7EB;">
-              <span><b>${idx + 1}.</b>${ex.name}</span>
-              <span style="font-weight:bold; color:#D9A441;">${ex.duration} Min</span>
-            </div>
-          `).join('')}
+      <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px;">
+        <h3 style="margin:0 0 10px 0; color:#0E211A; font-size:12px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #D1D5DB; padding-bottom:4px;">📋 Esquemas Táticos da Sessão</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          ${exCards}
         </div>
       </div>`;
   }
@@ -509,26 +604,10 @@ window.exportTrainingPDF = function(trId) {
         <div style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937;">${obsText}</div>
       </div>` : ''}
 
-      <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; page-break-inside:avoid;">
-        <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">
-          🏃 Controlo de Presenças & Tempo Efetivo (${allPlayers.length} Atletas)
-        </h3>
-        <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <thead>
-            <tr style="background:#E5E7EB; color:#374151;">
-              <th style="text-align:left; padding:6px 12px;">Atleta</th>
-              <th style="text-align:center;">Estado da Presença</th>
-              <th style="text-align:center;">Tempo Cumprido</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
-      </div>
+      ${attendanceHtml}
 
       <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
-        <div style="font-size:10px; color:#6B7280;">• Documento de registo de assiduidade — Coachfolio v3.5</div>
+        <div style="font-size:10px; color:#6B7280;">• Documento de Análise & Registo — Coachfolio v3.5</div>
         <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
       </div>
     </div>`;
@@ -536,6 +615,7 @@ window.exportTrainingPDF = function(trId) {
   document.getElementById('print-area').innerHTML = html;
   window.openSafePrintModal();
 };
+
 function renderStats(){
   const seasons = getSeasonsList();
   let activeSeason = window.statsSeasonFilter === 'todas' ? 'TUDO' : (window.statsSeasonFilter || state.currentSeason);
@@ -813,7 +893,7 @@ function renderClassificacoes() {
                     sortedTable.forEach((row, idx) => { let isMyClub = row.name === getMyClub() || row.name === state.myClubName; html += `<tr style="${isMyClub?'background:var(--surface-2);':''}"><td style="color:var(--muted);">${idx+1}</td><td class="team-name" style="${isMyClub?'color:var(--gold);':''}">${row.name}</td><td>${row.p}</td><td>${row.w}</td><td>${row.d}</td><td>${row.l}</td><td>${row.gf}</td><td>${row.ga}</td><td>${row.gd>0?'+':''}${row.gd}</td><td><b style="color:var(--chalk);">${row.pts}</b></td></tr>`; });
                     html += `</table>`;
                 } else { html += `<div class="empty" style="padding:10px;">Adiciona equipas abaixo.</div>`; }
-                html += `<div class="panel-title" style="margin-top:20px;">${t('lg_teams')}</div><div class="seg" style="margin-bottom:10px;">${lg.teams.map((tName, idx) => `<div class="seg-btn" style="display:flex; justify-content:space-between; align-items:center;">${tName} <span style="color:var(--red); font-size:14px; margin-left:8px;" onclick="event.stopPropagation(); askConfirm('${t('msg_del_lg_team')}', ()=>uiRemoveLeagueTeam('${lg.id}', ${idx}))">✕</span></div>`).join('')}</div><div class="add-row" style="margin-top:0;"><input id="lg-team-input" type="text" placeholder="Nome da Equipa"><button onclick="uiAddLeagueTeam('${lg.id}')">+</button></div>`;
+                html += `<div class="panel-title" style="margin-top:20px;">${t('lg_teams')}</div><div class="seg" style="margin-bottom:10px;">${lg.teams.map((tName, idx) => `<div class="seg-btn" style="display:flex; justify-content:space-between; align-items:center;">${tName} <span style="color:var(--red); font-size:14px; margin-left:8px;" onclick="event.stopPropagation(); askConfirm('${t('msg_del_lg_team')}', ()=>uiRemoveLeagueTeam('${lg.id}',${idx}))">✕</span></div>`).join('')}</div><div class="add-row" style="margin-top:0;"><input id="lg-team-input" type="text" placeholder="Nome da Equipa"><button onclick="uiAddLeagueTeam('${lg.id}')">+</button></div>`;
                 if(lg.teams.length >= 2) {
                     html += `<div class="panel-title" style="margin-top:20px;">${t('lg_matches')}</div>`;
                     lg.matches.slice().reverse().forEach(m => { html += `<div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-2); padding:8px 12px; border-radius:6px; margin-bottom:6px; font-size:12px;"><div style="flex:1;">${m.md ? `<b style="color:var(--gold); margin-right:6px;">J${m.md}</b>` : ''}${m.h} <b style="margin:0 4px;">${m.hg} - ${m.ag}</b> ${m.a}</div><div style="display:flex; gap:8px;"><button class="quick-del" style="font-size:12px; color:var(--muted);" onclick="uiEditLeagueMatch('${lg.id}', '${m.id}')">✏️</button><button class="quick-del" style="font-size:12px; color:var(--red);" onclick="askConfirm('${t('msg_del_lg_match')}', ()=>uiRemoveLeagueMatch('${lg.id}', '${m.id}'))">✕</button></div></div>`; });
@@ -1131,8 +1211,9 @@ window.renderPlantel = function() {
             <div style="display:flex; align-items:center; gap:8px; text-align:left;">
               <span style="color:var(--gold); font-weight:bold; font-size:15px;" class="mono">${p.number !== null && p.number !== undefined && p.number !== '' ? p.number : ''}</span>
               <span style="font-weight:bold; color:var(--chalk); font-size:15px;">${p.name || t('pl_no_name')}</span>
+              ${p.medicalNotes ? `<span style="font-size:12px; margin-left:4px;" title="Alerta Médico">🚑</span>` : ''}
               ${posBadges}
-              ${age !== null ? `<span style="font-size:12px; color:var(--muted); font-weight:normal;">- ${age} ${t('pl_yrs')}</span>` : ''}
+              ${age !== null ? `<span style="font-size:12px; color:var(--muted); font-weight:normal;">- ${age}${t('pl_yrs')}</span>` : ''}
               ${fairPlayDot}
             </div>
           </div>`;
@@ -1152,7 +1233,18 @@ window.renderPlantel = function() {
                 <textarea placeholder="Ex: Atleta com boa visão de jogo. A trabalhar o pé não dominante..." onchange="updatePlayerNotes('${p.id}', this.value)" style="min-height:60px; font-size:12px;">${p.notes || ''}</textarea>
               </div>
 
+              <!-- SECÇÃO SAÚDE E EMERGÊNCIA (EDIÇÃO) -->
+              <div class="panel-title" style="color:var(--gold); margin-top:16px; margin-bottom:10px;">🚑 Saúde & Emergência</div>
+              <div class="grid-btns" style="margin-bottom:10px;">
+                <div class="field" style="margin-bottom:0;"><label>Enc. de Educação / Emergência</label><input type="text" placeholder="Nome" value="${p.contactName || ''}" onchange="updatePlayerContactName('${p.id}', this.value)"></div>
+                <div class="field" style="margin-bottom:0;"><label>Nº Telemóvel</label><input type="tel" placeholder="Ex: 912345678" value="${p.contactPhone || ''}" onchange="updatePlayerContactPhone('${p.id}', this.value)"></div>
+              </div>
               <div class="field" style="margin-bottom:12px;">
+                <label>🩹 Notas Médicas (Alergias, Lesões...)</label>
+                <textarea placeholder="Ex: Asmático. Lesão no joelho direito em recuperação..." onchange="updatePlayerMedicalNotes('${p.id}', this.value)" style="min-height:60px; font-size:12px;">${p.medicalNotes || ''}</textarea>
+              </div>
+
+              <div class="field" style="margin-bottom:12px; margin-top:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                   <label style="margin:0;">${t('pl_pos')}</label>
                   ${safePos ? `<button class="quick-del" style="font-size:9px; border:1px solid var(--line); border-radius:4px; padding:2px 6px;" onclick="clearPlayerPos('${p.id}')">🧹 LIMPAR</button>` : ''}
@@ -1214,6 +1306,34 @@ window.renderPlantel = function() {
                   ${donutChart}
                   <div style="font-size:8px; color:var(--muted); font-weight:bold; text-transform:uppercase; margin-top:4px;">ASSIDUIDADE TREINO</div>
                 </div>
+              </div>
+
+              <!-- ACORDEÃO SAÚDE & EMERGÊNCIA -->
+              <div style="margin-bottom:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+                  <div style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${window.expandedHealth === p.id ? 'var(--surface)' : 'transparent'}; border-bottom:${window.expandedHealth === p.id ? '1px solid var(--line)' : 'none'};" onclick="event.stopPropagation(); window.expandedHealth = window.expandedHealth === '${p.id}' ? null : '${p.id}'; render();">
+                      <span style="font-size:11px; color:${p.medicalNotes ? 'var(--red)' : 'var(--gold)'}; font-weight:bold; text-transform:uppercase;">🚑 Saúde & Emergência</span>
+                      <span style="color:var(--gold); font-size:12px; transition:transform 0.2s;">${window.expandedHealth === p.id ? '▼' : '▶'}</span>
+                  </div>
+                  ${window.expandedHealth === p.id ? `
+                  <div style="padding:12px; animation: fadeIn 0.2s ease-in-out;">
+                      <div style="margin-bottom:12px;">
+                          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; margin-bottom:4px;">Contacto de Emergência / Enc. Ed.</div>
+                          ${p.contactName || p.contactPhone ? `
+                              <div style="font-size:12px; color:var(--chalk); font-weight:bold; margin-bottom:8px;">${p.contactName || 'Sem Nome'} ${p.contactPhone ? `— ${p.contactPhone}` : ''}</div>
+                              ${p.contactPhone ? `
+                              <div style="display:flex; gap:8px;">
+                                  <a href="tel:${p.contactPhone}" class="btn btn-green" style="flex:1; text-decoration:none; padding:8px; font-size:11px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="event.stopPropagation();">📞 Ligar</a>
+                                  <a href="sms:${p.contactPhone}" class="btn btn-gold" style="flex:1; text-decoration:none; padding:8px; font-size:11px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="event.stopPropagation();">💬 Enviar SMS</a>
+                              </div>
+                              ` : ''}
+                          ` : `<div style="font-size:11px; color:var(--muted);">Nenhum contacto registado.</div>`}
+                      </div>
+                      <div>
+                          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; margin-bottom:4px;">Notas Médicas / Alergias</div>
+                          <div style="font-size:11px; color:var(--chalk); background:var(--surface); padding:8px; border-radius:6px; border:1px solid var(--line); white-space:pre-wrap;">${p.medicalNotes || 'Sem notas médicas registadas.'}</div>
+                      </div>
+                  </div>
+                  ` : ''}
               </div>
 
               <div style="display:flex; gap:8px;">
@@ -1344,6 +1464,10 @@ window.updatePlayerNotes = function(id, val) {
     saveState();
   }
 };
+window.updatePlayerContactName = function(id, val) { const p=state.roster.find(x=>x.id===id); if(p){p.contactName=escapeHTML(val.trim()); saveState();} };
+window.updatePlayerContactPhone = function(id, val) { const p=state.roster.find(x=>x.id===id); if(p){p.contactPhone=escapeHTML(val.trim()); saveState();} };
+window.updatePlayerMedicalNotes = function(id, val) { const p=state.roster.find(x=>x.id===id); if(p){p.medicalNotes=escapeHTML(val.trim()); saveState();} };
+
 window.updatePlayerBirthDate = function(id, val){ 
   const p = state.roster.find(x=>x.id===id); 
   if(!p) return;

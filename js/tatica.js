@@ -77,8 +77,14 @@ window.getTacticItemSVG = function(item) {
         </g>`;
     }
     if (item.kind === 'rope') {
+        // Agora desenha uma ESCADA DE AGILIDADE
         return `<g>
-            <rect x="-8" y="-2" width="16" height="4" rx="1" fill="none" stroke="#EAB308" stroke-width="1" stroke-dasharray="2 1"/>
+            <line x1="-8" y1="-3" x2="8" y2="-3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="-8" y1="3" x2="8" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="-6" y1="-3" x2="-6" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="-2" y1="-3" x2="-2" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="2" y1="-3" x2="2" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="6" y1="-3" x2="6" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
         </g>`;
     }
     return '';
@@ -285,7 +291,7 @@ function renderTatica() {
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('cone')">🔶 Cone</button>
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('minigoal')">🥅 Baliza</button>
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('pole')">📍 Estaca</button>
-            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('rope')">➰ Corda</button>
+            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('rope')">🪜 Escada</button>
         </div>
 
         <!-- LISTA DOS TEUS JOGADORES -->
