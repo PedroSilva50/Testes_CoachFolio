@@ -264,7 +264,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Centraliza verticalmente o ícone e texto */
+    justify-content: center;
     gap: 3px;
     color: var(--muted, #888888);
     font-size: 9px;
@@ -273,7 +273,7 @@
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
-    white-space: nowrap; /* Impede a quebra em 2 linhas */
+    white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -299,17 +299,10 @@
     transform: scale(0.90);
 }
 
-/* Protege o conteúdo de ficar oculto atrás da nova barra */
 body {
     padding-bottom: calc(75px + env(safe-area-inset-bottom));
 }
 </style>
-<!-- Manifesto para transformar em App Nativa (PWA) -->
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="./icon-512.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Coachfolio">
 </head>
 <body>
 <div class="app" id="app"></div>
@@ -344,16 +337,11 @@ body {
 
 <script>
 window.addEventListener('error', function(e) {
-  // Ignora erros irrelevantes que não afetam os dados do utilizador
   if (e.message && (e.message.includes('ResizeObserver') || e.message.includes('Script error'))) return;
-  
-  // Aponta apenas para falhas de dados/execução grave
   if (typeof showToast === 'function') {
     showToast('⚠️ Erro detetado! Recomenda-se guardar backup.', 'btn-red');
   }
 });
-
-
 
 const themes = {
   original: { '--bg': '#0E211A', '--surface': '#153328', '--surface-2': '#1C4133', '--chalk': '#F3EFE6', '--muted': '#8FA79B', '--gold': '#D9A441', '--gold-dim': '#4A3E22', '--red': '#C8493F', '--red-dim': '#3F2320', '--yellow': '#E1C324', '--green': '#4ade80', '--green-dim': '#133320', '--line': 'rgba(243,239,230,0.10)', '--btn-gold-txt': '#241B08', '--btn-red-txt': '#2B0F0C', '--btn-green-txt': '#0E211A' },
@@ -400,7 +388,6 @@ let selectedPlayerId = null;
 window.matchSeasonFilter = undefined;
 window.planSeasonFilter = undefined;
 
-// --- NOVO: Lógica do Ecrã Sempre Ligado (Wake Lock) ---
 let wakeLock = null;
 
 async function manageWakeLock() {
@@ -424,9 +411,7 @@ async function manageWakeLock() {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') manageWakeLock();
 });
-// --------------------------------------------------------
 
-// --- NOVO: Variáveis e função para ordenar as estatísticas ---
 let statsSortCol = 'minutos'; 
 let statsSortAsc = false;
 
@@ -440,8 +425,6 @@ window.setStatsSort = function(col) {
     }
     render();
 };
-// -------------------------------------------------------------
-
 
 function getAutoSaveStatusHTML() {
   if (!state.lastBackupDate) return '';
@@ -451,16 +434,13 @@ function getAutoSaveStatusHTML() {
     🟢 <strong>Dados gravados no dispositivo:</strong> ${dateStr}
   </div>`;
 }
-// 🛡️ ESCAPE INTELIGENTE: Impede a "Bola de Neve" e limpa a Base de Dados
+
 function escapeHTML(str) { 
     if(!str) return ''; 
-    // 1. Primeiro limpa qualquer código que já lá esteja (impede o lixo acumulado)
     let clean = String(str).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
-    // 2. Depois protege de forma limpa e única
     return clean.replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); 
 }
 
-// 🧹 EXTRATOR LIMPO: Devolve o texto real para o Excel e exportações
 function cleanHTML(str) {
     if(!str) return '';
     return String(str).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
@@ -593,12 +573,11 @@ function playerName(id){
 function eligiblePlayers(){ return sortPlayerObjs((state.roster || []).filter(p => p && p.active !== false)); }
 function formatMatchTime(ms){ const totalSecs = Math.floor(ms / 1000); const mm = Math.floor(totalSecs / 60); const ss = totalSecs % 60; return String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0'); }
 function getMatchElapsedMs(m){ if(!m.timer) return 0; let total = m.timer.elapsedMs; if(m.timer.isRunning) total += (Date.now() - m.timer.lastStartTs); return total; }
+
 window.getMatchDisplayTimeMs = function(m) {
     if(!m.timer) return 0;
     const totalElapsed = getMatchElapsedMs(m);
     if(m.timeline && m.timeline.secondHalfStart) {
-        // A Magia da TV: 2ª Parte arranca no tempo base (planeado), independentemente
-        // de a 1ª parte real ter durado mais por causa de descontos.
         const baseMs = (m.halfDuration || state.defaultHalfDuration || 30) * 60 * 1000;
         return baseMs + totalElapsed;
     }
@@ -614,9 +593,7 @@ function getHalfDuration(m, half) {
 function getPlayersOnPitchAtEndOfHalf(m, half) { let current = [...(m.lineup || [])]; let subs = (m.subs || []).filter(s => s.half <= half).sort((a,b) => { if(a.half !== b.half) return a.half - b.half; let minA = a.isHalftime ? 9999 : (a.minute || 0); let minB = b.isHalftime ? 9999 : (b.minute || 0); return minA - minB; }); subs.forEach(s => { current = current.filter(id => id !== s.outId); current.push(s.inId); }); return current; }
 window.getGlobalMinuteDisplay = function(m, half, relMin) {
     if (relMin == null) return '';
-    if (half === 1) return relMin; // Na 1ª parte é direto
-    
-    // Na 2ª parte, a base é SEMPRE a duração planeada por parte (Tempo de TV)
+    if (half === 1) return relMin;
     let plannedHalfMins = m.halfDuration || state.defaultHalfDuration || 30;
     if (m.isNewManualModel && m.manualHalf1Duration) {
         plannedHalfMins = m.manualHalf1Duration;
@@ -647,7 +624,6 @@ function calcPlayerMinutes(m, pId) {
        else if (m.timeline && m.timeline.secondHalfStart) { durationSecs = Math.floor((m.timer && m.timer.elapsedMs ? m.timer.elapsedMs : getMatchElapsedMs(m)) / 1000); }
     }
 
-    // A CORREÇÃO: Tranca a 2ª parte a zero em jogos de parte única ao vivo
     if (!isManualHistoric && m.singleHalf && half === 2) {
         durationSecs = 0;
     }
@@ -1198,7 +1174,7 @@ window.triggerSafePrint = async function() {
         try {
             showToast('A preparar ficheiro para o iOS... ⏳');
             // Cria um ficheiro HTML formatado em Blob para ser aceite pelo menu nativo do iOS
-            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}</body></html>`;
+            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}'</body' + '></html>'`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const file = new File([blob], `Coachfolio_Relatorio_${Date.now()}.html`, { type: 'text/html' });
 
