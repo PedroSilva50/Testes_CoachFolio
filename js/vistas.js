@@ -22,7 +22,7 @@ function renderModalHTML(){
                   <div style="font-weight:bold; color:var(--chalk); font-size:13px;">${ex.name}</div>
                   <div style="font-size:10px; color:var(--muted);">${ex.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</div>
                 </div>
-                <button class="btn btn-green" style="font-size:10px; padding:6px 10px;" onclick="addExerciseToTraining('${ex.id}', 15)">+ Importar</button>
+                <button class="btn btn-green" style="flex:none; width:auto; font-size:9px; padding:4px 8px;" onclick="addExerciseToTraining('${ex.id}', 15)">Importar</button>
               </div>
             `).join('') : `<div class="empty">Nenhum exercício encontrado.</div>`}
           </div>
@@ -331,7 +331,7 @@ function renderModalHTML(){
      </div></div>`;
   }
   
-return `<div class="modal-overlay"><div class="modal-card"><p>${modalConfig.message}</p><div style="display:flex; gap:10px;"><button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button><button class="btn ${modalConfig.btnClass || 'btn-red'}" onclick="closeModal(); confirmModal();">${t('confirm')}</button></div></div></div>`;}
+return `<div class="modal-overlay"><div class="modal-card"><p>${modalConfig.message}</p><div style="display:flex; gap:10px;"><button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button><button class="btn ${modalConfig.btnClass || 'btn-red'}" onclick="confirmModal();">${t('confirm')}</button></div></div></div>`;}
 
 function topbarHtml(title){ 
   return `<div class="topbar"><div style="display:flex; align-items:center;"><span class="topbar-home" onclick="goHome()" title="${t('nav_home_lbl')}"><span class="topbar-home-icon">${ballIconSvg()}</span><span class="topbar-home-label">${t('nav_home_lbl')}</span></span><h1 style="margin-left:10px;">${title}</h1></div><span class="topbar-settings" onclick="openSettings()">⚙️</span></div>`; 
