@@ -63,7 +63,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Coachfolio">
 <meta name="theme-color" content="#0E211A">
-<title>COACHFOLIO v3.testes</title>
+<title>COACHFOLIO v3.6</title>
 <script src="js/dicionario.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/tatica.js"></script>
@@ -146,7 +146,7 @@
   .seg{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
   .seg-btn{flex:1;text-align:center;padding:10px 8px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);cursor:pointer;transition:all 0.15s ease;font-weight:700;}
   .seg-btn.active{background:var(--gold-dim);color:var(--gold);border-color:var(--gold);}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10000;}
   .modal-card{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
   .modal-card p{font-size:14px;line-height:1.5;margin:0 0 20px;font-weight:normal;text-transform:none;letter-spacing:normal;}
   .goal-list{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;}
@@ -327,7 +327,6 @@ body {
         <span id="nav-lbl-strat">Tática</span>
     </div>
     <div class="dock-btn navbtn" data-hub="equipa" onclick="navigateToHub('equipa')">
-        <!-- Ícone de 2 Bonecos (Equipa) -->
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         <span id="nav-lbl-team">Equipa</span>
     </div>
@@ -384,9 +383,7 @@ let expandedMatch = null; let expandedSchedule = null; let statsFilter = 'todos'
 let modalConfig = null; let expandedPlayer = null; let editingPlayerId = null; let trainingForm = null; let expandedTraining = null; let videoForm = null; let expandedVideo = null; let diaryForm = null; let expandedDiary = null;
 let schedulingNew = false; let editingSchId = null; let schForm = { isBatch: false, opp: '', date: '', time: '09:00', type: 'amigavel', loc: 'casa', phase: '', matchday: '', tournamentName: '', games: [] };
 let expandedLeague = null; let leagueForm = null; let editingLgMatch = null; let fineForm = null; 
-let selectedPlayerId = null;
-window.matchSeasonFilter = undefined;
-window.planSeasonFilter = undefined;
+window.matchSeasonFilter = undefined; window.planSeasonFilter = undefined;
 
 let wakeLock = null;
 
@@ -465,18 +462,18 @@ window.navigateToHub = function(hub) {
   else if(hub === 'estrategia') currentTab = 'tatica';
   else if(hub === 'equipa') currentTab = 'plantel';
   pending = null; pendingCard = null; pendingCaptain = false; pendingRatings = false; pendingSub = null;
-  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null; selectedPlayerId = null;
+  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null;
   render();
 };
 
 window.navigateToTab = function(tab) {
   currentTab = tab;
   pending = null; pendingCard = null; pendingCaptain = false; pendingRatings = false; pendingSub = null;
-  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null; selectedPlayerId = null;
+  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null;
   render();
 };
 
-window.goHome = function(){ currentHub = 'home'; currentTab = 'home'; selectedPlayerId = null; render(); };
+window.goHome = function(){ currentHub = 'home'; currentTab = 'home'; render(); };
 window.openSettings = function(){ modalConfig = { type: 'settings' }; document.getElementById('modal-root').innerHTML = renderModalHTML(); };
 window.setTheme = function(tName) { state.theme = tName; applyTheme(tName); saveState(); document.getElementById('modal-root').innerHTML = renderModalHTML(); };
 window.setLanguage = function(lang) { state.lang = lang; saveState(); render(); document.getElementById('modal-root').innerHTML = renderModalHTML(); };
@@ -747,7 +744,7 @@ window.confirmLineup = function(mId) {
   const m = state.matches.find(x => x.id === mId); 
   if (m) { 
     m.lineup = [...pendingLineupSet]; 
-    window.generateMatchTacticalSnapshot(m); // Gera a tática automaticamente
+    if(typeof window.generateMatchTacticalSnapshot === 'function') window.generateMatchTacticalSnapshot(m);
     saveState(); 
   } 
   render(); 
@@ -779,7 +776,6 @@ window.currentHalfFromTimeline = function(m){
   if(tl.secondHalfStart) return 2;
   return 1;
 };
-// Resolve a parte a usar num evento novo: em jogos de parte única, nunca pergunta — é sempre a 1ª.
 window.resolveEventHalf = function(m){
   if (m.singleHalf) return 1;
   return window.currentHalfFromTimeline(m);
@@ -787,7 +783,7 @@ window.resolveEventHalf = function(m){
 window.doFinishMatch = function() {
     const m = getActiveMatch(); if(!m) return; const notes = (document.getElementById('notes-input') || {}).value;
     if(notes !== undefined) m.notes = escapeHTML(notes); m.finished = true;
-    m.actionsUnlocked = false; // Tranca o aloquete ao fechar
+    m.actionsUnlocked = false;
     if(!m.timeline) m.timeline = {}; if(!m.timeline.fullTime) window.setMatchTimeMark(m.id, 'fullTime'); 
     if(m.timer && m.timer.isRunning) window.pauseMatchTimer(m.id);
     pendingRatings = false; saveState(); navigateToTab('jogos');
@@ -819,8 +815,8 @@ window.confirmFinishMatch = function(action) {
             m.manualHalf1Duration = (isNaN(h1) || h1 < 0) ? 45 : h1;
             m.manualHalf2Duration = (isNaN(h2) || h2 < 0) ? 0 : h2;
             m.singleHalf = m.manualHalf2Duration === 0;
-            m.isNewManualModel = true; // Flag da nova arquitetura
-            m.manualMatchDuration = m.manualHalf1Duration + m.manualHalf2Duration; // Para as barras não estoirarem
+            m.isNewManualModel = true; 
+            m.manualMatchDuration = m.manualHalf1Duration + m.manualHalf2Duration;
         }
         if(ignoreInput) { m.ignoreMinutes = ignoreInput.checked; }
         
@@ -838,7 +834,7 @@ window.reopenMatch = function(id){
     const m = state.matches.find(m=>m.id===id); 
     if(m){ 
         m.finished=false; 
-        m.actionsUnlocked=false; // Começa trancado por segurança
+        m.actionsUnlocked=false;
         saveState(); navigateToTab('jogo'); 
     } 
 };
@@ -851,7 +847,7 @@ window.toggleIgnoreMinutes = function(mId) {
         showToast(m.ignoreMinutes ? 'Minutos e utilização anulados neste jogo. ⏱️' : 'Minutos restaurados. ⏱️');
     }
 };
-// 1. Função genérica atualizada para suportar subtipos de golo (normal, penalti, autogolo)
+
 window.addGoal = function(matchId, type, half, scorerId, assistId, customMin, goalSubtype = 'normal', gkId = 'auto'){ 
   const m = state.matches.find(m => m.id === matchId); 
   if(!m) return; 
@@ -870,7 +866,7 @@ window.addGoal = function(matchId, type, half, scorerId, assistId, customMin, go
     half: half === 'halftime' ? 1 : half, 
     scorerId: type === 'scored' ? scorerId : (goalSubtype === 'autogolo' ? scorerId : null), 
     assistId: type === 'scored' ? (assistId || 'none') : 'none', 
-    gkId: gkId === 'auto' ? null : gkId, // NOVO: Guarda o ID do GR se for escolhido
+    gkId: gkId === 'auto' ? null : gkId, 
     minute: minVal,
     timestamp: Date.now() 
   }); 
@@ -879,6 +875,7 @@ window.addGoal = function(matchId, type, half, scorerId, assistId, customMin, go
   saveState(); 
   render(); 
 };
+
 window.getGoalInputPanelHTML = function(m, isManualMode) {
   if (!pending) return '';
   const showMinInput = isManualMode || m.actionsUnlocked;
@@ -894,7 +891,6 @@ window.getGoalInputPanelHTML = function(m, isManualMode) {
     </div>`;
   }
 
-  // --- GOLOS MARCADOS ---
   if (pending.kind === 'scored') {
     if (!pending.goalSubtype) {
       return `<div class="panel">
@@ -957,16 +953,11 @@ window.getGoalInputPanelHTML = function(m, isManualMode) {
     }
   }
 
-  // --- GOLOS SOFRIDOS ---
   if (pending.kind === 'conceded') {
-    
-    // A LÓGICA DE OURO: Verifica se é um jogo ao vivo normal
     const isLiveGame = m.timeline && m.timeline.kickoff && !m.ignoreMinutes && !isManualMode && !m.actionsUnlocked;
     const needsGK = !isLiveGame;
 
-    // PASSO 1: Tipo de Golo Sofrido
     if (!pending.goalSubtype) {
-      // Se for jogo ao vivo, clica e regista logo o golo. Se for edição, avança de passo.
       let onclickGolo = needsGK ? "pending.goalSubtype='normal'; render();" : `addGoal('${m.id}', 'conceded', pending.half, null, null, null, 'normal', 'auto')`;
       let onclickPenalti = needsGK ? "pending.goalSubtype='penalti'; render();" : `addGoal('${m.id}', 'conceded', pending.half, null, null, null, 'penalti', 'auto')`;
 
@@ -981,12 +972,10 @@ window.getGoalInputPanelHTML = function(m, isManualMode) {
       </div>`;
     }
 
-    // PASSO 2: Autogolo (Quem foi?)
     if (pending.goalSubtype === 'autogolo' && !pending.scorerId) {
       let currH = pending.half === 'halftime' ? 1 : pending.half; 
       let availablePlayers = [];
       
-      // Se for edição, ignorar minutos ou sem titulares, mostra a EQUIPA TODA
       if (!isLiveGame || m.ignoreMinutes || !state.trackSubs || !m.lineup || m.lineup.length === 0) {
           availablePlayers = eligiblePlayers();
       } else {
@@ -1013,9 +1002,7 @@ window.getGoalInputPanelHTML = function(m, isManualMode) {
       </div>`;
     }
 
-    // PASSO 3: Quem estava na baliza? (Só aparece em Edição, Histórico ou Minutos Ignorados)
     if (needsGK && pending.gkId === undefined) {
-      // Traz a equipa TODA para o ecrã, mas mete os GR no topo a dourado
       let allP = eligiblePlayers();
       allP.sort((a,b) => {
          let aGK = (a.positions||'').toUpperCase().includes('GR') || (a.positions||'').toUpperCase().includes('GK') ? -1 : 1;
@@ -1058,13 +1045,11 @@ window.editEventMinute = function(matchId, kind, eventId){
   if (!obj) return;
 
   const input = prompt('Novo minuto do evento:', currentMinute != null ? currentMinute : '');
-  if (input === null) return; // cancelou
+  if (input === null) return; 
   const newMin = parseInt(input, 10);
   if (isNaN(newMin) || newMin < 0) { showToast('Minuto inválido.'); return; }
 
   obj.minute = newMin;
-  // Substituições alimentam o cálculo de minutos através de subMs, não só do "minute" visual —
-  // têm de ficar sincronizados, senão a edição não afeta os minutos jogados do atleta.
   if (kind === 'sub') obj.subMs = newMin * 60000;
 
   saveState();
@@ -1167,14 +1152,13 @@ window.triggerSafePrint = async function() {
         return;
     }
 
-    // Se estiver no iPhone/iPad em modo PWA (Adicionado ao Ecrã Principal)
     const isIOSPWA = (window.navigator.standalone === true) || (window.matchMedia('(display-mode: standalone)').matches && /iPhone|iPad|iPod/.test(navigator.userAgent));
 
     if (isIOSPWA) {
         try {
             showToast('A preparar ficheiro para o iOS... ⏳');
-            // Cria um ficheiro HTML formatado em Blob para ser aceite pelo menu nativo do iOS
-            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}'</body' + '></html>'`;
+            // AQUI ESTÁ A TÁTICA ANTI LIVE SERVER DA VS CODE
+            const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}\x3C/body\x3E\x3C/html\x3E`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const file = new File([blob], `Coachfolio_Relatorio_${Date.now()}.html`, { type: 'text/html' });
 
@@ -1192,7 +1176,6 @@ window.triggerSafePrint = async function() {
         }
     }
 
-    // Fallback nativo para Browsers normais no PC ou Android
     closeModal();
     setTimeout(() => {
         window.print();
@@ -1254,12 +1237,12 @@ window.fecharCreditos = function() {
   const el = document.getElementById('modalCreditos');
   if (el) el.style.display = 'none';
 };
-// HELPER PARA OBTER A TAG DA IMAGEM NOS PDFS
+
 function getClubLogoHtml() {
   if (!state.clubLogo) return '';
   return `<img src="${state.clubLogo}" style="max-height:55px; max-width:80px; object-fit:contain; margin-left:15px;">`;
 }
-// FUNÇÃO PARA CARREGAR O EMBLEMA DO CLUBE (com atualização imediata do modal)
+
 window.uploadClubLogo = function(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -1279,9 +1262,6 @@ window.uploadClubLogo = function(event) {
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      // Preenche a branco antes de desenhar, para que emblemas com fundo
-      // transparente (a maioria dos PNGs de clube) não fiquem com um
-      // quadrado preto à volta ao serem convertidos para JPEG.
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
@@ -1303,11 +1283,11 @@ loadState();
 </script>
 
 <!-- MODAL DE CRÉDITOS E PARCEIROS -->
-<div id="modalCreditos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+<div id="modalCreditos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
   <div style="background: #fff; width: 90%; max-width: 400px; padding: 20px; border-radius: 10px; text-align: center; color: #333; font-family: sans-serif;">
     
     <h2 style="margin-top: 0; color: #0E211A; margin-bottom: 5px;">⚽ Coachfolio</h2>
-    <p style="font-size: 0.9em; color: #666; margin: 0;">Versão 3.5</p>
+    <p style="font-size: 0.9em; color: #666; margin: 0;">Versão 3.6</p>
     <p style="font-size: 0.9em; font-style: italic; color: #555; margin-top: 5px;">"Feito por treinadores, para treinadores."</p>
     
     <hr style="border: 0; border-top: 1px solid #ccc; margin: 15px 0;">
