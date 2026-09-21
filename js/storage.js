@@ -4,21 +4,24 @@ const storageAdapter = {
   async get(key){ if(usingClaudeStorage){ try{ return await window.storage.get(key); }catch(e){ return null; } } else { const v = localStorage.getItem(key); return v ? { key, value: v } : null; } },
   async set(key, value){ if(usingClaudeStorage) return await window.storage.set(key, value); else { localStorage.setItem(key, value); return { key, value }; } }
 };
+
 // 🛡️ 1. FILA DE GRAVAÇÃO (SAVE QUEUE) - Fim dos atropelamentos de dados
 let saveQueue = Promise.resolve();
 
 function saveState() { 
-  if (!IS_LICENSED) return Promise.resolve();
+  // Proteção: Verifica se a variável global já carregou para não dar ReferenceError
+  if (typeof IS_LICENSED !== 'undefined' && !IS_LICENSED) return Promise.resolve();
   
   state.schemaVersion = 1; // Assinatura da versão para o futuro
+  state.lastBackupDate = Date.now(); // LÓGICA CORRIGIDA: Atualiza a data ANTES de converter para texto!
   
   saveQueue = saveQueue.then(async () => {
     try { 
       await storageAdapter.set(STORAGE_KEY, JSON.stringify(state)); 
-      state.lastBackupDate = Date.now();
     } catch(e) { 
       if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || (e.message && e.message.includes('quota'))) { 
-        alert(t('msg_quota')); 
+        // Proteção caso a tradução t() ainda não esteja pronta na memória
+        alert(typeof t === 'function' ? t('msg_quota') : 'Espaço Esgotado! O telemóvel não tem memória.'); 
       } else { 
         console.error("Erro ao guardar estado:", e); 
       } 
@@ -30,7 +33,7 @@ function saveState() {
 // 🛡️ 2. PROTEÇÃO DE CARREGAMENTO & DIREITOS ADQUIRIDOS (GRANDFATHERING)
 async function loadState(){
   try{
-    if (!IS_LICENSED) return;
+    if (typeof IS_LICENSED !== 'undefined' && !IS_LICENSED) return;
 
     const res = await storageAdapter.get(STORAGE_KEY);
     if(res && res.value) {
@@ -61,7 +64,8 @@ async function loadState(){
        if(!state.teamColor) state.teamColor = '#D9A441';
        if(!state.oppColor) state.oppColor = '#C8493F';
        if(!state.seasonFormat) state.seasonFormat = 'europeu';
-       if(!state.currentSeason) state.currentSeason = defaultSeason();
+       // Proteção: Se a função defaultSeason não existir ainda, usa fallback
+       if(!state.currentSeason) state.currentSeason = typeof defaultSeason === 'function' ? defaultSeason() : '24/25';
        if(!state.theme) state.theme = 'original'; if(!state.lang) state.lang = 'pt'; if(!state.myClubName) state.myClubName = '';
        if(!state.rosterSortBy) state.rosterSortBy = 'posicao';
        if(!state.lastBackupDate && state.matches.length > 0) state.lastBackupDate = Date.now() - (8 * 24 * 60 * 60 * 1000); 
@@ -75,7 +79,7 @@ async function loadState(){
            }
        });
        
-    } else { state.currentSeason = defaultSeason(); }
+    } else { state.currentSeason = typeof defaultSeason === 'function' ? defaultSeason() : '24/25'; }
   } catch(e) {
     // ⚠️ ECRÃ VERMELHO DE EMERGÊNCIA: Protege os dados se houver falha de leitura
     document.body.innerHTML = `
@@ -85,14 +89,15 @@ async function loadState(){
         <p style="color:#8FA79B; font-size:14px; max-width:400px; line-height:1.5; margin-bottom:20px;">
           Ocorreu um erro a ler a base de dados. Para não perderes os registos, a aplicação foi bloqueada por precaução.
         </p>
-        <button style="padding:12px 20px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="exportDataJSON()">1. Exportar Backup de Emergência</button>
+        <button style="padding:12px 20px; background:var(--gold); border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="if(typeof exportDataJSON === 'function') exportDataJSON(); else alert('Função ainda não carregada.')">1. Exportar Backup de Emergência</button>
         <button style="padding:12px 20px; background:transparent; border:1px solid var(--muted); color:var(--muted); border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="window.location.reload()">2. Tentar Novamente</button>
       </div>`;
     throw new Error("Falha Crítica ao carregar dados. Execução interrompida.");
   }
-  applyTheme(state.theme || 'original'); 
+  if(typeof applyTheme === 'function') applyTheme(state.theme || 'original'); 
   checkActivationAndRender(); // Entra no verificador de licença em vez do render direto
 }
+
 // 🛡️ 3. SISTEMA DE ATIVAÇÃO POR CHAVE ÚNICA (OFFLINE - OFUSCADO)
 function verifyKey(identifier, key) {
     // A palavra secreta está ofuscada e dividida. O curioso só vê lixo informático.
@@ -108,37 +113,41 @@ function verifyKey(identifier, key) {
     const expected = Math.abs(hash).toString(16).toUpperCase().substring(0, 6);
     return key.trim().toUpperCase() === expected;
 }
+
 window.activateApp = function() {
     const idVal = document.getElementById('act-id').value;
     const kVal = document.getElementById('act-key').value;
     
     if(!idVal || !kVal) { 
-        showToast('Preenche os dois campos!'); 
+        if(typeof showToast === 'function') showToast('Preenche os dois campos!'); else alert('Preenche os dois campos!');
         return; 
     }
     
     if(verifyKey(idVal, kVal)) {
         state.isActivated = true;
         saveState(); // Grava a licença no telemóvel
-        render(); // Desbloqueia e carrega o Menu Inicial!
+        if(typeof render === 'function') render(); // Desbloqueia e carrega o Menu Inicial!
     } else {
-        showToast('Chave de Ativação Inválida!');
+        if(typeof showToast === 'function') showToast('Chave de Ativação Inválida!'); else alert('Chave Inválida!');
     }
 }
 
 function checkActivationAndRender() {
     if (state.isActivated) {
-        render(); // Cliente ativado, a vida segue normal.
+        if(typeof render === 'function') render(); // Cliente ativado, a vida segue normal.
     } else {
         // Esconde a barra de navegação para ficar um ecrã limpo
         const nav = document.getElementById('navbar');
         if (nav) nav.style.display = 'none';
         
+        // Proteção caso o ícone ainda não exista
+        const ballIcon = typeof ballIconSvg === 'function' ? ballIconSvg() : '⚽';
+        
         // Ecrã de bloqueio compacto e sem scroll
         document.getElementById('app').innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:20px; box-sizing:border-box; background:var(--bg); color:var(--chalk); text-align:center; font-family:-apple-system, sans-serif; margin-top:-20px;">
             
-            <div style="width:70px; height:70px; margin-bottom:12px;">${ballIconSvg()}</div>
+            <div style="width:70px; height:70px; margin-bottom:12px;">${ballIcon}</div>
             <h1 style="color:var(--chalk); margin:0 0 4px 0; font-size:24px; letter-spacing:0.05em;">COACHFOLIO</h1>
             <p style="color:var(--muted); font-size:10px; margin-bottom:24px; text-transform:uppercase; letter-spacing:1px;">App de um Treinador, para Treinadores!</p>
             

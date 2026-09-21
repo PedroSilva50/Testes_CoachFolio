@@ -74,10 +74,9 @@ window.exportCallupPDF = function(schId) {
           <p style="font-size:20px; font-weight:bold; margin-top:5px; color:#000;">${matchTitle}</p>
           <p style="font-size:13px; color:#444; margin-top:2px;">${compLabel} | Local: <b>${locLabel}</b></p>
         </div>
-        ${getClubLogoHtml()}
+        ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
       </div>
 
-      <!-- CAIXA DE DATAS (APENAS DATA E COMPARÊNCIA) -->
       <div style="display:flex; justify-content:space-around; align-items:center; background:#EEE; padding:12px 15px; border-radius:6px; margin-bottom:20px; border:1px solid #DDD; font-size:14px;">
         <div><b>📅 Data do Jogo:</b> ${dateStr}</div>
         <div><b>📍 Hora de Comparência:</b> <span style="font-size:16px; font-weight:bold; color:#000;">${meetTime}</span></div>
@@ -123,7 +122,7 @@ window.exportCallupPDF = function(schId) {
     </div>`;
 
   document.getElementById('print-area').innerHTML = html;
-  window.openSafePrintModal();
+  if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
 };
 
 window.openScouting = function(schId) {
@@ -152,7 +151,7 @@ window.openScouting = function(schId) {
 
     modalConfig = { type: 'scouting', schId: s.id };
     const root = document.getElementById('modal-root');
-    if (root) root.innerHTML = renderModalHTML();
+    if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
   } else {
     showToast('Não foi possível abrir a ficha de Scouting.');
   }
@@ -178,16 +177,14 @@ window.saveScoutingData = function(schId) {
   s.scouting.setPieces = escapeHTML(document.getElementById('scout-setpieces')?.value || '');
   s.scouting.gamePlan = escapeHTML(document.getElementById('scout-gameplan')?.value || '');
 
-  // Atualiza também a ficha viva do adversário, para o próximo jogo já arrancar
-  // com esta versão mais recente — sem tocar nos snapshots de jogos já guardados.
   if (!state.scoutingBook) state.scoutingBook = {};
   const oppKey = (s.opponent || '').trim().toLowerCase();
   if (oppKey) state.scoutingBook[oppKey] = JSON.parse(JSON.stringify(s.scouting));
 
-  saveState(); // Garante a gravação física no armazenamento local do telemóvel
-  closeModal();
+  saveState(); 
+  if(typeof closeModal === 'function') closeModal();
   showToast('Análise de Scouting gravada com sucesso! 👁️');
-  render(); // Atualiza a vista para refletir a existência do scouting no jogo
+  render(); 
 };
 
 window.deleteScoutingData = function(schId) {
@@ -197,11 +194,12 @@ window.deleteScoutingData = function(schId) {
   if (confirm('Tem a certeza que deseja eliminar a análise de scouting deste jogo?')) {
     delete s.scouting;
     saveState();
-    closeModal();
+    if(typeof closeModal === 'function') closeModal();
     showToast('Análise de scouting eliminada! 🗑️');
     render();
   }
 };
+
 window.exportScoutingPDF = function(schId) {
   let s = state.schedule.find(x => x.id === schId);
   if (!s) {
@@ -228,7 +226,7 @@ window.exportScoutingPDF = function(schId) {
         <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Adversário: ${s.opponent || 'N/D'}</p>
         <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${s.season || state.currentSeason}</b></p>
       </div>
-      ${getClubLogoHtml()}
+      ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
     </div>
 
     <!-- PAINEL DE TÁTICA E BLOCO -->
@@ -272,8 +270,9 @@ window.exportScoutingPDF = function(schId) {
   </div>`;
 
   printArea.innerHTML = html;
-  window.openSafePrintModal();
+  if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
 };
+
 function renderCalendario(){
   if(schedulingNew){
     if(!schForm.date) schForm.date = new Date().toISOString().slice(0,10);
@@ -310,9 +309,12 @@ function renderCalendario(){
 
   const schCards = currentSch.map(s => { 
       const open = expandedSchedule === s.id; 
-      const locLabel = s.location === 'casa' ? t('match_home') : t('match_away'); 
+      
+      // 🛡️ CORREÇÃO E EXTRAÇÃO DA LÓGICA DE CLASSE "CASA" E "FORA" 
+      const isHomeMatch = (s.location === 'casa' || !s.location);
+      const locLabel = isHomeMatch ? t('match_home') : t('match_away');
+      const badgeClass = isHomeMatch ? 'casa' : 'fora';
 
-      // ⚔️ MAGIA DO CONFRONTO DIRETO (Agora super limpa e formatada) ⚔️
       let h2hHtml = '';
       if(s.opponent && s.opponent.trim() !== '') {
           const oppQuery = s.opponent.trim().toLowerCase();
@@ -378,7 +380,7 @@ function renderCalendario(){
                 <div>
                     <div class="opp">
                         ${typeLabel}
-                        ${s.opponent} <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span>
+                        ${s.opponent} <span class="badge-loc ${badgeClass}">${locLabel}</span>
                     </div>
                     <div class="date">${s.date.split('-').reverse().join('/')} às ${s.time} | ${s.numberOfHalves || 2}P de ${s.halfDuration || state.defaultHalfDuration || 30}'</div>
                 </div>
@@ -410,6 +412,7 @@ function renderCalendario(){
   html += schCards;
   return html;
 }
+
 window.uiSaveTraining = function() {
   if (!trainingForm) return;
 
@@ -440,7 +443,7 @@ window.uiSaveTraining = function() {
         plan: plan,
         obs: obs,
         notes: plan,
-        exercises: exercises, // PERMANECE GUARDADO PARA SEMPRE
+        exercises: exercises,
         absences: absencesObj,
         customMinutes: customMinsObj,
         status: state.trainings[idx].status || 'pending'
@@ -455,7 +458,7 @@ window.uiSaveTraining = function() {
       plan: plan,
       obs: obs,
       notes: plan,
-      exercises: exercises, // PERMANECE GUARDADO PARA SEMPRE
+      exercises: exercises,
       status: 'pending',
       absences: absencesObj,
       customMinutes: customMinsObj
@@ -467,6 +470,7 @@ window.uiSaveTraining = function() {
   saveState();
   render();
 };
+
 window.setAbsenceReason = function(pId, reason){
   if(!trainingForm.absences) trainingForm.absences = {};
   if(!trainingForm.customMinutes) trainingForm.customMinutes = {};
@@ -498,7 +502,7 @@ window.editTraining = function(trId) {
     plan: tr.plan || tr.notes || '',
     obs: tr.obs || '',
     notes: tr.plan || tr.notes || '',
-    exercises: tr.exercises ? JSON.parse(JSON.stringify(tr.exercises)) : [], // CORREÇÃO: Agora os exercícios já vêm para a edição!
+    exercises: tr.exercises ? JSON.parse(JSON.stringify(tr.exercises)) : [], 
     absences: Array.isArray(tr.absences) 
       ? tr.absences.reduce((acc, id) => { acc[id] = 'injustificada'; return acc; }, {}) 
       : (tr.absences ? { ...tr.absences } : {}),
@@ -535,7 +539,6 @@ function renderTreinos(){
 
     const baseDuration = parseInt(trainingForm.duration, 10) || 90;
 
-    // Lógica: Arranca SEMPRE fechado por defeito. O utilizador abre apenas se quiser.
     if (trainingForm.showPlan === undefined) {
         trainingForm.showPlan = false;
     }
@@ -547,7 +550,6 @@ function renderTreinos(){
           <div class="field" style="margin-bottom:0;"><label>Duração Total (Min)</label><input id="tr-duration-input" type="number" inputmode="numeric" pattern="[0-9]*" min="15" max="300" step="5" placeholder="Ex: 90" value="${trainingForm.duration || 90}" onclick="this.select()" oninput="trainingForm.duration=parseInt(this.value,10)||'';"></div>
         </div>
 
-        <!-- ACORDEÃO: PLANO E EXERCÍCIOS -->
         <div style="margin-top:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px; overflow:hidden;">
             <div style="padding:10px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:${trainingForm.showPlan ? 'var(--surface)' : 'transparent'}; border-bottom:${trainingForm.showPlan ? '1px solid var(--line)' : 'none'};" onclick="trainingForm.showPlan = !trainingForm.showPlan; render();">
                 <span style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase;">📋 Plano & Exercícios</span>
@@ -594,12 +596,12 @@ function renderTreinos(){
 
                 <div class="field" style="margin-top:12px; margin-bottom:10px;">
                   <label>🏋️‍♂️ Plano de Treino (Gerado/Editável)</label>
-                  <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${trainingForm.plan || trainingForm.notes || ''}</textarea>
+                  <textarea id="tr-plan-input" placeholder="Ex: 1. Meiinho; 2. Posse de bola..." oninput="trainingForm.plan=this.value; trainingForm.notes=this.value;">${escapeHTML(trainingForm.plan || trainingForm.notes || '')}</textarea>
                 </div>
 
                 <div class="field" style="margin-bottom:0;">
                   <label>📝 Observações</label>
-                  <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${trainingForm.obs || ''}</textarea>
+                  <textarea id="tr-obs-input" placeholder="Ex: Atitude excelente do grupo..." oninput="trainingForm.obs=this.value">${escapeHTML(trainingForm.obs || '')}</textarea>
                 </div>
             </div>
             ` : ''}
@@ -667,7 +669,7 @@ function renderTreinos(){
           </div>
           <div style="display:flex; gap:6px; align-items:center;">
             ${!isCompleted ? `<button class="btn btn-green" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); quickCompleteTraining('${tr.id}')">🟢 Concluir</button>` : ''}
-            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); modalConfig={type:'printTrainingChoice', trId:'${tr.id}'}; document.getElementById('modal-root').innerHTML = renderModalHTML();">📄 PDF</button>
+            <button class="btn btn-outline" style="font-size:10px; padding:4px 8px; flex:none;" onclick="event.stopPropagation(); modalConfig={type:'printTrainingChoice', trId:'${tr.id}'}; document.getElementById('modal-root').innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';">📄 PDF</button>
             <button class="quick-del" style="color:var(--muted);" onclick="event.stopPropagation(); editTraining('${tr.id}')" title="Editar">✏️</button>
             <button class="quick-del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_tr')}', ()=>deleteTraining('${tr.id}'))">🗑</button>
           </div>
@@ -686,8 +688,8 @@ function renderTreinos(){
               </div>
             </div>
           ` : ''}
-          ${planTxt ? `<div class="notes-readonly">🏋️‍♂️ <b>Plano:</b>\n${planTxt}</div>` : ''}
-          ${tr.obs ? `<div class="notes-readonly" style="margin-top:4px;">📝 <b>Notas:</b> ${tr.obs}</div>` : ''}
+          ${planTxt ? `<div class="notes-readonly">🏋️‍♂️ <b>Plano:</b>\n${escapeHTML(planTxt)}</div>` : ''}
+          ${tr.obs ? `<div class="notes-readonly" style="margin-top:4px;">📝 <b>Notas:</b> ${escapeHTML(tr.obs)}</div>` : ''}
           <div style="font-size:12px; margin-top:8px; color:var(--muted);"><b style="color:var(--chalk);">${t('tr_abs')}:</b><br>${absKeys.length ? absKeys.map(id => {
           const reason = absObj[id];
           const customMins = tr.customMinutes && tr.customMinutes[id] != null ? tr.customMinutes[id] : null;
@@ -706,7 +708,7 @@ function renderTreinos(){
 
 window.uiSaveDiary = function(){ 
     if(!diaryForm.title || !diaryForm.title.trim()){ showToast('⚠️ Insere um título na nota!'); return; } 
-    state.diary.unshift({ id: uid(), date: diaryForm.date || new Date().toISOString().slice(0,10), season: state.currentSeason, title: escapeHTML(diaryForm.title.trim()), content: escapeHTML(diaryForm.content||'') }); 
+    state.diary.unshift({ id: uid(), date: diaryForm.date || new Date().toISOString().slice(0,10), season: state.currentSeason, title: escapeHTML(diaryForm.title.trim()), content: diaryForm.content||'' }); 
     diaryForm = null; saveState(); render(); showToast('Nota guardada no Diário ✓'); 
 };
 window.deleteDiary = function(id){ state.diary = state.diary.filter(d=>d.id!==id); saveState(); render(); };
@@ -716,8 +718,8 @@ function renderDiario(){
       return `${topbarHtml(t('diary_new'))}${renderPlanSubHeader()}
       <div class="card">
         <div class="field"><label>${t('sch_date')}</label><input type="date" value="${diaryForm.date||new Date().toISOString().slice(0,10)}" oninput="diaryForm.date=this.value"></div>
-        <div class="field"><label>${t('diary_heading')}</label><input type="text" placeholder="${t('diary_heading_ph')}" value="${diaryForm.title||''}" oninput="diaryForm.title=this.value"></div>
-        <div class="field" style="margin-bottom:0;"><label>${t('diary_content')}</label><textarea placeholder="${t('diary_content_ph')}" oninput="diaryForm.content=this.value">${diaryForm.content||''}</textarea></div>
+        <div class="field"><label>${t('diary_heading')}</label><input type="text" placeholder="${t('diary_heading_ph')}" value="${escapeHTML(diaryForm.title||'')}" oninput="diaryForm.title=this.value"></div>
+        <div class="field" style="margin-bottom:0;"><label>${t('diary_content')}</label><textarea placeholder="${t('diary_content_ph')}" oninput="diaryForm.content=this.value">${escapeHTML(diaryForm.content||'')}</textarea></div>
       </div>
       <button class="btn btn-gold" style="width:100%; margin-bottom:10px;" onclick="uiSaveDiary()">${t('diary_save')}</button>
       <button class="btn btn-outline" style="width:100%;" onclick="diaryForm=null; render()">${t('cancel')}</button>`; 
@@ -735,16 +737,16 @@ function renderDiario(){
         return `<div class="card match-item" onclick="if(!event.target.closest('button')){ expandedDiary=expandedDiary==='${d.id}'?null:'${d.id}'; render(); }">
             <div class="match-head-row">
                 <div class="match-head" style="flex:1;">
-                    <div><div class="opp">${d.title}</div><div class="date">${d.date.split('-').reverse().join('/')}</div></div>
+                    <div><div class="opp">${escapeHTML(d.title)}</div><div class="date">${d.date.split('-').reverse().join('/')}</div></div>
                 </div>
                 <button class="quick-del" onclick="event.stopPropagation(); askConfirm('Apagar esta nota do diário?', ()=>deleteDiary('${d.id}'))">🗑</button>
             </div>
-            ${open ? `<div class="goal-list"><div class="notes-readonly">📝 ${d.content}</div></div>` : ''}
+            ${open ? `<div class="goal-list"><div class="notes-readonly">📝 ${escapeHTML(d.content)}</div></div>` : ''}
         </div>`; 
     }).join('') : `<div class="empty">${t('diary_none')}</div>`}`;
 }
 
-window.uiSaveVideo = function(){ if(!videoForm.title || !videoForm.title.trim()){ showToast(t('vid_name')); return; } if(!videoForm.url || !videoForm.url.trim()){ showToast(t('vid_url')); return; } state.videos.unshift({ id: uid(), title: escapeHTML(videoForm.title.trim()), type: videoForm.type || 'treino', url: escapeHTML(videoForm.url.trim()), notes: escapeHTML(videoForm.notes || '') }); videoForm = null; saveState(); render(); showToast(t('msg_vid_saved')); };
+window.uiSaveVideo = function(){ if(!videoForm.title || !videoForm.title.trim()){ showToast(t('vid_name')); return; } if(!videoForm.url || !videoForm.url.trim()){ showToast(t('vid_url')); return; } state.videos.unshift({ id: uid(), title: escapeHTML(videoForm.title.trim()), type: videoForm.type || 'treino', url: escapeHTML(videoForm.url.trim()), notes: videoForm.notes || '' }); videoForm = null; saveState(); render(); showToast(t('msg_vid_saved')); };
 window.deleteVideo = function(id){ state.videos = state.videos.filter(v=>v.id!==id); saveState(); render(); };
 window.shareVideoWhatsapp = function(id){
   const v = state.videos.find(x=>x.id===id); if(!v) return;
@@ -757,9 +759,9 @@ function renderVideos(){
   if(videoForm){
     return `${topbarHtml(t('vid_new'))}${renderStratSubHeader()}
       <div class="card">
-        <div class="field"><label>${t('vid_name')}</label><input type="text" placeholder="Ex: Exercício de Finalização" value="${videoForm.title||''}" oninput="videoForm.title=this.value"></div>
-        <div class="field"><label>${t('vid_url')}</label><input type="url" placeholder="https://youtube.com/... ou link do vídeo" value="${videoForm.url||''}" oninput="videoForm.url=this.value"></div>
-        <div class="field" style="margin-bottom:0;"><label>Descrição / Notas</label><textarea placeholder="Ex: Foco no tempo de passe..." oninput="videoForm.notes=this.value">${videoForm.notes||''}</textarea></div>
+        <div class="field"><label>${t('vid_name')}</label><input type="text" placeholder="Ex: Exercício de Finalização" value="${escapeHTML(videoForm.title||'')}" oninput="videoForm.title=this.value"></div>
+        <div class="field"><label>${t('vid_url')}</label><input type="url" placeholder="https://youtube.com/... ou link do vídeo" value="${escapeHTML(videoForm.url||'')}" oninput="videoForm.url=this.value"></div>
+        <div class="field" style="margin-bottom:0;"><label>Descrição / Notas</label><textarea placeholder="Ex: Foco no tempo de passe..." oninput="videoForm.notes=this.value">${escapeHTML(videoForm.notes||'')}</textarea></div>
       </div>
       <button class="btn btn-gold" style="width:100%; margin-bottom:10px;" onclick="uiSaveVideo()">${t('vid_save')}</button>
       <button class="btn btn-outline" style="width:100%;" onclick="videoForm=null; render()">${t('cancel')}</button>`;
@@ -770,19 +772,19 @@ function renderVideos(){
     <button class="btn btn-gold" style="width:100%; margin-bottom:14px;" onclick="videoForm={title:'', url:'', notes:''}; render()">${t('vid_new')}</button>
     ${list.length ? list.map(v => {
       const open = expandedVideo === v.id; 
-      const ytEmbed = getYouTubeEmbedUrl(v.url);
+      const ytEmbed = typeof getYouTubeEmbedUrl === 'function' ? getYouTubeEmbedUrl(v.url) : null;
       return `<div class="card match-item" onclick="if(!event.target.closest('button') && !event.target.closest('a') && !event.target.closest('iframe')){ expandedVideo=expandedVideo==='${v.id}'?null:'${v.id}'; render(); }">
         <div class="match-head-row">
           <div class="match-head" style="flex:1;">
             <div>
-              <div class="opp">${v.title}</div>
+              <div class="opp">${escapeHTML(v.title)}</div>
             </div>
           </div>
           <button class="quick-del" onclick="event.stopPropagation(); askConfirm('${t('vid_del_ask')}', ()=>deleteVideo('${v.id}'))">🗑</button>
         </div>
         ${open ? `<div class="goal-list">
           ${ytEmbed ? `<div class="video-embed-container"><iframe src="${ytEmbed}" allowfullscreen></iframe></div>` : ''}
-          ${v.notes ? `<div class="notes-readonly" style="margin-top:8px;">📝 ${v.notes}</div>` : ''}
+          ${v.notes ? `<div class="notes-readonly" style="margin-top:8px;">📝 ${escapeHTML(v.notes)}</div>` : ''}
           <div class="btn-row" style="margin-top:12px;">
             <button class="btn btn-green" style="font-size:11px; padding:10px;" onclick="event.stopPropagation(); shareVideoWhatsapp('${v.id}')">${t('vid_share')}</button>
             <a class="btn btn-outline" style="font-size:11px; padding:10px; text-decoration:none;" href="${v.url}" target="_blank" onclick="event.stopPropagation();">${t('vid_open')}</a>
@@ -791,6 +793,15 @@ function renderVideos(){
       </div>`;
     }).join('') : `<div class="empty">Nenhum vídeo guardado.</div>`}`;
 }
+
+window.exerciseSearchQuery = '';
+
+window.openExerciseSelectorModal = function() {
+    window.exerciseSearchQuery = '';
+    modalConfig = { type: 'exerciseSelector' };
+    const root = document.getElementById('modal-root');
+    if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+};
 
 window.addExerciseToTraining = function(exerciseId, customDur = 15) {
     if (!trainingForm) return;
@@ -809,9 +820,17 @@ window.addExerciseToTraining = function(exerciseId, customDur = 15) {
 
     // LÓGICA INTELIGENTE: Mantém o tempo limite do treino e constrói o plano
     window.recalculateTrainingPlanAndDuration();
-    closeModal();
+    if (typeof closeModal === 'function') closeModal();
     render();
     if (typeof showToast === 'function') showToast(`Importado: ${play.name} (${exDuration}m)`);
+};
+
+window.updateExerciseDurationInTraining = function(index, newMins) {
+    if (!trainingForm || !trainingForm.exercises || !trainingForm.exercises[index]) return;
+    const val = parseInt(newMins, 10);
+    trainingForm.exercises[index].duration = isNaN(val) || val <= 0 ? 15 : val;
+    window.recalculateTrainingPlanAndDuration();
+    render();
 };
 
 window.removeExerciseFromTraining = function(index) {
@@ -838,68 +857,6 @@ window.recalculateTrainingPlanAndDuration = function() {
     }
 };
 
-window.exerciseSearchQuery = '';
-
-window.openExerciseSelectorModal = function() {
-    window.exerciseSearchQuery = '';
-    modalConfig = { type: 'exerciseSelector' };
-    const root = document.getElementById('modal-root');
-    if (root) root.innerHTML = renderModalHTML();
-};
-
-window.addExerciseToTraining = function(exerciseId, customDur = 15) {
-    if (!trainingForm) return;
-    const play = (state.tacticalNotebook || []).find(x => x.id === exerciseId);
-    if (!play) return;
-
-    if (!trainingForm.exercises) trainingForm.exercises = [];
-    
-    const exDuration = parseInt(customDur, 10) || play.duration || 15;
-    trainingForm.exercises.push({
-        id: uid(),
-        notebookId: play.id,
-        name: play.name,
-        duration: exDuration
-    });
-
-    window.recalculateTrainingPlanAndDuration();
-    closeModal();
-    render();
-    if (typeof showToast === 'function') showToast(`Importado: ${play.name} (+${exDuration}m)`);
-};
-
-window.updateExerciseDurationInTraining = function(index, newMins) {
-    if (!trainingForm || !trainingForm.exercises || !trainingForm.exercises[index]) return;
-    const val = parseInt(newMins, 10);
-    trainingForm.exercises[index].duration = isNaN(val) || val <= 0 ? 15 : val;
-    window.recalculateTrainingPlanAndDuration();
-    render();
-};
-
-window.removeExerciseFromTraining = function(index) {
-    if (!trainingForm || !trainingForm.exercises) return;
-    trainingForm.exercises.splice(index, 1);
-    window.recalculateTrainingPlanAndDuration();
-    render();
-};
-
-
-
-window.updateExerciseDurationInTraining = function(index, newMins) {
-    if (!trainingForm || !trainingForm.exercises || !trainingForm.exercises[index]) return;
-    const val = parseInt(newMins, 10);
-    trainingForm.exercises[index].duration = isNaN(val) || val <= 0 ? 15 : val;
-    window.recalculateTrainingPlanAndDuration();
-    render();
-};
-
-window.removeExerciseFromTraining = function(index) {
-    if (!trainingForm || !trainingForm.exercises) return;
-    trainingForm.exercises.splice(index, 1);
-    window.recalculateTrainingPlanAndDuration();
-    render();
-};
-
 window.viewExerciseScheme = function(notebookId) {
   const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
   if (!play) {
@@ -907,7 +864,6 @@ window.viewExerciseScheme = function(notebookId) {
     return;
   }
   
-  // Usamos o campo gerado para o PDF, mas mostramos no ecrã!
   const svgHTML = window.buildExerciseTacticalPitchSVG ? window.buildExerciseTacticalPitchSVG(notebookId) : '';
   
   modalConfig = { 
@@ -917,7 +873,7 @@ window.viewExerciseScheme = function(notebookId) {
   };
   
   const root = document.getElementById('modal-root');
-  if (root) root.innerHTML = renderModalHTML();
+  if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
 };
 
 // ==========================================
@@ -951,17 +907,26 @@ window.exportMicrocyclePDF = function() {
     let monStr = days[0].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
     let sunStr = days[6].toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
 
-    let daysHtml = '';
-    days.forEach((d, idx) => {
+    // OTIMIZAÇÃO: Filtra os dados de uma vez só para os 7 dias, em vez de filtrar a época inteira a cada volta do loop
+    const weekDates = days.map(d => {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
-        const dateIso = `${yyyy}-${mm}-${dd}`;
-        const dayStr = `${dd}/${mm}`;
+        return `${yyyy}-${mm}-${dd}`;
+    });
 
-        const trs = (state.trainings || []).filter(t => t.date === dateIso);
-        const schs = (state.schedule || []).filter(s => s.date === dateIso);
-        const mats = (state.matches || []).filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
+    const weekTrs = (state.trainings || []).filter(t => weekDates.includes(t.date));
+    const weekSchs = (state.schedule || []).filter(s => weekDates.includes(s.date));
+    const weekMats = (state.matches || []).filter(m => weekDates.includes(m.date));
+
+    let daysHtml = '';
+    days.forEach((d, idx) => {
+        const dateIso = weekDates[idx];
+        const dayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        const trs = weekTrs.filter(t => t.date === dateIso);
+        const schs = weekSchs.filter(s => s.date === dateIso);
+        const mats = weekMats.filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
 
         let eventsHtml = '';
         if(trs.length === 0 && schs.length === 0 && mats.length === 0) {
@@ -975,7 +940,7 @@ window.exportMicrocyclePDF = function() {
                         <span style="color:#10B981; font-weight:bold; font-size:12px; text-transform:uppercase;">🏋️ Treino</span>
                         <span style="color:#6B7280; font-weight:bold; font-size:12px;">${dur} Min</span>
                     </div>
-                    ${tr.plan ? `<div style="font-size:11px; color:#374151; white-space:pre-wrap; line-height:1.4;">${tr.plan}</div>` : ''}
+                    ${tr.plan ? `<div style="font-size:11px; color:#374151; white-space:pre-wrap; line-height:1.4;">${escapeHTML(tr.plan)}</div>` : ''}
                 </div>`;
             });
             [...schs, ...mats].forEach(m => {
@@ -986,7 +951,7 @@ window.exportMicrocyclePDF = function() {
                         <span style="color:#D9A441; font-weight:bold; font-size:12px; text-transform:uppercase;">⚽ Jogo</span>
                         <span style="color:#6B7280; font-weight:bold; font-size:12px;">${isHome ? 'CASA' : 'FORA'}</span>
                     </div>
-                    <div style="font-size:13px; color:#111827; font-weight:bold;">vs ${m.opponent}</div>
+                    <div style="font-size:13px; color:#111827; font-weight:bold;">vs ${escapeHTML(m.opponent)}</div>
                     <div style="font-size:11px; color:#6B7280; margin-top:2px;">${m.type === 'amigavel' ? 'Amigável' : (m.type==='campeonato' ? 'Campeonato' : 'Torneio')}</div>
                 </div>`;
             });
@@ -1010,7 +975,7 @@ window.exportMicrocyclePDF = function() {
                 <p style="font-size:16px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">Semana: ${monStr} a ${sunStr}</p>
                 <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Época: <b>${state.currentSeason}</b></p>
             </div>
-            ${getClubLogoHtml()}
+            ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
         </div>
         ${daysHtml}
         <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
@@ -1020,7 +985,7 @@ window.exportMicrocyclePDF = function() {
     </div>`;
 
     document.getElementById('print-area').innerHTML = html;
-    window.openSafePrintModal();
+    if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
 };
 
 window.renderMicrociclo = function() {
@@ -1051,18 +1016,25 @@ window.renderMicrociclo = function() {
     <div style="display:flex; flex-direction:column; gap:8px;">
     `;
 
-    days.forEach((d, idx) => {
-        // Criar a data ISO manual para evitar conflitos de fuso horário
+    // OTIMIZAÇÃO: Filtra os dados da semana toda em vez de processar toda a base de dados repetidamente!
+    const weekDates = days.map(d => {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
-        const dateIso = `${yyyy}-${mm}-${dd}`;
-        const dayStr = `${dd}/${mm}`;
+        return `${yyyy}-${mm}-${dd}`;
+    });
 
-        // Cruzar Treinos e Jogos daquela data
-        const trs = (state.trainings || []).filter(t => t.date === dateIso);
-        const schs = (state.schedule || []).filter(s => s.date === dateIso);
-        const mats = (state.matches || []).filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
+    const weekTrs = (state.trainings || []).filter(t => weekDates.includes(t.date));
+    const weekSchs = (state.schedule || []).filter(s => weekDates.includes(s.date));
+    const weekMats = (state.matches || []).filter(m => weekDates.includes(m.date));
+
+    days.forEach((d, idx) => {
+        const dateIso = weekDates[idx];
+        const dayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        const trs = weekTrs.filter(t => t.date === dateIso);
+        const schs = weekSchs.filter(s => s.date === dateIso);
+        const mats = weekMats.filter(m => m.date === dateIso && !schs.some(s => s.id === (m.originalSchedule && m.originalSchedule.id)));
 
         let eventsHtml = '';
         if(trs.length === 0 && schs.length === 0 && mats.length === 0) {
@@ -1076,7 +1048,7 @@ window.renderMicrociclo = function() {
                       <div style="font-size:11px; color:var(--green); font-weight:bold; text-transform:uppercase;">🏋️ Treino ${isDone ? '🟢' : '🟡'}</div>
                       <div style="font-size:11px; color:var(--muted); font-weight:bold;">${dur}'</div>
                     </div>
-                    ${tr.plan ? `<div style="font-size:10px; color:var(--chalk); margin-top:6px; white-space:pre-wrap; overflow-wrap:break-word;">${tr.plan}</div>` : ''}
+                    ${tr.plan ? `<div style="font-size:10px; color:var(--chalk); margin-top:6px; white-space:pre-wrap; overflow-wrap:break-word;">${escapeHTML(tr.plan)}</div>` : ''}
                 </div>`;
             });
             [...schs, ...mats].forEach(m => {
@@ -1087,7 +1059,7 @@ window.renderMicrociclo = function() {
                        <div style="font-size:11px; color:var(--gold); font-weight:bold; text-transform:uppercase;">⚽ Jogo ${isDone}</div>
                        <div style="font-size:11px; color:var(--muted); font-weight:bold;">${isHome ? 'CASA' : 'FORA'}</div>
                     </div>
-                    <div style="font-size:12px; color:var(--chalk); margin-top:4px; font-weight:bold;">vs ${m.opponent}</div>
+                    <div style="font-size:12px; color:var(--chalk); margin-top:4px; font-weight:bold;">vs ${escapeHTML(m.opponent)}</div>
                     <div style="font-size:10px; color:var(--muted); margin-top:2px;">${m.type === 'amigavel' ? 'Amigável' : (m.type==='campeonato' ? 'Campeonato' : 'Torneio')}</div>
                 </div>`;
             });

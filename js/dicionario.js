@@ -1,5 +1,6 @@
 const dict = {
   pt: {
+    // --- GERAIS & NAVEGAÇÃO ---
     def_club: "A Minha Equipa", set_club: "Nome da tua Equipa", set_club_ph: "Ex: GD São Roque",
     nav_home_lbl: "Início", set_home_tip: "💡 Clica no ícone da Bola no canto superior esquerdo para voltar ao Menu Inicial a qualquer momento.",
     nav_hub_match: "Dia de Jogo", nav_hub_plan: "Planeamento", nav_hub_strat: "Estratégia", nav_hub_team: "Equipa & Dados",
@@ -8,6 +9,9 @@ const dict = {
     hub_plan_title: "Planeamento", hub_plan_desc: "Calendário, Treinos & Diário do Balneário",
     hub_strat_title: "Estratégia", hub_strat_desc: "Quadro Tático Interativo & Vídeos",
     hub_team_title: "Equipa & Dados", hub_team_desc: "Plantel, Classificações & Estatísticas",
+    cancel: "Cancelar", confirm: "Confirmar", del: "Apagar", save: "Gravar", edit: "Editar", remove: "Remover", close: "Fechar",
+    
+    // --- DEFINIÇÕES ---
     set_title: "⚙️ Definições", set_theme: "Tema Visual", set_theme_orig: "Floresta", set_theme_sun: "Sol", set_theme_ocean: "Oceano",
     set_lang: "Idioma / Language",
     set_subs: "Registar Substituições e Minutos", set_yes: "Sim", set_no: "Não", set_subs_desc: "Pede a equipa inicial antes do apito e regista minutos.",
@@ -16,7 +20,22 @@ const dict = {
     set_kit: "Cor da Equipa (Tática)", set_opp_kit: "Cor do Adversário (Tática)", set_archive: "Terminar e Arquivar Época",
     set_season_format: "Formato da Época", set_season_eu: "Europa (Ex: 26/27)", set_season_civ: "Ano Civil (Ex: 2026)",
     archive_title: "Fim de Época", archive_desc: "Vais transitar para uma nova época. O calendário, treinos e diário mantêm-se no arquivo. Os jogos concluídos passam para o Histórico e as estatísticas recomeçam do zero.", archive_warn: "Guarda os teus dados antes de avançar:", archive_btn: "Sim, Arquivar Época",
-    cancel: "Cancelar", confirm: "Confirmar", del: "Apagar", save: "Gravar", edit: "Editar", remove: "Remover", close: "Fechar",
+    set_id: "🛡️ Identidade do Clube", set_tac_game: "📋 Tática e Jogo", set_mod_ui: "📱 Módulos & Interface", set_season_mng: "📅 Gestão de Época",
+    set_level: "Escalão / Categoria", set_logo: "Emblema / Logótipo", set_format: "Formato de Jogo (Quadro Tático & Plantel)",
+    set_format_5: "Futebol 5 (5v5)", set_format_7: "Futebol 7 (7v7)", set_format_9: "Futebol 9 (9v9)", set_format_11: "Futebol 11 (11v11)",
+    set_half_dur: "Tempo por Parte (Min)", set_data_bkp: "💾 Dados & Backups", set_bkp_desc: "Para evitar a perda de dados, exporta um backup regularmente.",
+    set_exp_json: "📥 EXPORTAR JSON", set_imp_json: "📤 IMPORTAR JSON", set_storage: "ARMAZENAMENTO",
+    set_reset: "🗑️ LIMPAR DADOS (RESET)", set_credits: "🤝 CRÉDITOS & PARCEIROS", set_screen: "Ecrã Sempre Ligado (Durante o Jogo)",
+    
+    // --- HOME DASHBOARD ---
+    home_bkp_warn: "⚠️ Backup Atrasado (+7 dias)", home_bkp_btn: "Exportar Já", home_install: "📲 Instalar Aplicação",
+    home_install_desc: "Para evitares a perda de dados, toca em Partilhar e <b>\"Adicionar ao Ecrã Principal\"</b>.",
+    home_bday_today: "🎂 Hoje é o aniversário de <b>{name}</b>! 🎉", home_bday_next: "🎂 Próximo aniversário: <b>{name}</b> ({d} dia/s)",
+    home_next_match: "📅 PRÓXIMO JOGO", home_meet: "📍 Comparência:", home_callup_btn: "CONVOCATÓRIA 📋",
+    home_tr_pend: "🔴 Treino Pendente", home_tr_next: "🟡 Próximo Treino", home_tr_late: "Sessão em atraso (por concluir)",
+    home_tr_sched: "{n} sessão(ões) agendada(s)", home_tr_btn: "Ver Treinos 🟢", home_form: "FORMA (ÚLT. {n})", home_by: "by Pedro Silva",
+    
+    // --- JOGO ---
     match_curr: "Jogo em curso", match_none: "Nenhum jogo a decorrer no momento.", match_goto_sch: "Ir para Calendário",
     match_kickoff: "Apito Inicial", match_ht: "Intervalo", match_ht_lbl: "Intervalo", match_2nd: "Início 2ª Parte", match_ft: "🏁 Apito Final",
     match_pause: "⏸ Pausar", match_resume: "▶ Retomar", match_ended: "🏁 Jogo Terminado (Falta gravar relatório)",
@@ -30,37 +49,96 @@ const dict = {
     match_vs: "vs", match_home: "Casa", match_away: "Fora", match_scored: "Marcados", match_conc: "Sofridos", match_add_goal: "+ Marcado", match_add_conc: "+ Sofrido",
     match_yellow: "Amarelo", match_red: "Vermelho", match_locked: "🔒 Ações de jogo bloqueadas (Apito Final)",
     match_notes: "Notas finais do jogo", match_notes_ph: "Ex: notas do jogo...",
+    match_goal_type: "Tipo de Golo Marcado", match_goal_norm: "⚽ Golo", match_goal_pen: "🎯 Penálti", match_goal_own_adv: "🤖 Autogolo Adversário", match_goal_own_us: "⚠️ Autogolo Nosso",
+    match_scorer_pen: "🎯 Marcador do Penálti", match_own_who: "Quem cometeu o Autogolo?", match_unknown: "Desconhecido / Equipa", match_gk_who: "Quem estava na baliza?",
+    match_hist_btn: "📝 Registar Jogo Histórico (Sem Relógio)", match_hist_active: "📝 Modo Histórico Ativo", match_unlock: "🔓 Desbloquear Ações de Jogo",
+    match_h2h: "⚔️ Histórico vs {opp}", match_send_wapp: "Enviar WhatsApp 📋", match_print_pdf: "📄 Imprimir PDF", match_scout_btn: "👁️ Scouting", match_scout_pdf: "📄 PDF Scouting",
+    
+    // --- TÁTICA ---
     tac_title: "Quadro Tático", tac_inst: "Modo [Mover]: Arrasta jogadores | Modo [Desenhar]: Risco Livre",
     tac_box: "Caixa de Peças", tac_clear: "🧹 Limpar Peças", tac_opp: "+ Adversário", tac_ball: "+ Bola ⚽", tac_own: "Teus Jogadores", tac_no_pls: "Sem mais jogadores disponíveis.",
+    tac_adj_title: "📋 AJUSTAR ESQUEMA TÁTICO: {opp}", tac_save_match: "💾 GUARDAR NO JOGO & VOLTAR", tac_cancel: "✕ CANCELAR",
+    tac_drag_inst: "Arrasta as camisolas para definir a formação em campo. Clica em Guardar no topo para confirmar.",
+    tac_my_plays: "📋 MINHAS JOGADAS", tac_save_play: "📋 GUARDAR JOGADA", tac_save_tr: "🏋️ GUARDAR TREINO", tac_exp_pdf: "📄 EXPORTAR PDF",
+    tac_full_pitch: "⚽ ALTERNAR PARA CAMPO INTEIRO", tac_half_pitch: "🏟️ ALTERNAR PARA MEIO CAMPO",
+    tac_mode_move: "🖐️ MOVER", tac_mode_draw: "✏️ DESENHAR", tac_inst_move: "MODO [MOVER]: ARRASTA JOGADORES E MATERIAL", tac_inst_draw: "MODO [DESENHAR]: ESCOLHE UMA COR E RISCA",
+    tac_piece_box: "CAIXA DE PEÇAS", tac_undo_line: "↩️ RISCO", tac_clear_lines: "🧹 RISCOS", tac_undo_piece: "↩️ PEÇA", tac_clear_pieces: "🗑️ PEÇAS",
+    tac_add_opp: "+ ADVERSÁRIO ({n}/{m})", tac_add_ball: "+ BOLA ⚽", tac_cone: "🔶 Cone", tac_goal: "🥅 Baliza", tac_pole: "📍 Estaca", tac_ladder: "🪜 Escada",
+    tac_your_pls: "TEUS JOGADORES (ADICIONADOS: {n} | LIMITE: {m})", tac_notebook_empty: "Nenhum esquema guardado no Caderno.<br>Cria um esquema no Quadro Tático e guarda como Jogada ou Treino.",
+    tac_plays: "📋 JOGADAS ({n})", tac_drills: "🏋️ EXERCÍCIOS ({n})", tac_load: "▶ CARREGAR", tac_view: "👁️ Ver Esquema",
+    
+    // --- CALENDÁRIO / SCOUTING ---
     sch_title: "Calendário", sch_new: "+ Agendar Novo Jogo", sch_edit: "Editar Agendamento", sch_single: "Jogo Único", sch_multi: "Torneio (Múltiplos)",
     sch_tour_name: "Nome do Torneio", sch_tour_ph: "Ex: Torneio de Verão", sch_loc_gen: "Local (Geral)", sch_tour_games: "Jogos do Torneio", sch_game: "Jogo",
     sch_phase: "Fase / Competição", sch_phase_ph: "Ex: 1ª Fase, Taça", sch_matchday: "Jornada", sch_matchday_ph: "Ex: 1, 14", sch_opp: "Adversário", sch_opp_ph: "Nome da equipa",
     sch_date: "Data", sch_time: "Hora", sch_add_game: "+ Adicionar Jogo ao Torneio", sch_type: "Tipo de jogo", sch_friendly: "Amigável", sch_champ: "Camp.", sch_tour: "Torneio",
     sch_save: "Guardar Agendamento", sch_none: "Nenhum jogo agendado no calendário.", sch_callup: "Convocatória", sch_start: "Iniciar Jogo", sch_meet: "Hora de Comparência:",
+    scout_title: "👁️ Scouting: {opp}", scout_sys: "Sistema Tático Base", scout_block: "Bloco Defensivo", scout_block_high: "🔴 Bloco Alto", scout_block_mid: "🟡 Bloco Médio", scout_block_low: "🟢 Bloco Baixo",
+    scout_buildup: "Construção / Saída de Bola", scout_build_short: "⚽ Apoiada (Curto)", scout_build_long: "🚀 Jogo Direto (Longo)", scout_build_mixed: "🔄 Mista",
+    scout_key_pl: "⚠️ Jogadores-Chave & Alertas Individuais", scout_set_pieces: "🎯 Bolas Paradas", scout_gameplan: "💡 O Nosso Plano de Jogo", scout_del: "Apagar Análise",
+    
+    // --- TREINOS ---
     tr_title: "Treinos", tr_new: "+ Novo Treino", tr_notes: "Plano de Treino & Observações", tr_notes_ph: "Ex: 1. Meiinho; 2. Posse 4v4... | Notas: A equipa esteve bem.",
     tr_abs: "Faltas", tr_abs_desc: "Todos ficam presentes por omissão. Toca em quem faltou.", tr_save: "Guardar Treino",
     tr_pres: "presentes", tr_abss: "faltas", tr_none: "Ainda não há treinos registados.",
+    tr_total_dur: "Duração Total (Min)", tr_plan_drills: "📋 Plano & Exercícios", tr_notebook_drills: "🏋️ Exercícios do Caderno",
+    tr_time_missing: "⏳ Faltam preencher {n} min", tr_time_exceeds: "⚠️ Excede {n} min do total!", tr_time_exact: "✅ Tempo exato da Sessão", tr_time_manage: "Gere os minutos importados",
+    tr_plan_edit: "🏋️‍♂️ Plano de Treino (Gerado/Editável)", tr_obs: "📝 Observações", tr_att_record: "Registo de Presenças & Tempo Efetivo",
+    tr_att_desc: "Podes ajustar os minutos cumpridos se o jogador foi dispensado/lesionado a meio.",
+    tr_status_done: "🟢 Concluído", tr_status_sched: "🟡 Agendado",
+    tr_abs_unjust: "🔴 Injustificada", tr_abs_just: "🟡 Justificada", tr_abs_late: "🕐 Atrasado", tr_abs_inj: "🩹 Lesão / Médico", tr_abs_sus: "🟥 Castigo", tr_abs_dis: "⚪ Dispensado",
+    tr_pres_status: "Estado da Presença", tr_time_done: "Tempo Cumprido", tr_done_btn: "🟢 Concluir", tr_pdf_btn: "📄 PDF",
+    
+    // --- MICROCICLO ---
+    plan_rest: "🛋️ Folga / Recuperação", plan_work_week: "Semana de Trabalho", plan_curr_week: "📅 SEMANA ATUAL",
+    
+    // --- DIÁRIO & VÍDEOS ---
     diary_title: "Diário do Balneário", diary_new: "+ Nova Nota / Reunião", diary_heading: "Título da Nota", diary_heading_ph: "Ex: Reunião de Pais / Conversa Individual",
     diary_content: "Conteúdo / Apontamentos", diary_content_ph: "Escreve aqui os pontos falados...", diary_save: "Guardar no Diário", diary_none: "Nenhuma nota registada no diário.",
     vid_title: "Biblioteca de Vídeos", vid_new: "+ Novo Vídeo / Exercício", vid_name: "Nome do Exercício / Jogada", vid_name_ph: "Ex: Saída sob Pressão 4v3",
     vid_type: "Categoria", vid_type_train: "⚽ Treino", vid_type_match: "🏟️ Jogo", vid_type_setpiece: "🎯 Bolas Paradas",
     vid_url: "Link do Vídeo (URL)", vid_url_ph: "https://youtube.com/... ou link de vídeo", vid_notes: "Pontos-Chave / Notas", vid_notes_ph: "Ex: Foco no tempo de passe...",
     vid_save: "Guardar Vídeo", vid_open: "Abrir Link ↗", vid_share: "Partilhar WhatsApp 📋", vid_none: "Nenhum vídeo guardado nesta categoria.", vid_del_ask: "Apagar este vídeo?",
+    
+    // --- RESULTADOS & ESTATÍSTICAS ---
     res_title: "Resultados", res_search: "Pesquisar por adversário...", res_all: "Todas", res_edit: "Editar Dados do Jogo", res_ongoing: "Em curso",
     res_share_matchday: "Partilhar Resultado 📸", res_none_search: "Nenhum jogo corresponde à pesquisa.", res_none: "Ainda não há jogos registados na época atual.",
-    st_title: "Estatísticas", st_all: "Todos", st_all_phases: "Todas as Fases", st_global: "Resultados Globais", st_wins: "Vitórias", st_draws: "Empates", st_losses: "Derrotas",
+    st_title: "Estatísticas", st_all: "TODOS", st_all_phases: "Todas as Fases", st_global: "Resultados Globais", st_wins: "Vitórias", st_draws: "Empates", st_losses: "Derrotas",
     st_ga: "Golos e Assistências", st_top_s: "Top Marcadores", st_top_a: "Top Assistências",
     st_cards: "Cartões", st_half: "Rendimento por Parte", st_bal: "Balanço", st_form: "Forma e Evolução", st_form_last: "Forma (Últimos {n} Jogos)",
     st_evol: "Evolução de Golos (Últ. {n})", st_tap: "Toca nas barras para ver o resultado",
     st_no_goals: "Sem golos marcados.", st_no_assists: "Sem assistências registadas.", st_no_cards: "Nenhum cartão registado.",
+    st_team: "Equipa", st_players: "Jogadores", st_all_scorers: "⚽ Todos os Marcadores desta Competição", st_tech_bal: "📝 Balanço da Equipa Técnica",
+    st_tech_bal_ph: "Ex: Fase muito positiva, com evolução na construção...", st_exp_pdf_cons: "📄 EXPORTAR RELATÓRIO CONSOLIDADO (PDF)", st_all_tourn: "TODOS OS TORNEIOS",
+    
+    // --- PLANTEL & CLASSIFICAÇÕES ---
     pl_title: "Plantel", pl_none: "Sem jogadores no plantel. Adiciona abaixo.", pl_no_name: "Sem Nome", pl_yrs: "anos",
     pl_goals: "⚽ Golos", pl_assists: "🎯 Assistências", pl_avg: "⭐ Forma Média", pl_mins: "⏱️ Minutos", pl_start: "Titular (XI)", pl_tr_abs: "📉 Faltas aos Treinos",
     pl_disc: "Disciplina", pl_edit: "✏️ Editar Dados do Jogador", pl_mode: "Modo Edição", pl_name: "Nome", pl_num: "Número", pl_pos: "Posições",
     pl_dob: "Data Nascimento (dd.mm.aaaa)", pl_done: "✓ Concluir", pl_add_ph: "Nome do jogador",
+    pl_tab_players: "Jogadores", pl_tab_compare: "Comparar 1v1", pl_tab_staff: "Equipa Técnica",
+    pl_sort_by: "Ordenar por:", pl_sort_pos: "Posição", pl_sort_name: "Nome", pl_sort_num: "Número",
+    pl_add_staff: "➕ Adicionar Staff", pl_staff_role: "Cargo / Função",
     lg_title: "Classificações", lg_new: "+ Nova Competição", lg_name: "Nome da Competição", lg_teams: "Equipas Inscritas", lg_add_team: "+ Adicionar Equipa", lg_matches: "Resultados da Jornada", lg_add_match: "+ Registar Resultado", lg_table: "Tabela Classificativa",
+    lg_editing_res: "A editar resultado...", lg_vs: "VS",
     fp_balanced: "🟢 Minutos Equilibrados", fp_medium: "🟡 Tempo Abaixo da Média", fp_low: "🔴 Pouco Utilizado",
+    comp_p1: "Jogador 1...", comp_p2: "Jogador 2...", comp_mins: "Minutos Jogados", comp_goals: "Golos Marcados", comp_assists: "Assistências",
+    comp_starts: "Titularidades", comp_abs: "Faltas ao Treino", comp_yel: "Cartões Amarelos", comp_red: "Cartões Vermelhos",
+    comp_season: "Estatísticas da época atual", comp_diff: "Seleciona dois jogadores diferentes.", comp_select: "Seleciona dois jogadores acima para ver o Frente a Frente.",
+    
+    // --- EXPORTAÇÃO & CAIXINHA ---
     exp_title: "Cópia de Segurança & Exportação", exp_desc: "O JSON é o backup para recuperar dados. O PDF e o CSV são relatórios para análise e partilha.",
     exp_json: "Exportar JSON", imp_json: "Importar JSON", exp_pdf: "Relatório (PDF)", exp_csv: "Estatísticas (CSV)",
+    fine_title: "Caixinha", fine_new: "+ Nova Multa", fine_reason: "Motivo (Ex: Atraso)", fine_val: "Valor (€)", fine_empty: "Sem registos na Caixinha.", fine_save: "Guardar Multa",
+    fine_global_bal: "Saldo Global", fine_ext: "Extrato Caixinha do Balneário",
+    
+    // --- MODAIS GERAIS & MSGS ---
+    modal_ex_title: "🏋️ Selecionar Exercício do Caderno", search_ex: "Pesquisar exercício...", half_pitch: "Meio Campo", full_pitch: "Campo Inteiro",
+    btn_import: "➕ Importar", no_ex_found: "Nenhum exercício encontrado.", no_visual: "Sem esquema visual.",
+    print_tr_title: "Imprimir Treino", print_tr_q: "O que pretendes incluir no relatório PDF?", print_full: "📑 Relatório Completo (Com Presenças)", print_plan_only: "⚽ Só Plano & Exercícios",
+    fin_match_dur: "Duração do Jogo (Minutos)", fin_match_h1: "1ª Parte", fin_match_h2: "2ª Parte", fin_match_single: "Deixa a 2ª Parte a 0 para torneios de Parte Única.", fin_match_ignore: "Ignorar minutos deste jogo nas estatísticas",
+    fin_rep_ready: "Relatório Gerado", fin_rep_desc: "O teu relatório está pronto. Clica abaixo para abrir, imprimir ou guardar.", fin_rep_btn: "🖨️ Abrir / Partilhar / Imprimir",
+    fin_tac_ready: "Tática Preparada", fin_tac_desc: "O esquema tático foi desenhado. Clica abaixo para partilhar ou guardar.", fin_tac_btn: "📲 Partilhar / Guardar",
     msg_quota: "⚠️ Espaço Esgotado! O teu telemóvel não tem mais memória alocada para a app.",
     msg_del_goal: "Eliminar golo?", msg_del_card: "Eliminar cartão?", msg_del_sub: "Eliminar substituição?",
     msg_clear_tac: "Limpar todas as peças do quadro?", msg_lim_own: "Limite: Apenas {n} jogadores no Fut {n}!", msg_lim_opp: "Limite: Apenas {n} adversários no Fut {n}!",
@@ -80,18 +158,11 @@ const dict = {
     msg_ask_archive: "De certeza que queres arquivar a Época atual?",
     msg_archive_done: "Época arquivada com sucesso ✓",
     msg_del_lg_team: "Remover equipa?", msg_del_lg_match: "Eliminar resultado?",
-    rep_title: "COACHFOLIO — RELATÓRIO DE ÉPOCA", rep_gen: "Gerado em:", rep_conc: "Sofrido",
-    st_team: "Equipa", st_players: "Jogadores",
-    fine_title: "Caixinha", fine_new: "+ Nova Multa", fine_reason: "Motivo (Ex: Atraso)", fine_val: "Valor (€)", fine_empty: "Sem registos na Caixinha.", fine_save: "Guardar Multa",
-    pl_tab_players: "Jogadores", pl_tab_compare: "Comparar 1v1", pl_tab_staff: "Equipa Técnica",
-    pl_sort_by: "Ordenar por:", pl_sort_pos: "Posição", pl_sort_name: "Nome", pl_sort_num: "Número",
-    comp_p1: "Jogador 1...", comp_p2: "Jogador 2...",
-    comp_mins: "Minutos Jogados", comp_goals: "Golos Marcados", comp_assists: "Assistências",
-    comp_starts: "Titularidades", comp_abs: "Faltas ao Treino", comp_yel: "Cartões Amarelos", comp_red: "Cartões Vermelhos",
-    comp_season: "Estatísticas da época atual", comp_diff: "Seleciona dois jogadores diferentes.", comp_select: "Seleciona dois jogadores acima para ver o Frente a Frente.",
-    set_screen: "Ecrã Sempre Ligado (Durante o Jogo)"
+    msg_csv_exp: "Estatísticas exportadas ✓", 
+    rep_title: "COACHFOLIO — RELATÓRIO DE ÉPOCA", rep_gen: "Gerado em:", rep_conc: "Sofrido"
   },
   en: {
+    // --- GENERAL & NAVIGATION ---
     def_club: "My Team", set_club: "Your Team Name", set_club_ph: "Ex: Local FC",
     nav_home_lbl: "Home", set_home_tip: "💡 Click the ball icon in the top left to return to the Main Menu anytime.",
     nav_hub_match: "Matchday", nav_hub_plan: "Planning", nav_hub_strat: "Strategy", nav_hub_team: "Team & Stats",
@@ -100,6 +171,9 @@ const dict = {
     hub_plan_title: "Planning", hub_plan_desc: "Calendar, Trainings & Locker Room Diary",
     hub_strat_title: "Strategy", hub_strat_desc: "Interactive Tactics Board & Videos",
     hub_team_title: "Team & Stats", hub_team_desc: "Roster, Standings & Statistics",
+    cancel: "Cancel", confirm: "Confirm", del: "Delete", save: "Save", edit: "Edit", remove: "Remove", close: "Close",
+    
+    // --- SETTINGS ---
     set_title: "⚙️ Settings", set_theme: "Visual Theme", set_theme_orig: "Forest", set_theme_sun: "Sun", set_theme_ocean: "Ocean",
     set_lang: "Idioma / Language",
     set_subs: "Track Substitutions and Minutes", set_yes: "Yes", set_no: "No", set_subs_desc: "Ask for starting XI before kickoff and track minutes.",
@@ -108,7 +182,22 @@ const dict = {
     set_kit: "Team Kit Color (Tactics)", set_opp_kit: "Opponent Kit Color (Tactics)", set_archive: "End and Archive Season",
     set_season_format: "Season Format", set_season_eu: "Europe (Ex: 26/27)", set_season_civ: "Civil Year (Ex: 2026)",
     archive_title: "End of Season", archive_desc: "You are about to transition to a new season. Calendar, trainings, and diary will be archived. Completed matches move to History and stats reset to zero.", archive_warn: "Save your data before proceeding:", archive_btn: "Yes, Archive Season",
-    cancel: "Cancel", confirm: "Confirm", del: "Delete", save: "Save", edit: "Edit", remove: "Remove", close: "Close",
+    set_id: "🛡️ Club Identity", set_tac_game: "📋 Tactics & Game", set_mod_ui: "📱 Modules & UI", set_season_mng: "📅 Season Management",
+    set_level: "Age Group / Category", set_logo: "Club Logo / Crest", set_format: "Match Format (Tactics & Roster)",
+    set_format_5: "5-a-side (5v5)", set_format_7: "7-a-side (7v7)", set_format_9: "9-a-side (9v9)", set_format_11: "11-a-side (11v11)",
+    set_half_dur: "Half Duration (Min)", set_data_bkp: "💾 Data & Backups", set_bkp_desc: "To prevent data loss, export a backup regularly.",
+    set_exp_json: "📥 EXPORT JSON", set_imp_json: "📤 IMPORT JSON", set_storage: "STORAGE",
+    set_reset: "🗑️ CLEAR DATA (RESET)", set_credits: "🤝 CREDITS & PARTNERS", set_screen: "Keep Screen Awake (During Match)",
+    
+    // --- HOME DASHBOARD ---
+    home_bkp_warn: "⚠️ Backup Overdue (+7 days)", home_bkp_btn: "Export Now", home_install: "📲 Install App",
+    home_install_desc: "To prevent data loss, tap Share and <b>\"Add to Home Screen\"</b>.",
+    home_bday_today: "🎂 Today is <b>{name}</b>'s birthday! 🎉", home_bday_next: "🎂 Next birthday: <b>{name}</b> ({d} days)",
+    home_next_match: "📅 NEXT MATCH", home_meet: "📍 Meeting Time:", home_callup_btn: "CALL-UP 📋",
+    home_tr_pend: "🔴 Pending Training", home_tr_next: "🟡 Next Training", home_tr_late: "Overdue session (pending)",
+    home_tr_sched: "{n} scheduled session(s)", home_tr_btn: "View Trainings 🟢", home_form: "FORM (LAST {n})", home_by: "by Pedro Silva",
+    
+    // --- MATCH ---
     match_curr: "Current Match", match_none: "No match ongoing right now.", match_goto_sch: "Go to Calendar",
     match_kickoff: "Kickoff", match_ht: "Halftime", match_ht_lbl: "Halftime", match_2nd: "Start 2nd Half", match_ft: "🏁 Full Time",
     match_pause: "⏸ Pause", match_resume: "▶ Resume", match_ended: "🏁 Match Ended (Save report pending)",
@@ -122,37 +211,96 @@ const dict = {
     match_vs: "vs", match_home: "Home", match_away: "Away", match_scored: "Scored", match_conc: "Conceded", match_add_goal: "+ Scored", match_add_conc: "+ Conceded",
     match_yellow: "Yellow", match_red: "Red", match_locked: "🔒 Match actions locked (Full Time)",
     match_notes: "Final match notes", match_notes_ph: "Ex: match notes...",
+    match_goal_type: "Type of Goal Scored", match_goal_norm: "⚽ Goal", match_goal_pen: "🎯 Penalty", match_goal_own_adv: "🤖 Opponent Own Goal", match_goal_own_us: "⚠️ Our Own Goal",
+    match_scorer_pen: "🎯 Penalty Scorer", match_own_who: "Who committed the Own Goal?", match_unknown: "Unknown / Team", match_gk_who: "Who was in goal?",
+    match_hist_btn: "📝 Log Historic Match (No Clock)", match_hist_active: "📝 Historic Mode Active", match_unlock: "🔓 Unlock Match Actions",
+    match_h2h: "⚔️ History vs {opp}", match_send_wapp: "Send WhatsApp 📋", match_print_pdf: "📄 Print PDF", match_scout_btn: "👁️ Scouting", match_scout_pdf: "📄 Scouting PDF",
+    
+    // --- TACTICS ---
     tac_title: "Tactics Board", tac_inst: "Mode [Move]: Drag players | Mode [Draw]: Freehand drawing",
     tac_box: "Piece Box", tac_clear: "🧹 Clear Pieces", tac_opp: "+ Opponent", tac_ball: "+ Ball ⚽", tac_own: "Your Players", tac_no_pls: "No more players available.",
+    tac_adj_title: "📋 ADJUST TACTICAL BOARD: {opp}", tac_save_match: "💾 SAVE TO MATCH & RETURN", tac_cancel: "✕ CANCEL",
+    tac_drag_inst: "Drag the shirts to define the formation on the pitch. Click Save at the top to confirm.",
+    tac_my_plays: "📋 MY PLAYS", tac_save_play: "📋 SAVE PLAY", tac_save_tr: "🏋️ SAVE DRILL", tac_exp_pdf: "📄 EXPORT PDF",
+    tac_full_pitch: "⚽ SWITCH TO FULL PITCH", tac_half_pitch: "🏟️ SWITCH TO HALF PITCH",
+    tac_mode_move: "🖐️ MOVE", tac_mode_draw: "✏️ DRAW", tac_inst_move: "MODE [MOVE]: DRAG PLAYERS AND PROPS", tac_inst_draw: "MODE [DRAW]: CHOOSE A COLOR AND DRAW",
+    tac_piece_box: "PIECE BOX", tac_undo_line: "↩️ LINE", tac_clear_lines: "🧹 LINES", tac_undo_piece: "↩️ PIECE", tac_clear_pieces: "🗑️ PIECES",
+    tac_add_opp: "+ OPPONENT ({n}/{m})", tac_add_ball: "+ BALL ⚽", tac_cone: "🔶 Cone", tac_goal: "🥅 Goal", tac_pole: "📍 Pole", tac_ladder: "🪜 Ladder",
+    tac_your_pls: "YOUR PLAYERS (ADDED: {n} | LIMIT: {m})", tac_notebook_empty: "No schemes saved in the Notebook.<br>Create a scheme on the Tactics Board and save it as a Play or Drill.",
+    tac_plays: "📋 PLAYS ({n})", tac_drills: "🏋️ DRILLS ({n})", tac_load: "▶ LOAD", tac_view: "👁️ View Scheme",
+    
+    // --- CALENDAR / SCOUTING ---
     sch_title: "Calendar", sch_new: "+ Schedule New Match", sch_edit: "Edit Schedule", sch_single: "Single Match", sch_multi: "Tournament (Multiple)",
     sch_tour_name: "Tournament Name", sch_tour_ph: "Ex: Summer Cup", sch_loc_gen: "Location (General)", sch_tour_games: "Tournament Matches", sch_game: "Match",
     sch_phase: "Phase / Competition", sch_phase_ph: "Ex: Group Stage, Final", sch_matchday: "Matchday", sch_matchday_ph: "Ex: 1, 14", sch_opp: "Opponent", sch_opp_ph: "Team name",
     sch_date: "Date", sch_time: "Time", sch_add_game: "+ Add Match to Tournament", sch_type: "Match Type", sch_friendly: "Friendly", sch_champ: "League", sch_tour: "Cup/Tourn.",
     sch_save: "Save Schedule", sch_none: "No matches scheduled.", sch_callup: "Call-up", sch_start: "Start Match", sch_meet: "Meeting Time:",
+    scout_title: "👁️ Scouting: {opp}", scout_sys: "Base Tactical System", scout_block: "Defensive Block", scout_block_high: "🔴 High Block", scout_block_mid: "🟡 Mid Block", scout_block_low: "🟢 Low Block",
+    scout_buildup: "Build-up Play", scout_build_short: "⚽ Short Build-up", scout_build_long: "🚀 Direct Play (Long)", scout_build_mixed: "🔄 Mixed",
+    scout_key_pl: "⚠️ Key Players & Alerts", scout_set_pieces: "🎯 Set Pieces", scout_gameplan: "💡 Our Gameplan", scout_del: "Delete Analysis",
+    
+    // --- TRAININGS ---
     tr_title: "Trainings", tr_new: "+ New Training", tr_notes: "Training Plan & Notes", tr_notes_ph: "Ex: 1. Rondo; 2. Possession 4v4... | Notes: Good intensity.",
     tr_abs: "Absences", tr_abs_desc: "Everyone is present by default. Tap who was absent.", tr_save: "Save Training",
     tr_pres: "present", tr_abss: "absent", tr_none: "No trainings recorded yet.",
+    tr_total_dur: "Total Duration (Min)", tr_plan_drills: "📋 Plan & Drills", tr_notebook_drills: "🏋️ Notebook Drills",
+    tr_time_missing: "⏳ Missing {n} min", tr_time_exceeds: "⚠️ Exceeds total by {n} min!", tr_time_exact: "✅ Exact Session Time", tr_time_manage: "Manage imported minutes",
+    tr_plan_edit: "🏋️‍♂️ Training Plan (Generated/Editable)", tr_obs: "📝 Notes & Observations", tr_att_record: "Attendance Record & Effective Time",
+    tr_att_desc: "You can adjust minutes played if the player was dismissed/injured halfway.",
+    tr_status_done: "🟢 Completed", tr_status_sched: "🟡 Scheduled",
+    tr_abs_unjust: "🔴 Unexcused", tr_abs_just: "🟡 Excused", tr_abs_late: "🕐 Late", tr_abs_inj: "🩹 Injured / Medical", tr_abs_sus: "🟥 Suspended", tr_abs_dis: "⚪ Dismissed",
+    tr_pres_status: "Attendance Status", tr_time_done: "Time Completed", tr_done_btn: "🟢 Complete", tr_pdf_btn: "📄 PDF",
+    
+    // --- MICROCYCLE ---
+    plan_rest: "🛋️ Rest / Recovery", plan_work_week: "Work Week", plan_curr_week: "📅 CURRENT WEEK",
+    
+    // --- DIARY & VIDEOS ---
     diary_title: "Locker Room Diary", diary_new: "+ New Note / Meeting", diary_heading: "Note Title", diary_heading_ph: "Ex: Parents Meeting / 1-on-1",
     diary_content: "Content / Notes", diary_content_ph: "Write down the discussed points here...", diary_save: "Save in Diary", diary_none: "No notes recorded in the diary.",
     vid_title: "Video Library", vid_new: "+ New Video / Drill", vid_name: "Drill / Play Name", vid_name_ph: "Ex: Build-up under pressure 4v3",
     vid_type: "Category", vid_type_train: "⚽ Training", vid_type_match: "🏟️ Match", vid_type_setpiece: "🎯 Set Pieces",
     vid_url: "Video Link (URL)", vid_url_ph: "https://youtube.com/... or video link", vid_notes: "Key Points / Notes", vid_notes_ph: "Ex: Focus on pass timing...",
     vid_save: "Save Video", vid_open: "Open Link ↗", vid_share: "Share WhatsApp 📋", vid_none: "No videos saved in this category.", vid_del_ask: "Delete this video?",
+    
+    // --- RESULTS & STATS ---
     res_title: "Results", res_search: "Search by opponent...", res_all: "All", res_edit: "Edit Match Data", res_ongoing: "Ongoing",
     res_share_matchday: "Share Result 📸", res_none_search: "No matches match your search.", res_none: "No matches recorded in the current season yet.",
-    st_title: "Statistics", st_all: "All", st_all_phases: "All Phases", st_global: "Global Results", st_wins: "Wins", st_draws: "Draws", st_losses: "Losses",
+    st_title: "Statistics", st_all: "ALL", st_all_phases: "All Phases", st_global: "Global Results", st_wins: "Wins", st_draws: "Draws", st_losses: "Losses",
     st_ga: "Goals and Assists", st_top_s: "Top Scorers", st_top_a: "Top Assists",
     st_cards: "Cards", st_half: "Performance per Half", st_bal: "Balance", st_form: "Form and Evolution", st_form_last: "Form (Last {n} Matches)",
     st_evol: "Goal Evolution (Last {n})", st_tap: "Tap bars to see the result",
     st_no_goals: "No goals scored.", st_no_assists: "No assists recorded.", st_no_cards: "No cards recorded.",
+    st_team: "Team", st_players: "Players", st_all_scorers: "⚽ All Scorers in this Competition", st_tech_bal: "📝 Technical Staff Review",
+    st_tech_bal_ph: "Ex: Very positive phase, with improvements in build-up...", st_exp_pdf_cons: "📄 EXPORT CONSOLIDATED REPORT (PDF)", st_all_tourn: "ALL TOURNAMENTS",
+    
+    // --- ROSTER & STANDINGS ---
     pl_title: "Roster", pl_none: "No players in the roster. Add below.", pl_no_name: "No Name", pl_yrs: "yrs",
     pl_goals: "⚽ Goals", pl_assists: "🎯 Assists", pl_avg: "⭐ Avg Form", pl_mins: "⏱️ Minutes", pl_start: "Starter (XI)", pl_tr_abs: "📉 Training Absences",
     pl_disc: "Discipline", pl_edit: "✏️ Edit Player Data", pl_mode: "Edit Mode", pl_name: "Name", pl_num: "Number", pl_pos: "Positions",
     pl_dob: "Birth Date (dd.mm.yyyy)", pl_done: "✓ Done", pl_add_ph: "Player name",
+    pl_tab_players: "Players", pl_tab_compare: "Compare 1v1", pl_tab_staff: "Staff",
+    pl_sort_by: "Sort by:", pl_sort_pos: "Position", pl_sort_name: "Name", pl_sort_num: "Number",
+    pl_add_staff: "➕ Add Staff", pl_staff_role: "Role / Function",
     lg_title: "Standings", lg_new: "+ New Competition", lg_name: "Competition Name", lg_teams: "Enrolled Teams", lg_add_team: "+ Add Team", lg_matches: "Matchday Results", lg_add_match: "+ Add Result", lg_table: "League Table",
+    lg_editing_res: "Editing result...", lg_vs: "VS",
     fp_balanced: "🟢 Balanced Minutes", fp_medium: "🟡 Below Avg Time", fp_low: "🔴 Rarely Used",
+    comp_p1: "Player 1...", comp_p2: "Player 2...", comp_mins: "Minutes Played", comp_goals: "Goals Scored", comp_assists: "Assists",
+    comp_starts: "Starts", comp_abs: "Training Absences", comp_yel: "Yellow Cards", comp_red: "Red Cards",
+    comp_season: "Current season statistics", comp_diff: "Select two different players.", comp_select: "Select two players above to view Head-to-Head.",
+    
+    // --- EXPORT & FINES ---
     exp_title: "Backup & Export", exp_desc: "JSON is the backup to recover data. PDF and CSV are reports for analysis and sharing.",
     exp_json: "Export JSON", imp_json: "Import JSON", exp_pdf: "Report (PDF)", exp_csv: "Stats (CSV)",
+    fine_title: "Fine Box", fine_new: "+ New Fine", fine_reason: "Reason (Ex: Late)", fine_val: "Value (€)", fine_empty: "No records in the Fine Box.", fine_save: "Save Fine",
+    fine_global_bal: "Global Balance", fine_ext: "Locker Room Fine Box Statement",
+    
+    // --- MODALS & MESSAGES ---
+    modal_ex_title: "🏋️ Select Drill from Notebook", search_ex: "Search drill...", half_pitch: "Half Pitch", full_pitch: "Full Pitch",
+    btn_import: "➕ Import", no_ex_found: "No drills found.", no_visual: "No visual scheme.",
+    print_tr_title: "Print Training", print_tr_q: "What to include in the PDF report?", print_full: "📑 Full Report (With Attendance)", print_plan_only: "⚽ Plan & Drills Only",
+    fin_match_dur: "Match Duration (Minutes)", fin_match_h1: "1st Half", fin_match_h2: "2nd Half", fin_match_single: "Leave 2nd Half at 0 for single-half tournaments.", fin_match_ignore: "Ignore minutes of this match in stats",
+    fin_rep_ready: "Report Generated", fin_rep_desc: "Your report is ready. Click below to open, print, or save.", fin_rep_btn: "🖨️ Open / Share / Print",
+    fin_tac_ready: "Tactics Ready", fin_tac_desc: "The tactical board was drawn. Click below to share or save.", fin_tac_btn: "📲 Share / Save",
     msg_quota: "⚠️ Storage Full! Your phone has no more memory allocated for the app.",
     msg_del_goal: "Delete goal?", msg_del_card: "Delete card?", msg_del_sub: "Delete substitution?",
     msg_clear_tac: "Clear all pieces from the board?", msg_lim_own: "Limit: Only {n} players in Fut {n}!", msg_lim_opp: "Limit: Only {n} opponents in Fut {n}!",
@@ -172,18 +320,11 @@ const dict = {
     msg_ask_archive: "Are you sure you want to archive the current Season?",
     msg_archive_done: "Season archived successfully ✓",
     msg_del_lg_team: "Remove team?", msg_del_lg_match: "Delete result?",
-    rep_title: "COACHFOLIO — SEASON REPORT", rep_gen: "Generated on:", rep_conc: "Conceded",
-    st_team: "Team", st_players: "Players",
-    fine_title: "Fine Box", fine_new: "+ New Fine", fine_reason: "Reason (Ex: Late)", fine_val: "Value (€)", fine_empty: "No records in the Fine Box.", fine_save: "Save Fine",
-    pl_tab_players: "Players", pl_tab_compare: "Compare 1v1", pl_tab_staff: "Staff",
-    pl_sort_by: "Sort by:", pl_sort_pos: "Position", pl_sort_name: "Name", pl_sort_num: "Number",
-    comp_p1: "Player 1...", comp_p2: "Player 2...",
-    comp_mins: "Minutes Played", comp_goals: "Goals Scored", comp_assists: "Assists",
-    comp_starts: "Starts", comp_abs: "Training Absences", comp_yel: "Yellow Cards", comp_red: "Red Cards",
-    comp_season: "Current season statistics", comp_diff: "Select two different players.", comp_select: "Select two players above to view Head-to-Head.",
-    set_screen: "Keep Screen Awake (During Match)"
+    msg_csv_exp: "Stats exported ✓", 
+    rep_title: "COACHFOLIO — SEASON REPORT", rep_gen: "Generated on:", rep_conc: "Conceded"
   }
 };
+
 let state = { 
   schemaVersion: 1, isActivated: false, // 🛡️ NOVAS VARIÁVEIS DE SEGURANÇA E VERSÃO
   roster: [], matches: [], trainings: [], schedule: [], tactics: [], tacticPaths: [], tacticalNotebook: [], videos: [], diary: [], leagues: [], fines: [], staff: [],
@@ -191,9 +332,29 @@ let state = {
   showFairPlay: true, enableVideos: true, enableDiary: true, enableLeagues: true, enableFines: false, enableBirthdays: false, teamColor: '#D9A441', oppColor: '#C8493F', currentSeason: '', seasonFormat: 'europeu',
   tacticHalfPitch: false, rosterSortBy: 'posicao', keepScreenAwake: false
 };
+
 function t(key, vars = {}) {
-  let str = dict[state.lang] ? dict[state.lang][key] : dict['pt'][key];
-  if (!str) return key;
-  for (let k in vars) { str = str.split(`{${k}}`).join(vars[k]); }
+  // 1. Procura a tradução no idioma atual
+  let str = dict[state.lang] && dict[state.lang][key] !== undefined ? dict[state.lang][key] : null;
+
+  // 2. Fallback de Segurança: Se não existir em Inglês, tenta ir buscar a Português
+  if (str === null && dict['pt'][key] !== undefined) {
+      str = dict['pt'][key];
+  }
+
+  // 3. Fallback Automático Mestre: Se a chave não existir em lado nenhum!
+  if (str === null) {
+      // Deixa um aviso na consola para o Treinador saber o que falta no código
+      console.warn(`[Coachfolio] Tradução em falta: "${key}" no idioma "${state.lang}"`);
+      
+      // Transforma a chave numa frase legível (ex: "btn_novo_jogador" -> "Btn Novo Jogador")
+      str = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  // 4. Injeta as variáveis dinâmicas (ex: {color} ou {n})
+  for (let k in vars) { 
+      str = str.split(`{${k}}`).join(vars[k]); 
+  }
+  
   return str;
 }

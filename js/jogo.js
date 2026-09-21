@@ -48,8 +48,8 @@ function buildMatchReportHTML(m){
   sortedSquad.forEach(p => {
     const isStarter = (m.lineup||[]).includes(p.id);
     const wasSubbedIn = (m.subs||[]).some(s => s.inId === p.id);
-    let secs = calcPlayerMinutes(m, p.id);
-    let minsStr = formatSecsToMinSec(secs);
+    let secs = typeof calcPlayerMinutes === 'function' ? calcPlayerMinutes(m, p.id) : 0;
+    let minsStr = typeof formatSecsToMinSec === 'function' ? formatSecsToMinSec(secs) : Math.round(secs/60)+"'";
     const r = (m.ratings && m.ratings[p.id]) ? `${m.ratings[p.id]}★` : '-';
     let statusLabel = isStarter ? '<b>(XI)</b>' : (wasSubbedIn ? '(Sup)' : '(SNU)');
     lineupHtml += `<tr><td style="text-align:left;">${playerLabel(p)} ${statusLabel}</td><td style="white-space:nowrap; padding:0 6px;">${minsStr}</td><td>${r}</td></tr>`;
@@ -74,25 +74,27 @@ function buildMatchReportHTML(m){
     cardsHtml += `<tr><td>${minDisplay}</td><td style="text-align:left;">${c.color==='Amarelo'?'🟨':'🟥'} ${playerName(c.playerId)}</td></tr>`;
   });
 
-  const selectedStaffIds = m.originalSchedule?.staffCallup || [];
+  const selectedStaffIds = (m.originalSchedule && m.originalSchedule.staffCallup) ? m.originalSchedule.staffCallup : [];
   const staffList = (state.staff || []).filter(st => selectedStaffIds.includes(st.id));
   let staffRowsHtml = '';
   if (staffList.length === 0) {
     staffRowsHtml = '<tr><td colspan="2" style="text-align:center; padding:6px; color:#666;">Equipa Técnica / Delegado não registados.</td></tr>';
   } else {
     staffList.forEach(st => {
-      staffRowsHtml += `<tr><td style="text-align:left; font-weight:bold;">${st.name}</td><td style="text-align:center; color:#444;">${st.role || 'Equipa Técnica'}</td></tr>`;
+      staffRowsHtml += `<tr><td style="text-align:left; font-weight:bold;">${escapeHTML(st.name)}</td><td style="text-align:left; color:#444;">${escapeHTML(st.role || 'Equipa Técnica')}</td></tr>`;
     });
   }
+
+  const logoHtml = typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : '';
 
   let html = `<div class="print-card">
     <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; text-align:left;">
       <div>
         <h1 style="margin:0;">Relatório de Jogo</h1>
-        <p style="font-size:18px; font-weight:bold; margin:5px 0 0;">${getMyClub()} ${sc} - ${co} ${m.opponent} (${locLabel})</p>
+        <p style="font-size:18px; font-weight:bold; margin:5px 0 0;">${getMyClub()} ${sc} - ${co} ${escapeHTML(m.opponent)} (${locLabel})</p>
         <p style="margin:5px 0 0;"><b>${getClubAndEscalao()}</b> | ${dateStr} | Época: ${m.season||state.currentSeason} ${m.capitao ? ' | © Capitão: ' + playerName(m.capitao) : ''} | Duração Real: ${totalMatchMins}'</p>
       </div>
-      ${getClubLogoHtml()}
+      ${logoHtml}
     </div>
     <div style="display:flex; gap:20px; margin-bottom:20px; align-items:flex-start;">
       <div style="flex:1.2;">
@@ -103,7 +105,7 @@ function buildMatchReportHTML(m){
         <h3>Substituições</h3>
         <table><tr><th>Min</th><th style="text-align:left;">Saiu</th><th style="text-align:left;">Entrou</th></tr>${subsHtml||'<tr><td colspan="3">Sem registo</td></tr>'}</table>
         <h3 style="margin-top:15px;">Equipa Técnica Presente</h3>
-        <table><tr><th style="text-align:left;">Jogador</th><th style="width:70px;">Min</th><th style="width:40px;">Aval</th></tr>
+        <table><tr><th style="text-align:left;">Nome</th><th style="text-align:left;">Função</th></tr>${staffRowsHtml}</table>
         <h3 style="margin-top:15px;">Cartões</h3>
         <table><tr><th>Min</th><th style="text-align:left;">Jogador</th></tr>${cardsHtml||'<tr><td colspan="2">Sem registo</td></tr>'}</table>
       </div>
@@ -111,12 +113,12 @@ function buildMatchReportHTML(m){
     <h3>Golos e Ocorrências</h3>
     <table><tr><th style="width:50px;">Min</th><th style="text-align:left;">Evento</th></tr>${goalsHtml||'<tr><td colspan="2">Sem registo</td></tr>'}</table>
     <h3>Notas do Treinador</h3>
-    <p style="white-space:pre-wrap; border:1px solid #CCC; padding:10px; border-radius:6px; background:#FFF; min-height:60px;">${m.notes||'Nenhuma nota registada neste jogo.'}</p>
+    <p style="white-space:pre-wrap; border:1px solid #CCC; padding:10px; border-radius:6px; background:#FFF; min-height:60px;">${escapeHTML(m.notes || 'Nenhuma nota registada neste jogo.')}</p>
   </div>`;
 
   return html;
 }
-// Desenha o campo tático vetorial horizontal (4:3) em SVG para ser impresso no PDF
+
 window.buildMatchTacticalPitchSVG = function(m) {
   if (!m) return '';
 
@@ -142,14 +144,11 @@ window.buildMatchTacticalPitchSVG = function(m) {
     const svgY = (cy / 100) * 75;
 
     piecesSVG += `
-      <!-- Círculo da Camisola -->
       <circle cx="${cx}" cy="${svgY}" r="5" fill="${kitColor}" stroke="#FFFFFF" stroke-width="0.8" />
-      <!-- Número no Centro -->
-      <text x="${cx}" y="${svgY + 1.5}" fill="${numColor}" font-size="4" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${numLabel}</text>
-      <!-- Nome do Jogador -->
+      <text x="${cx}" y="${svgY + 1.5}" fill="${numColor}" font-size="4" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${escapeHTML(numLabel)}</text>
       ${nameLabel ? `
         <rect x="${cx - 10}" y="${svgY + 5.5}" width="20" height="4.5" rx="1" fill="rgba(0,0,0,0.75)" />
-        <text x="${cx}" y="${svgY + 8.8}" fill="#FFFFFF" font-size="3" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${nameLabel}</text>
+        <text x="${cx}" y="${svgY + 8.8}" fill="#FFFFFF" font-size="3" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${escapeHTML(nameLabel)}</text>
       ` : ''}
     `;
   });
@@ -168,6 +167,7 @@ window.buildMatchTacticalPitchSVG = function(m) {
     </div>
   `;
 };
+
 window.exportMatchPDF = function(mId) {
   const m = state.matches.find(x => x.id === mId);
   if (!m) return;
@@ -187,7 +187,6 @@ window.exportMatchPDF = function(mId) {
     totalMatchMins = (m.halfDuration || state.defaultHalfDuration || 30) * (m.numberOfHalves || 2);
   }
 
-  // 1. Separar Convocatória e Plantel
   let squadIds = [];
   if (m.originalSchedule && m.originalSchedule.callup && m.originalSchedule.callup.length > 0) {
     squadIds = [...m.originalSchedule.callup];
@@ -213,13 +212,11 @@ window.exportMatchPDF = function(mId) {
     else unused.push(p);
   });
 
-  // Tabela da Equipa Inicial
   let startersHtml = '';
   sortPlayerObjs(starters).forEach(p => {
-    startersHtml += `<tr style="border-bottom: 1px solid #E5E7EB;"><td style="text-align:center; font-weight:bold; width:35px; padding:6px 0; color:#111827;">${p.number || '-'}</td><td style="text-align:left; font-weight:600; padding-left:10px; color:#1F2937;">${p.name || t('pl_no_name')}</td></tr>`;
+    startersHtml += `<tr style="border-bottom: 1px solid #E5E7EB;"><td style="text-align:center; font-weight:bold; width:35px; padding:6px 0; color:#111827;">${p.number || '-'}</td><td style="text-align:left; font-weight:600; padding-left:10px; color:#1F2937;">${escapeHTML(p.name) || t('pl_no_name')}</td></tr>`;
   });
 
-  // Tabela Completa da Convocatória com Minutos e Avaliações
   const sortedSquad = [
     ...sortPlayerObjs(starters),
     ...sortPlayerObjs(usedSubs),
@@ -230,8 +227,8 @@ window.exportMatchPDF = function(mId) {
   sortedSquad.forEach((p, idx) => {
     const isStarter = (m.lineup || []).includes(p.id);
     const wasSubbedIn = (m.subs || []).some(s => s.inId === p.id);
-    let secs = calcPlayerMinutes(m, p.id);
-    let minsStr = formatSecsToMinSec(secs);
+    let secs = typeof calcPlayerMinutes === 'function' ? calcPlayerMinutes(m, p.id) : 0;
+    let minsStr = typeof formatSecsToMinSec === 'function' ? formatSecsToMinSec(secs) : Math.round(secs/60)+"'";
     const r = (m.ratings && m.ratings[p.id]) ? `${m.ratings[p.id]}★` : '-';
     let statusLabel = isStarter ? '<span style="color:#059669; font-weight:bold;">(XI)</span>' : (wasSubbedIn ? '<span style="color:#D97706;">(Sup)</span>' : '<span style="color:#9CA3AF;">(SNU)</span>');
     let bg = idx % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
@@ -239,7 +236,6 @@ window.exportMatchPDF = function(mId) {
     lineupHtml += `<tr style="background:${bg}; border-bottom:1px solid #F3F4F6;"><td style="text-align:left; padding:6px 8px; color:#111827;">${playerLabel(p)} ${statusLabel}</td><td style="white-space:nowrap; text-align:center; padding:6px 4px; font-family:monospace; font-weight:bold; color:#374151;">${minsStr}</td><td style="text-align:center; color:#D9A441; font-weight:bold;">${r}</td></tr>`;
   });
 
-  // Substituições, Golos e Cartões
   let subsHtml = '';
   if (m.subs && m.subs.length > 0) {
     m.subs.forEach(s => {
@@ -272,28 +268,25 @@ window.exportMatchPDF = function(mId) {
     });
   }
 
-  // Equipa Técnica Presente
-  const selectedStaffIds = m.originalSchedule?.staffCallup || [];
+  const selectedStaffIds = (m.originalSchedule && m.originalSchedule.staffCallup) ? m.originalSchedule.staffCallup : [];
   const staffList = (state.staff || []).filter(st => selectedStaffIds.includes(st.id));
   let staffStr = staffList.length > 0 
-    ? staffList.map(st => `<b>${st.name}</b> (${st.role || 'Equipa Técnica'})`).join(' &nbsp;•&nbsp; ')
+    ? staffList.map(st => `<b>${escapeHTML(st.name)}</b> (${escapeHTML(st.role || 'Equipa Técnica')})`).join(' &nbsp;•&nbsp; ')
     : 'Sem registo oficial de elementos presentes.';
 
-  // Campo Tático
   const tacticalPitchSVG = window.buildMatchTacticalPitchSVG ? window.buildMatchTacticalPitchSVG(m) : '';
+  const logoHtml = typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : '';
 
   let html = `<div class="print-card" style="padding:24px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827;">
-    <!-- CABEÇALHO COM EMBLEMA -->
     <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:18px;">
       <div>
         <h1 style="font-size:20px; margin:0; text-transform:uppercase; letter-spacing:0.05em; color:#0E211A; font-weight:800;">BOLETIM OFICIAL DE JOGO</h1>
-        <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">${getMyClub()} ${sc} - ${co} ${m.opponent || 'Adversário'} <span style="font-size:12px; font-weight:normal; color:#4B5563;">(${locLabel})</span></p>
+        <p style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:#D9A441;">${getMyClub()} ${sc} - ${co} ${escapeHTML(m.opponent || 'Adversário')} <span style="font-size:12px; font-weight:normal; color:#4B5563;">(${locLabel})</span></p>
         <p style="font-size:11px; color:#4B5563; margin:4px 0 0 0;"><b>${getClubAndEscalao()}</b> &nbsp;|&nbsp; Data: <b>${dateStr}</b> &nbsp;|&nbsp; Época: <b>${m.season || state.currentSeason}</b> ${m.capitao ? ' &nbsp;|&nbsp; © Capitão: <b>' + playerName(m.capitao) + '</b>' : ''} &nbsp;|&nbsp; Duração: <b>${totalMatchMins}'</b></p>
       </div>
-      ${getClubLogoHtml()}
+      ${logoHtml}
     </div>
 
-    <!-- BLOCO 1: EQUIPA INICIAL & CAMPO TÁTICO -->
     <div style="display:flex; gap:16px; margin-bottom:18px; align-items:flex-start; page-break-inside:avoid;">
       <div style="flex:0.8; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
         <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Titulares (${starters.length})</h3>
@@ -308,7 +301,6 @@ window.exportMatchPDF = function(mId) {
       </div>
     </div>
 
-    <!-- BLOCO 2: INCIDÊNCIAS DO JOGO -->
     <div style="display:flex; gap:16px; margin-bottom:18px; align-items:flex-start; page-break-inside:avoid;">
       <div style="flex:1.2; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px;">
         <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Golos e Ocorrências</h3>
@@ -331,7 +323,6 @@ window.exportMatchPDF = function(mId) {
       </div>
     </div>
 
-    <!-- BLOCO 3: CONVOCATÓRIA E MINUTOS -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px; page-break-inside:avoid;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 8px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase; color:#0E211A;">Convocatória e Minutos de Jogo (${sortedSquad.length} Atletas)</h3>
       <table style="width:100%; border-collapse:collapse; font-size:11px;">
@@ -340,29 +331,28 @@ window.exportMatchPDF = function(mId) {
       </table>
     </div>
 
-    <!-- BLOCO 4: EQUIPA TÉCNICA -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 4px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">Equipa Técnica Presente</h3>
       <p style="font-size:11px; margin:4px 0 0 0; color:#374151;">${staffStr}</p>
     </div>
 
-    <!-- BLOCO 5: NOTAS DO TREINADOR -->
     ${m.notes ? `
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:10px; margin-bottom:18px; page-break-inside:avoid;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">Observações Técnicas</h3>
-      <p style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937; margin:4px 0 0 0;">${m.notes}</p>
+      <p style="white-space:pre-wrap; font-size:11px; line-height:1.5; color:#1F2937; margin:4px 0 0 0;">${escapeHTML(m.notes)}</p>
     </div>
     ` : ''}
 
     <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
-      <div style="font-size:10px; color:#9CA3AF;">• Documento de registo oficial — Coachfolio v3.5</div>
+      <div style="font-size:10px; color:#9CA3AF;">• Documento de registo oficial — Coachfolio v3.6</div>
       <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold; color:#111827;">A Equipa Técnica</div>
     </div>
   </div>`;
 
   printArea.innerHTML = html;
-  window.openSafePrintModal();
+  if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
 };
+
 window.exportSeasonPDF = function(season){
   const seasonId = season || state.currentSeason;
   const seasonMatches = (state.matches || [])
@@ -375,7 +365,7 @@ window.exportSeasonPDF = function(season){
     });
 
   if (seasonMatches.length === 0) {
-    showToast('Sem jogos registados nesta época para exportar.');
+    if(typeof showToast === 'function') showToast('Sem jogos registados nesta época para exportar.');
     return;
   }
 
@@ -386,12 +376,12 @@ window.exportSeasonPDF = function(season){
   const printArea = document.getElementById('print-area');
   if (printArea) {
     printArea.innerHTML = combinedHtml;
-    window.openSafePrintModal();
+    if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
   } else {
-    showToast('Erro ao aceder à área de impressão.');
+    if(typeof showToast === 'function') showToast('Erro ao aceder à área de impressão.');
   }
 };
-// 1. Gera ou atualiza a disposição tática padrão dos titulares do jogo (Horizontal 4:3)
+
 window.generateMatchTacticalSnapshot = function(m) {
   if (!m) return;
   
@@ -414,7 +404,6 @@ window.generateMatchTacticalSnapshot = function(m) {
       const numLabel = p && p.number ? String(p.number) : String(idx + 1);
       const nameLabel = p ? (p.name ? p.name.split(' ')[0] : '') : '';
 
-      // Posições horizontais padrão (Guarda-redes na baliza esquerda x=12)
       let x = 12, y = 50;
       if (idx > 0) {
         let col = Math.floor((idx - 1) / 3);
@@ -439,15 +428,12 @@ window.generateMatchTacticalSnapshot = function(m) {
   saveState();
 };
 
-// 2. Abre o Quadro Tático associado ao jogo atual
 window.openMatchTacticalBoard = function(mId) {
   const m = state.matches.find(x => x.id === mId);
   if (!m) return;
 
-  // Garante que o snapshot existe com a equipa inicial
   window.generateMatchTacticalSnapshot(m);
 
-  // Define o estado de edição exclusiva do jogo
   window.editingMatchTacticsId = mId;
   state.tacticFormat = m.tacticalSnapshot.format || state.tacticFormat || 11;
   state.tactics = (m.tacticalSnapshot.pieces || []).map(p => ({
@@ -460,9 +446,10 @@ window.openMatchTacticalBoard = function(mId) {
   }));
 
   saveState();
-  navigateToHub('estrategia');
-  navigateToTab('tatica');
+  if(typeof navigateToHub === 'function') navigateToHub('estrategia');
+  if(typeof navigateToTab === 'function') navigateToTab('tatica');
 };
+
 window.saveMatchTacticalBoardAndReturn = function() {
   const mId = window.editingMatchTacticsId;
   const m = state.matches.find(x => x.id === mId);
@@ -483,10 +470,10 @@ window.saveMatchTacticalBoardAndReturn = function() {
     });
 
     saveState();
-    showToast('Esquema tático guardado no jogo! 💾');
+    if(typeof showToast === 'function') showToast('Esquema tático guardado no jogo! 💾');
   }
 
   window.editingMatchTacticsId = null;
-  navigateToHub('jogo');
-  navigateToTab('jogo');
+  if(typeof navigateToHub === 'function') navigateToHub('jogo');
+  if(typeof navigateToTab === 'function') navigateToTab('jogo');
 };

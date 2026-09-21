@@ -15,7 +15,7 @@ function renderModalHTML(){
             <input type="text" placeholder="Pesquisar exercício..." value="${window.exerciseSearchQuery || ''}" oninput="updateExerciseSearch(this.value)">
           </div>
 
-          <div style="max-height:55vh; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:8px;">
+          <div id="exercise-list" style="max-height:55vh; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:8px;">
             ${filtered.length > 0 ? filtered.map(ex => `
               <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
@@ -123,11 +123,7 @@ function renderModalHTML(){
 
   if(modalConfig.type === 'settings') {
      const sizeKB = (JSON.stringify(state).length / 1024); const maxKB = 5120; const pct = Math.min(100, (sizeKB/maxKB)*100);
-     let strColor = pct > 90 ? 'var(--red)' : (pct > 70 ? 'var(--yellow)' : 'var(--green)');
-     
-     state.enableDiary = true;
-     state.enableVideos = true;
-     state.enableBirthdays = true;
+     let strColor = pct > 90 ? 'var(--red)' : (pct > 50 ? 'var(--yellow)' : 'var(--green)');
 
      window.settingsTab = window.settingsTab !== undefined ? window.settingsTab : null;
 
@@ -147,7 +143,6 @@ function renderModalHTML(){
          `;
      };
 
-     // 1. CONTEÚDO DAS ABAS (Declarado ANTES do return para evitar erros de leitura)
      const contentIdentidade = `
         <div class="field" style="margin-bottom:12px;">
             <label>${t('set_club')}</label>
@@ -237,7 +232,6 @@ function renderModalHTML(){
         <button class="btn btn-outline" style="width:100%; font-size:12px;" onclick="event.stopPropagation(); archiveSeason();">${t('set_archive')}</button>
      `;
 
-     // 2. RETORNO DO MODAL (Com layout flexível para garantir que o botão Fechar fica visível)
      return `
      <style>
        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -246,7 +240,6 @@ function renderModalHTML(){
        <div class="modal-card" style="max-height: 85vh; display: flex; flex-direction: column; padding: 16px; max-width: 480px; position: relative; z-index: 10000;">
          <h3 style="margin-top:0; margin-bottom:12px; color:var(--gold); flex-shrink:0;">${t('set_title')}</h3>
          
-         <!-- ÁREA COM SCROLL INTERNO -->
          <div style="flex: 1; overflow-y: auto; padding-right: 4px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;">
              
              ${makeAccordion('identidade', '🛡️', 'Identidade do Clube', contentIdentidade)}
@@ -276,7 +269,6 @@ function renderModalHTML(){
 
          </div>
          
-         <!-- BOTÕES FIXOS NO FUNDO DO MODAL -->
          <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 6px;">
              <button class="btn" style="width:100%; background:#0E211A; color:#fff; border:1px solid var(--line); font-size:11px; padding:10px;" onclick="abrirCreditos()">🤝 Créditos & Parceiros</button>
              <button class="btn btn-outline" style="width:100%; font-size:12px; padding:10px;" onclick="closeModal()">${t('close')}</button>
@@ -375,7 +367,7 @@ function matchNarrativeHtml(m, isLocked = false){
       const minA = a.minute==null?999:a.minute;
       const minB = b.minute==null?999:b.minute;
       if(minA !== minB) return minA - minB;
-      return a.timestamp - b.timestamp; // Desempate por milissegundo exato
+      return a.timestamp - b.timestamp;
     });
   };
   const formatExactHalf = (ms) => {
@@ -384,8 +376,6 @@ function matchNarrativeHtml(m, isLocked = false){
     return `(⏱️ ${mm}' ${String(ss).padStart(2,'0')}'' )`;
   };
 
-  // 3. Atualização da representação visual na Linha do Tempo / Narrativa do Jogo
-  // Função interna goalRow dentro de matchNarrativeHtml:
   const goalRow = (g) => {
     let subTag = g.goalSubtype === 'penalti' ? ' (Penálti)' : (g.goalSubtype === 'autogolo' ? ' (Autogolo)' : '');
     let desc = '';
@@ -408,10 +398,10 @@ function matchNarrativeHtml(m, isLocked = false){
       </span>
       ${!isLocked ? `<span><button class="del" style="color:var(--muted); margin-right:2px;" onclick="event.stopPropagation(); editEventMinute('${m.id}','goal','${g.id}')">✎</button><button class="del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_goal')}', ()=>deleteGoal('${m.id}', '${g.id}'))">✕</button></span>` : ''}
     </div>`;
-};
+  };
+  
   const cardRow = (c) => `<div class="goal-row"><span>${c.minute!=null?`<span class="mono" style="color:var(--gold);">${window.getGlobalMinuteDisplay(m, c.half, c.minute)}'</span> `:''}${c.color==='Amarelo'?'🟨':'🟥'} ${playerName(c.playerId)}</span>${!isLocked ? `<span><button class="del" style="color:var(--muted); margin-right:2px;" onclick="event.stopPropagation(); editEventMinute('${m.id}','card','${c.id}')">✎</button><button class="del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_card')}', ()=>deleteCard('${m.id}', '${c.id}'))">✕</button></span>` : ''}</div>`;
   const subRow = (s) => `<div class="goal-row"><span><span class="mono" style="color:var(--gold);">${s.isHalftime ? 'INT' : (s.minute!=null?window.getGlobalMinuteDisplay(m, s.data.half, s.minute)+"'":"")}</span> 🔄 <span style="color:var(--red)">↓ ${playerName(s.data.outId)}</span> <span style="color:var(--green)">↑ ${playerName(s.data.inId)}</span></span>${!isLocked ? `<span>${!s.isHalftime ? `<button class="del" style="color:var(--muted); margin-right:2px;" onclick="event.stopPropagation(); editEventMinute('${m.id}','sub','${s.data.id}')">✎</button>` : ''}<button class="del" onclick="event.stopPropagation(); askConfirm('${t('msg_del_sub')}', ()=>deleteSub('${m.id}', '${s.data.id}'))">✕</button></span>` : ''}</div>`;
-
 
   let rows = ''; const h1 = eventsForHalf(1); const h2 = eventsForHalf(2); const h1_regular = h1.filter(e => !e.isHalftime); const h1_int = h1.filter(e => e.isHalftime);
   
@@ -459,17 +449,23 @@ function renderHome(){
     bdayHtml = `<div style="background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px; text-align:center;">${msg}</div>`;
   }
 
-  let nextMatchHtml = '';
-  const upcomingGames = (state.schedule || [])
-    .filter(s => (s.season || state.currentSeason) === state.currentSeason)
-    .sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time));
+  const todayStr = new Date().toISOString().slice(0,10);
 
-  if (upcomingGames.length > 0) {
-    const nm = upcomingGames[0];
+  let nm = null;
+  let minSchMs = Infinity;
+  (state.schedule || []).forEach(s => {
+    if ((s.season || state.currentSeason) === state.currentSeason && s.date >= todayStr) {
+      const ms = new Date(s.date + 'T' + (s.time || '00:00')).getTime();
+      if (ms < minSchMs) { minSchMs = ms; nm = s; }
+    }
+  });
+
+  let nextMatchHtml = '';
+  if (nm) {
     const dateParts = nm.date.split('-');
     const dateStr = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}` : nm.date;
     
-    const timeParts = nm.time.split(':');
+    const timeParts = (nm.time || '00:00').split(':');
     let d = new Date();
     d.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]));
     d.setHours(d.getHours() - 1);
@@ -482,7 +478,7 @@ function renderHome(){
           <span style="font-size:10px; color:var(--muted);">${dateStr} às ${nm.time}</span>
         </div>
         <div style="font-size:14px; font-weight:bold; color:var(--chalk); margin-bottom:4px;">
-          ${nm.location === 'casa' ? `${getMyClub()} vs ${nm.opponent}` : `${nm.opponent} vs ${getMyClub()}`}
+          ${nm.location === 'casa' ? `${getMyClub()} vs${nm.opponent}` : `${nm.opponent} vs${getMyClub()}`}
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           <span style="font-size:11px; color:var(--muted);">📍 Comparência: <b>${meetTime}</b></span>
@@ -492,20 +488,26 @@ function renderHome(){
   }
 
   let pendingTrainingsHtml = '';
-  const todayStr = new Date().toISOString().slice(0,10);
-  const pendingTrs = (state.trainings || [])
-    .filter(t => t.status === 'pending')
-    .sort((a,b) => new Date(a.date) - new Date(b.date));
+  let nt = null;
+  let minTrMs = Infinity;
+  let pendingCount = 0;
+  
+  (state.trainings || []).forEach(t => {
+    if (t.status === 'pending') {
+      pendingCount++;
+      const ms = new Date(t.date).getTime();
+      if (ms < minTrMs) { minTrMs = ms; nt = t; }
+    }
+  });
 
-  if (pendingTrs.length > 0) {
-    const nt = pendingTrs[0];
+  if (nt) {
     const dateParts = nt.date.split('-');
     const dateStr = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}` : nt.date;
     const isPast = nt.date < todayStr;
 
     const labelTitle = isPast ? `🔴 Treino Pendente (${dateStr})` : `🟡 Próximo Treino (${dateStr})`;
     const labelColor = isPast ? `var(--red)` : `var(--yellow)`;
-    const labelSub = isPast ? `Sessão em atraso (por concluir)` : `${pendingTrs.length} sessão(ões) agendada(s)`;
+    const labelSub = isPast ? `Sessão em atraso (por concluir)` : `${pendingCount} sessão(ões) agendada(s)`;
 
     pendingTrainingsHtml = `
       <div style="background:var(--surface-2); border:1px solid ${labelColor}; border-radius:12px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
@@ -516,6 +518,7 @@ function renderHome(){
         <button class="btn btn-green" style="font-size:10px; padding:6px 10px; flex:none;" onclick="navigateToHub('planeamento'); navigateToTab('treinos');">Ver Treinos 🟢</button>
       </div>`;
   }
+
   let formHtml = '';
   const seasonFinishedMatches = (state.matches || [])
     .filter(m => m.finished && (m.season || state.currentSeason) === state.currentSeason)
@@ -537,6 +540,7 @@ function renderHome(){
       <div style="display:flex; align-items:center;">${formDots}</div>
     </div>`;
   }
+  
   return `<div class="home-screen">
     <div class="home-pitch-bg">
       <svg preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%; max-width: 400px;" viewBox="0 0 400 600">
@@ -576,7 +580,8 @@ function renderHome(){
 }
 
 function renderJogoSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='jogo'?'active':''}" onclick="navigateToTab('jogo')">${t('match_curr')}</div><div class="seg-btn ${currentTab==='jogos'?'active':''}" onclick="navigateToTab('jogos')">${t('res_title')}</div></div>`; }
-function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='semana'?'active':''}" onclick="navigateToTab('semana')">Semana</div><div class="seg-btn ${currentTab==='calendario'?'active':''}" onclick="navigateToTab('calendario')">${t('sch_title')}</div><div class="seg-btn ${currentTab==='treinos'?'active':''}" onclick="navigateToTab('treinos')">${t('tr_title')}</div>${state.enableDiary ? `<div class="seg-btn ${currentTab==='diario'?'active':''}" onclick="navigateToTab('diario')">${t('diary_title')}</div>` : ''}</div>`; }function renderStratSubHeader() { 
+function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='semana'?'active':''}" onclick="navigateToTab('semana')">Semana</div><div class="seg-btn ${currentTab==='calendario'?'active':''}" onclick="navigateToTab('calendario')">${t('sch_title')}</div><div class="seg-btn ${currentTab==='treinos'?'active':''}" onclick="navigateToTab('treinos')">${t('tr_title')}</div>${state.enableDiary ? `<div class="seg-btn ${currentTab==='diario'?'active':''}" onclick="navigateToTab('diario')">${t('diary_title')}</div>` : ''}</div>`; }
+function renderStratSubHeader() { 
   return `<div class="seg" style="margin-bottom:14px;">
     <div class="seg-btn ${currentTab==='tatica'?'active':''}" onclick="navigateToTab('tatica')">${t('tac_title')}</div>
     <div class="seg-btn ${currentTab==='caderno'?'active':''}" onclick="navigateToTab('caderno')">📋 Minhas Jogadas</div>
@@ -584,6 +589,7 @@ function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:1
   </div>`; 
 }
 function renderTeamSubHeader() { return `<div class="seg" style="margin-bottom:14px;"><div class="seg-btn ${currentTab==='plantel'?'active':''}" onclick="navigateToTab('plantel')" style="font-size:9px; padding:8px 4px;">${t('pl_title')}</div><div class="seg-btn ${currentTab==='stats'?'active':''}" onclick="navigateToTab('stats')" style="font-size:9px; padding:8px 4px;">${t('st_title')}</div>${state.enableFines ? `<div class="seg-btn ${currentTab==='caixinha'?'active':''}" onclick="navigateToTab('caixinha')" style="font-size:9px; padding:8px 4px;">${t('fine_title')}</div>` : ''}${state.enableLeagues ? `<div class="seg-btn ${currentTab==='classificacoes'?'active':''}" onclick="navigateToTab('classificacoes')" style="font-size:9px; padding:8px 4px;">${t('lg_title')}</div>` : ''}</div>`; }
+
 function renderJogo(){
   const m = getActiveMatch();
   if(!m) return `${topbarHtml(t('hub_match_title'))}${renderJogoSubHeader()}<div style="text-align:center; margin-top:40px;"><div class="empty">${t('match_none')}</div><button class="btn btn-gold" style="width:100%; max-width:300px; margin:20px auto 0;" onclick="navigateToTab('calendario')">${t('match_goto_sch')}</button></div>`;
@@ -592,7 +598,11 @@ function renderJogo(){
   const conceded = m.goals.filter(g=>g.type==='conceded').length;
   const matchStarted = m.timeline && m.timeline.kickoff; 
   const isMatchEnded = m.timeline && m.timeline.fullTime;
-  const locLabel = (m.location||'casa') === 'casa' ? t('match_home') : t('match_away');
+  
+  const isHomeMatch = (m.location === 'casa' || !m.location);
+  const locLabel = isHomeMatch ? t('match_home') : t('match_away');
+  const badgeClass = isHomeMatch ? 'casa' : 'fora';
+  
   const isManualMode = !!m.manualMode;
   const isGameActive = matchStarted || isManualMode; 
   const isSingleHalf = m.singleHalf || m.numberOfHalves === 1;
@@ -601,7 +611,9 @@ function renderJogo(){
   const isUnlocked = !!m.actionsUnlocked;
   const showMinInput = isManualMode || isUnlocked;
 
-  // 1. PAINEL DINÂMICO (Golos, Cartões, Subs, Capitão)
+  const isActionDisabled = (!isGameActive || pending || pendingCard || pendingCaptain || pendingRatings || pendingSub);
+  const disabledAttr = isActionDisabled ? 'disabled' : '';
+
   let dynamicPanel = '';
   if(pendingCaptain){
     let captainChips = eligiblePlayers().length ? eligiblePlayers().map(p=>`<div class="chip chip-sm ${m.capitao===p.id?'active-green':''}" onclick="setCaptain('${m.id}','${p.id}')">${playerLabel(p)}</div>`).join('') : `<div class="empty" style="grid-column:1/-1;">${t('pl_none')}</div>`;
@@ -664,7 +676,6 @@ function renderJogo(){
      `;
   }
 
-  // 2. PAINEL DA EQUIPA INICIAL
   let lineupPanel = '';
   if(needsLineup && !isGameActive) {
      lineupPanel = `<div class="panel" style="border-color:var(--gold);"><div class="panel-title" style="color:var(--gold);">${t('match_start_xi')} (${pendingLineupSet.length}/${state.tacticFormat})</div><div class="grid-btns cols-4">${eligiblePlayers().map(p => `<div class="chip chip-sm ${(pendingLineupSet).includes(p.id) ? 'active-green' : ''}" onclick="togglePendingLineup('${p.id}')">${playerLabel(p)}</div>`).join('')}</div><button class="btn btn-gold" style="width:100%; margin-top:10px;" ${pendingLineupSet.length !== state.tacticFormat ? 'disabled':''} onclick="confirmLineup('${m.id}')">${t('match_conf_xi')}</button></div>`;
@@ -673,7 +684,6 @@ function renderJogo(){
      lineupPanel = `<div style="display:flex; gap:8px; justify-content:center; margin-top:12px; margin-bottom:8px;">${editXiBtn}<button class="card-mini-btn" style="border:1px solid var(--gold); color:var(--gold); background:transparent;" onclick="window.openMatchTacticalBoard('${m.id}')">📋 Esquema Tático do Jogo</button></div>`;
   }
 
-  // 3. PAINEL DE AVALIAÇÕES (RATINGS)
   let ratingsPanel = '';
   if(pendingRatings){
       ratingsPanel = `<div style="margin-bottom:12px; padding:10px; background:var(--surface-2); border-radius:8px; border:1px solid var(--gold);"><div class="panel-title" style="color:var(--gold); margin-bottom:8px;">${t('match_rate_pls')}</div><div style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;">${eligiblePlayers().map(p => { const r = (m.ratings && m.ratings[p.id]) || 0; let starsHtml = ''; for(let i=1; i<=5; i++){ starsHtml += `<span style="font-size:24px; line-height:1; cursor:pointer; margin:0 2px; color:${i<=r ? 'var(--gold)' : 'var(--line)'};" onclick="setRating('${m.id}', '${p.id}',${i})">★</span>`; } return `<div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:6px; border-bottom:1px solid var(--line);"><span style="font-size:13px;">${playerLabel(p)}</span><div style="display:flex; align-items:center;">${starsHtml}</div></div>`; }).join('')}</div></div>`;
@@ -681,47 +691,6 @@ function renderJogo(){
       ratingsPanel = `<button class="btn btn-outline" style="width:100%; padding: 10px; font-size:12px; margin-bottom:12px;" onclick="pendingRatings=true; render()">${t('match_rate_edit')}</button>`; 
   }
 
-  // 4. CONFRONTO DIRETO (H2H)
-  let h2hHtml = '';
-  if(m.opponent && m.opponent.trim() !== '') {
-      const oppQuery = m.opponent.trim().toLowerCase();
-      const h2hMatches = (state.matches || []).filter(x => x.finished && x.id !== m.id && (x.opponent||'').trim().toLowerCase() === oppQuery).sort((a,b) => new Date(b.date) - new Date(a.date));
-      if(h2hMatches.length > 0) {
-          let w=0, d=0, l=0;
-          h2hMatches.forEach(x => {
-              const s = (x.goals||[]).filter(g=>g.type==='scored').length;
-              const c = (x.goals||[]).filter(g=>g.type==='conceded').length;
-              if(s>c) w++; else if(s===c) d++; else l++;
-          });
-          
-          let historyRows = '';
-          h2hMatches.slice(0, 3).forEach(x => {
-               const s = (x.goals||[]).filter(g=>g.type==='scored').length;
-               const c = (x.goals||[]).filter(g=>g.type==='conceded').length;
-               const res = s > c ? 'V' : (s === c ? 'E' : 'D');
-               const color = res === 'V' ? 'var(--green)' : (res === 'E' ? 'var(--yellow)' : 'var(--red)');
-               const isHome = x.location === 'casa';
-               historyRows += `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--line); font-size:11px;">
-                 <span style="color:var(--muted);">${x.date.split('-').reverse().join('/')} <span style="font-size:9px;">(${isHome?'CASA':'FORA'})</span></span>
-                 <span style="color:${color}; font-weight:bold; font-family:monospace; font-size:13px;">${res} ${s}-${c}</span>
-               </div>`;
-          });
-          
-          let extraTxt = h2hMatches.length > 3 ? `<div style="font-size:9px; color:var(--muted); text-align:center; margin-top:6px;">+ ${h2hMatches.length - 3} jogo(s) anterior(es)</div>` : '';
-
-          h2hHtml = `
-          <div style="background:var(--surface-2); border-radius:8px; padding:10px 12px; margin:14px 0 12px; text-align:left; border:1px solid var(--line);">
-              <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
-                  <span style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">⚔️ Histórico vs ${m.opponent}</span>
-                  <span style="font-size:11px; font-weight:bold; color:var(--chalk);">${w}V ${d}E ${l}D</span>
-              </div>
-              <div>${historyRows}</div>
-              ${extraTxt}
-          </div>`;
-      }
-  }
-
-  // 5. BOTÕES DO CRONÓMETRO E RELÓGIO
   let matchControlsHtml = '';
   if (!m.timeline || !m.timeline.kickoff) {
       if (!needsLineup) {
@@ -753,11 +722,8 @@ function renderJogo(){
       matchControlsHtml = `<div style="font-size:11px; color:var(--red); text-transform:uppercase; margin-top:10px; font-weight:700; letter-spacing: 0.05em;">${t('match_ended')}</div>`;
   }
 
-  // 6. BOTÕES DE ACÇÃO (Golos, Cartões, Subs)
   let actionButtonsHtml = '';
   if (!isMatchEnded || isUnlocked) {
-      let disabledAttr = (!isGameActive || pending || pendingCard || pendingCaptain || pendingRatings || pendingSub) ? 'disabled' : '';
-      
       let subBtnHtml = '';
       if (state.trackSubs) {
           subBtnHtml = `<button class="card-mini-btn" style="border:1px solid var(--chalk); color:var(--chalk);" onclick="pendingSub={outId:null, inId:null, half: window.resolveEventHalf(getActiveMatch())}; render()" ${disabledAttr}>${t('match_sub_title')}</button>`;
@@ -789,7 +755,6 @@ function renderJogo(){
       `;
   }
 
-  // 7. CAPITÃO DA EQUIPA
   let captainHtml = '';
   if (m.capitao) {
       let capChangeBtn = (!isMatchEnded || isUnlocked) ? `<button style="background:none; border:1px solid var(--line); color:var(--chalk); border-radius:4px; padding:2px 6px; font-size:9px; cursor:pointer;" onclick="pendingCaptain=true; render()">${t('match_cap_change')}</button>` : '';
@@ -798,15 +763,13 @@ function renderJogo(){
       captainHtml = `<div style="margin-bottom:12px;"><button class="card-mini-btn yellow" style="border-color:var(--gold); color:var(--gold);" onclick="pendingCaptain=true; render()">${t('match_cap_btn')}</button></div>`;
   }
 
-  // 8. TÍTULO DO ADVERSÁRIO E LOCAL
-  let oppHtml = locLabel.toLowerCase() === 'casa' || locLabel.toLowerCase() === 'home' 
+  let oppHtml = isHomeMatch
       ? `${getMyClub()} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${m.opponent}` 
       : `${m.opponent} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${getMyClub()}`;
 
   let finalBtnLabel = pendingRatings ? t('match_save_rate') : (isMatchEnded ? t('match_save_rep') : t('match_save_btn'));
   let finalBtnStyle = pendingRatings ? 'btn-gold' : 'btn-ghost';
 
-  // O RETORNO FINAL COMPLETAMENTE LIMPO (Sem blocos aninhados que confundem o VS Code!)
   return `
     ${topbarHtml(t('hub_match_title'))}
     ${renderJogoSubHeader()}
@@ -820,7 +783,7 @@ function renderJogo(){
       <div class="opponent" style="margin-bottom:4px;">
         <div style="font-size:15px;">
           ${oppHtml}
-          <span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span>
+          <span class="badge-loc ${badgeClass}">${locLabel}</span>
         </div>
         <span>${m.date}</span>
       </div>
@@ -851,6 +814,7 @@ function renderJogo(){
     <button class="btn ${finalBtnStyle}" style="width:100%; margin-top:6px;" onclick="uiFinishMatch()">${finalBtnLabel}</button>
   `;
 }
+
 function renderJogos(){
   if(!state.matches.length) return `${topbarHtml(t('hub_match_title'))}${renderJogoSubHeader()}<div class="empty">${t('res_none')}</div>`;
   const seasons = getSeasonsList(); const query = matchSearchQuery.trim().toLowerCase();
@@ -865,12 +829,16 @@ function renderJogos(){
       const sc = m.goals.filter(g=>g.type==='scored').length; 
       const co = m.goals.filter(g=>g.type==='conceded').length; 
       const open = expandedMatch === m.id; 
+      
       let typeLabel = ''; 
       if(m.type === 'campeonato') typeLabel = `${t('sch_champ')}${m.phase ? ' · '+m.phase : ''}${m.matchday ? ' (J:'+m.matchday+')' : ''}`; 
-      else if(m.type === 'torneio') typeLabel = `🏆 ${m.tournamentName||t('sch_tour')}${m.phase ? ' · '+m.phase : ''}${m.matchday ? ' (J:'+m.matchday+')' : ''}`; 
+      else if(m.type === 'torneio') typeLabel = `🏆 ${m.tournamentName || t('sch_tour')}${m.phase ? ' · '+m.phase : ''}${m.matchday ? ' (J:'+m.matchday+')' : ''}`; 
       else typeLabel = t('sch_friendly'); 
       
-      const locLabel = (m.location||'casa') === 'casa' ? t('match_home') : t('match_away'); 
+      const isHomeMatch = (m.location === 'casa' || !m.location);
+      const locLabel = isHomeMatch ? t('match_home') : t('match_away'); 
+      const badgeClass = isHomeMatch ? 'casa' : 'fora';
+
       const schedId = m.originalSchedule ? m.originalSchedule.id : m.id;
       const hasScouting = m.originalSchedule && m.originalSchedule.scouting;
 
@@ -884,7 +852,7 @@ function renderJogos(){
         <div class="match-head-row">
           <div class="match-head" style="flex:1;">
             <div>
-              <div class="opp">${m.opponent} ${hasScouting ? '👁️' : ''} ${!m.finished ? `<span class="badge-open">${t('res_ongoing')}</span>` : ''}<span class="badge-loc ${locLabel.toLowerCase()==='casa'||locLabel.toLowerCase()==='home'?'casa':'fora'}">${locLabel}</span></div>
+              <div class="opp">${m.opponent} ${hasScouting ? '👁️' : ''} ${!m.finished ? `<span class="badge-open">${t('res_ongoing')}</span>` : ''}<span class="badge-loc ${badgeClass}">${locLabel}</span></div>
               <div class="date">${m.date.split('-').reverse().join('/')} <span class="badge-type">${typeLabel}</span></div>
             </div>
             <div class="match-score"><span class="s">${sc}</span> – <span class="c">${co}</span></div>
@@ -909,6 +877,7 @@ function renderJogos(){
       </div>`; 
     }).join('') : `<div class="empty">${t('res_none_search')}</div>`}`;
 }
+
 window.exportData = function(){ 
   if (!IS_LICENSED) {
     showToast('Ação não permitida nesta licença.', 'btn-red');
@@ -929,9 +898,11 @@ window.exportData = function(){
   render(); 
   showToast(t('msg_bkp_exp')); 
 };
+window.exportDataJSON = window.exportData;
 
 function sanitizeData(obj) {
-  if (typeof obj === 'string') return escapeHTML(obj);
+  // Já não usamos o escapeHTML aqui para não corromper caracteres especiais (ex: &) num backup.
+  if (typeof obj === 'string') return obj.trim(); 
   if (Array.isArray(obj)) return obj.map(sanitizeData);
   if (obj && typeof obj === 'object') {
     const sanitized = {};
@@ -944,12 +915,10 @@ function sanitizeData(obj) {
   }
   return obj;
 }
-window.exportDataJSON = window.exportData;
-// 🛡️ O PORTEIRO DO BACKUP: Validação estrita do ficheiro antes de o aceitar
+
 function validateBackupFile(data) {
     if (!data || typeof data !== 'object') throw new Error("Ficheiro não é um objeto válido.");
     
-    // Garante que a estrutura principal existe e tem o formato correto (Array)
     const arraysObrigatorios = ['roster', 'matches', 'trainings', 'schedule', 'tactics', 'videos', 'diary', 'leagues'];
     arraysObrigatorios.forEach(key => {
         if (data[key] !== undefined && !Array.isArray(data[key])) {
@@ -957,7 +926,7 @@ function validateBackupFile(data) {
         }
     });
 
-    return true; // Se passar nos testes, é seguro entrar!
+    return true;
 }
 
 window.importData = function(input) { 
@@ -971,12 +940,10 @@ window.importData = function(input) {
     try { 
       const p = JSON.parse(e.target.result); 
       
-      // Validação do ficheiro
       if (typeof validateBackupFile === 'function') {
           validateBackupFile(p);
       }
       
-      // Aplica os dados diretamente
       state = sanitizeData(p); 
       
       if(!state.roster) state.roster = []; 
@@ -1018,6 +985,7 @@ window.importData = function(input) {
   reader.readAsText(file); 
   input.value = ''; 
 };
+
 function render(){
   try {
       document.getElementById('nav-lbl-match').textContent = 'Jogo'; 
@@ -1026,7 +994,7 @@ function render(){
       document.getElementById('nav-lbl-team').textContent = 'Equipa';
       document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.hub===currentHub));
       const app = document.getElementById('app'); const nav = document.getElementById('navbar');
-      nav.style.display = 'flex'; /* Barra sempre visível */
+      nav.style.display = 'flex'; 
       if(currentHub === 'home'){ app.innerHTML = renderHome(); } 
       else { 
           if(currentTab==='jogo') app.innerHTML = renderJogo(); else if(currentTab==='jogos') app.innerHTML = renderJogos(); else if(currentTab==='semana') app.innerHTML = renderMicrociclo(); else if(currentTab==='calendario') app.innerHTML = renderCalendario(); else if(currentTab==='treinos') app.innerHTML = renderTreinos(); else if(currentTab==='diario') app.innerHTML = renderDiario(); else if(currentTab==='tatica') { app.innerHTML = renderTatica(); setTimeout(initTacticCanvas, 0); } else if(currentTab==='caderno') app.innerHTML = renderCaderno(); else if(currentTab==='videos') app.innerHTML = renderVideos(); else if(currentTab==='plantel') app.innerHTML = renderPlantel(); else if(currentTab==='stats') app.innerHTML = renderStats(); else if(currentTab==='classificacoes') app.innerHTML = renderClassificacoes(); else if(currentTab==='caixinha') app.innerHTML = renderCaixinha(); 
@@ -1051,6 +1019,22 @@ function render(){
 
 window.updateExerciseSearch = function(val) {
   window.exerciseSearchQuery = val;
-  const root = document.getElementById('modal-root');
-  if (root) root.innerHTML = renderModalHTML();
+  const listEl = document.getElementById('exercise-list');
+  if (listEl) {
+      const exercises = (state.tacticalNotebook || []).filter(x => x.category === 'treino');
+      const query = (val || '').trim().toLowerCase();
+      const filtered = exercises.filter(ex => !query || ex.name.toLowerCase().includes(query));
+      listEl.innerHTML = filtered.length > 0 ? filtered.map(ex => `
+        <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:bold; color:var(--chalk); font-size:13px;">${ex.name}</div>
+            <div style="font-size:10px; color:var(--muted);">${ex.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</div>
+          </div>
+          <button class="btn btn-green" style="flex:none; width:auto; font-size:9px; padding:4px 8px;" onclick="addExerciseToTraining('${ex.id}', 15)">Importar</button>
+        </div>
+      `).join('') : `<div class="empty">Nenhum exercício encontrado.</div>`;
+  } else {
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = renderModalHTML();
+  }
 };

@@ -2,7 +2,6 @@
 // MÓDULO TÁTICO & QUADRO DE TREINO
 // ==========================================
 
-// Remove peça associada a um jogador específico
 window.removeTacticPieceByPlayerId = function(playerId) {
     if (!state.tactics) return;
     state.tactics = state.tactics.filter(i => i.playerId !== playerId);
@@ -10,7 +9,6 @@ window.removeTacticPieceByPlayerId = function(playerId) {
     render();
 };
 
-// Desfazer a última peça colocada
 window.undoLastTacticPiece = function() {
     if (!state.tactics || state.tactics.length === 0) return;
     state.tactics.pop();
@@ -18,7 +16,6 @@ window.undoLastTacticPiece = function() {
     render();
 };
 
-// Adiciona peças, jogadores ou materiais ao relvado
 window.spawnTacticItem = function(kind, playerId) {
     if(!state.tactics) state.tactics = [];
     
@@ -56,12 +53,12 @@ window.spawnTacticItem = function(kind, playerId) {
     render();
 };
 
-// SVG dos Materiais (Centrados no ponto de arrasto)
 window.getTacticItemSVG = function(item) {
     if (item.kind === 'cone') {
+        const color = item.color || '#FF9500';
         return `<g>
-            <polygon points="-3,4 3,4 1.5,-4 -1.5,-4" fill="${item.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/>
-            <ellipse cx="0" cy="4" rx="4" ry="1.5" fill="${item.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/>
+            <polygon points="-3,4 3,4 1.5,-4 -1.5,-4" fill="${color}" stroke="#000" stroke-width="0.5"/>
+            <ellipse cx="0" cy="4" rx="4" ry="1.5" fill="${color}" stroke="#000" stroke-width="0.5"/>
         </g>`;
     } 
     if (item.kind === 'minigoal') {
@@ -71,20 +68,21 @@ window.getTacticItemSVG = function(item) {
         </g>`;
     }
     if (item.kind === 'pole') {
+        const color = item.color || '#FF2D55';
         return `<g>
-            <circle cx="0" cy="0" r="2" fill="${item.color || '#FF2D55'}" stroke="#000" stroke-width="0.5"/>
-            <line x1="0" y1="0" x2="0" y2="-6" stroke="${item.color || '#FF2D55'}" stroke-width="1.5"/>
+            <circle cx="0" cy="0" r="2" fill="${color}" stroke="#000" stroke-width="0.5"/>
+            <line x1="0" y1="0" x2="0" y2="-6" stroke="${color}" stroke-width="1.5"/>
         </g>`;
     }
     if (item.kind === 'rope') {
-        // Agora desenha uma ESCADA DE AGILIDADE
+        const color = item.color || '#EAB308';
         return `<g>
-            <line x1="-8" y1="-3" x2="8" y2="-3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
-            <line x1="-8" y1="3" x2="8" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
-            <line x1="-6" y1="-3" x2="-6" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
-            <line x1="-2" y1="-3" x2="-2" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
-            <line x1="2" y1="-3" x2="2" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
-            <line x1="6" y1="-3" x2="6" y2="3" stroke="${item.color || '#EAB308'}" stroke-width="0.8"/>
+            <line x1="-8" y1="-3" x2="8" y2="-3" stroke="${color}" stroke-width="0.8"/>
+            <line x1="-8" y1="3" x2="8" y2="3" stroke="${color}" stroke-width="0.8"/>
+            <line x1="-6" y1="-3" x2="-6" y2="3" stroke="${color}" stroke-width="0.8"/>
+            <line x1="-2" y1="-3" x2="-2" y2="3" stroke="${color}" stroke-width="0.8"/>
+            <line x1="2" y1="-3" x2="2" y2="3" stroke="${color}" stroke-width="0.8"/>
+            <line x1="6" y1="-3" x2="6" y2="3" stroke="${color}" stroke-width="0.8"/>
         </g>`;
     }
     return '';
@@ -133,16 +131,23 @@ window.undoLastPath = function() {
 };
 
 function renderTatica() {
-    // DESVIO PARA MODO JOGO (Mostra apenas o campo limpo e os titulares)
     if (window.editingMatchTacticsId) {
         const m = (state.matches || []).find(x => x.id === window.editingMatchTacticsId);
         if (m) {
             const pieceBg = state.teamColor || '#D9A441';
             const pieceColor = typeof getContrastColor === 'function' ? getContrastColor(pieceBg) : '#000000';
+            const oppName = escapeHTML(m.opponent || '');
+
+            const matchPiecesHtml = (state.tactics || []).filter(item => item.kind === 'own').map(item => {
+                const itemX = Number(item.x) || 0;
+                const itemY = Number(item.y) || 0;
+                const itemLabel = escapeHTML(item.label || '?');
+                return `<div class="tactic-piece own" data-id="${item.id}" style="left:${itemX}%; top:${itemY}%; background:${pieceBg}; color:${pieceColor}; width:26px; height:26px; font-size:11px; position:absolute; transform:translate(-50%,-50%); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; border:2px solid #FFF; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.4); z-index:10;"><span>${itemLabel}</span></div>`;
+            }).join('');
 
             return `
                 <div class="topbar" style="margin-bottom:10px;">
-                    <h1 style="font-size:15px; color:var(--gold);">📋 AJUSTAR ESQUEMA TÁTICO: ${escapeHTML(m.opponent || '')}</h1>
+                    <h1 style="font-size:15px; color:var(--gold);">📋 AJUSTAR ESQUEMA TÁTICO: ${oppName}</h1>
                 </div>
 
                 <div style="display:flex; gap:8px; margin-bottom:12px;">
@@ -159,11 +164,7 @@ function renderTatica() {
                         <rect x="3" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
                         <rect x="83" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
                     </svg>
-
-                    ${(state.tactics || []).filter(item => item.kind === 'own').map(item => `
-                        <div class="tactic-piece own" data-id="${item.id}" style="left:${Number(item.x)||0}%; top:${Number(item.y)||0}%; background:${pieceBg}; color:${pieceColor}; width:26px; height:26px; font-size:11px; position:absolute; transform:translate(-50%,-50%); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; border:2px solid #FFF; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.4); z-index:10;">
-                            <span>${escapeHTML(item.label || '?')}</span>
-                        </div>`).join('')}
+                    ${matchPiecesHtml}
                 </div>
 
                 <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px;">
@@ -172,6 +173,7 @@ function renderTatica() {
             `;
         }
     }
+    
     if (!state.tactics) state.tactics = [];
     const format = state.tacticFormat || 11;
     const roster = eligiblePlayers(); 
@@ -179,38 +181,40 @@ function renderTatica() {
     const oppCount = state.tactics.filter(i => i.kind === 'opp').length;
     const isHalf = !!state.tacticHalfPitch;
     const pieceBg = state.teamColor || '#D9A441';
-    const pieceColor = getContrastColor(pieceBg);
+    
+    const pieceColor = typeof getContrastColor === 'function' ? getContrastColor(pieceBg) : '#000000';
     const oppBg = state.oppColor || '#C8493F';
-    const oppColor = getContrastColor(oppBg);
+    const oppColor = typeof getContrastColor === 'function' ? getContrastColor(oppBg) : '#FFFFFF';
+
+    const bW = currentDrawColor === '#FFFFFF' ? 'var(--gold)' : 'transparent';
+    const bY = currentDrawColor === '#E1C324' ? 'var(--chalk)' : 'transparent';
+    const bR = currentDrawColor === '#E74C3C' ? 'var(--chalk)' : 'transparent';
+    const bB = currentDrawColor === '#3498DB' ? 'var(--chalk)' : 'transparent';
 
     let html = `${topbarHtml(t('hub_strat_title'))}${renderStratSubHeader()}
 
-    <!-- 1. BARRAS SUPERIORES DE AÇÕES (JOGADA, TREINO, PDF) -->
     <div style="display:flex; gap:6px; margin-bottom:10px;">
         <button class="btn btn-gold" style="flex:1; font-size:10px; padding:10px 2px;" onclick="saveTacticalPlay('jogada')">📋 GUARDAR JOGADA</button>
         <button class="btn btn-green" style="flex:1; font-size:10px; padding:10px 2px;" onclick="saveTacticalPlay('treino')">🏋️ GUARDAR TREINO</button>
         <button class="btn btn-outline" style="flex:1; font-size:10px; padding:10px 2px; border-color:var(--gold); color:var(--gold);" onclick="exportTacticPDF()">📄 EXPORTAR PDF</button>
     </div>
 
-    <!-- 2. BOTÃO ALTERNAR CAMPO A OCUPAR A LARGURA TODA -->
     <button class="btn btn-outline" style="width:100%; margin-bottom:10px; font-size:11px; padding:8px 0;" onclick="state.tacticHalfPitch=!state.tacticHalfPitch; saveState(); render();">
         ${isHalf ? '⚽ ALTERNAR PARA CAMPO INTEIRO' : '🏟️ ALTERNAR PARA MEIO CAMPO'}
     </button>
 
-    <!-- 3. SELETOR DE MODOS E PALETA DE CORES -->
     <div class="seg" style="margin-bottom:6px;">
         <div class="seg-btn ${currentTacticMode==='move'?'active':''}" onclick="setTacticMode('move')">🖐️ MOVER</div>
         <div class="seg-btn ${currentTacticMode==='draw'?'active':''}" onclick="setTacticMode('draw')">✏️ DESENHAR</div>
     </div>
     `;
     
-    // PALETA DE CORES (Aparece apenas no modo Desenhar)
     if(currentTacticMode === 'draw') {
         html += `<div style="display:flex; gap:12px; justify-content:center; align-items:center; margin-bottom:10px; padding:8px; background:var(--surface-2); border-radius:8px;">
-            <div style="width:24px; height:24px; border-radius:50%; background:#FFFFFF; border:2px solid ${currentDrawColor==='#FFFFFF'?'var(--gold)':'transparent'}; cursor:pointer;" onclick="setDrawColor('#FFFFFF')"></div>
-            <div style="width:24px; height:24px; border-radius:50%; background:#E1C324; border:2px solid ${currentDrawColor==='#E1C324'?'var(--chalk)':'transparent'}; cursor:pointer;" onclick="setDrawColor('#E1C324')"></div>
-            <div style="width:24px; height:24px; border-radius:50%; background:#E74C3C; border:2px solid ${currentDrawColor==='#E74C3C'?'var(--chalk)':'transparent'}; cursor:pointer;" onclick="setDrawColor('#E74C3C')"></div>
-            <div style="width:24px; height:24px; border-radius:50%; background:#3498DB; border:2px solid ${currentDrawColor==='#3498DB'?'var(--chalk)':'transparent'}; cursor:pointer;" onclick="setDrawColor('#3498DB')"></div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#FFFFFF; border:2px solid ${bW}; cursor:pointer;" onclick="setDrawColor('#FFFFFF')"></div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#E1C324; border:2px solid ${bY}; cursor:pointer;" onclick="setDrawColor('#E1C324')"></div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#E74C3C; border:2px solid ${bR}; cursor:pointer;" onclick="setDrawColor('#E74C3C')"></div>
+            <div style="width:24px; height:24px; border-radius:50%; background:#3498DB; border:2px solid ${bB}; cursor:pointer;" onclick="setDrawColor('#3498DB')"></div>
         </div>`;
     }
 
@@ -218,7 +222,6 @@ function renderTatica() {
         ${currentTacticMode === 'move' ? 'MODO [MOVER]: ARRASTA JOGADORES E MATERIAL' : 'MODO [DESENHAR]: ESCOLHE UMA COR E RISCA'}
     </div>
 
-    <!-- 4. RELVADO TÁTICO -->
     <div id="tactic-pitch" style="position:relative; width:100%; max-width:420px; margin:0 auto 14px; aspect-ratio:4/3; background:#113821; border:2px solid #FFF; border-radius:12px; overflow:hidden; touch-action:none;">
         ${isHalf ? 
             `<svg viewBox="0 0 100 75" style="width:100%; height:100%; display:block; position:absolute; top:0; left:0;">
@@ -240,11 +243,10 @@ function renderTatica() {
             </svg>`
         }
 
-        <!-- PEÇAS E MATERIAIS NO CAMPO -->
         ${state.tactics.map(p => {
             let bg = p.kind === 'own' ? pieceBg : (p.kind === 'opp' ? oppBg : '#FFFFFF');
             let color = p.kind === 'ball' ? '#000' : (p.kind === 'own' ? pieceColor : oppColor);
-            let label = p.kind === 'ball' ? '⚽' : (p.label || '?');
+            let label = p.kind === 'ball' ? '⚽' : escapeHTML(p.label || '?');
             
             if (['cone', 'minigoal', 'pole', 'rope'].includes(p.kind)) {
                 let svgContent = window.getTacticItemSVG(p);
@@ -261,12 +263,10 @@ function renderTatica() {
         <canvas id="tactic-canvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:20; pointer-events:${currentTacticMode==='draw'?'auto':'none'};"></canvas>
     </div>
 
-    <!-- 5. CAIXA DE PEÇAS & MATERIAL DE TREINO -->
     <div class="card" style="padding:12px; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <span style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; letter-spacing:0.05em;">CAIXA DE PEÇAS</span>
             
-            <!-- LIMPEZA SEPARADA COM AÇÕES DIRETA -->
             <div style="display:flex; gap:12px; align-items:center;">
                 <div style="display:flex; gap:4px;">
                     <button class="btn btn-outline" style="font-size:9px; padding:3px 6px;" onclick="undoLastPath()" title="Desfazer Risco">↩️ RISCO</button>
@@ -280,13 +280,11 @@ function renderTatica() {
             </div>
         </div>
 
-        <!-- BOTÕES ADVERSÁRIO E BOLA -->
         <div style="display:flex; gap:8px; margin-bottom:10px;">
             <button class="btn btn-outline" style="flex:1; font-size:11px;" onclick="spawnTacticItem('opp')">+ ADVERSÁRIO (${oppCount}/${format})</button>
             <button class="btn btn-outline" style="flex:1; font-size:11px;" onclick="spawnTacticItem('ball')">+ BOLA ⚽</button>
         </div>
 
-        <!-- MATERIAL DE TREINO -->
         <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; border-top:1px dashed var(--line); padding-top:8px;">
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('cone')">🔶 Cone</button>
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('minigoal')">🥅 Baliza</button>
@@ -294,7 +292,6 @@ function renderTatica() {
             <button class="btn btn-outline" style="font-size:10px; padding:4px 8px;" onclick="spawnTacticItem('rope')">🪜 Escada</button>
         </div>
 
-        <!-- LISTA DOS TEUS JOGADORES -->
         <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:bold; margin-bottom:6px;">
             TEUS JOGADORES (Adicionados: ${addedPlayerIds.length} | Limite: ${format})
         </div>
@@ -309,7 +306,7 @@ function renderTatica() {
 
     return html;
 }
-// GUARDA JOGADA OU TREINO COM CATEGORIZAÇÃO
+
 window.saveTacticalPlay = function(category = 'jogada') {
     if((!state.tactics || state.tactics.length === 0) && (!state.tacticPaths || state.tacticPaths.length === 0)) {
         showToast('O quadro está vazio!'); return;
@@ -322,7 +319,7 @@ window.saveTacticalPlay = function(category = 'jogada') {
     state.tacticalNotebook.unshift({
         id: uid(),
         name: escapeHTML(playName.trim()),
-        category: category, // 'jogada' ou 'treino'
+        category: category, 
         format: state.tacticFormat || 11,
         halfPitch: !!state.tacticHalfPitch,
         tactics: JSON.parse(JSON.stringify(state.tactics || [])),
@@ -368,7 +365,7 @@ window.exportTacticPDF = function() {
                         <h1>${getMyClub()} — ESQUEMA TÁTICO</h1>
                         <p>Gerado em: ${new Date().toLocaleDateString('pt-PT')} | Época: ${state.currentSeason}</p>
                     </div>
-                    ${getClubLogoHtml()}
+                    ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
                 </div>
                 <div style="text-align:center; margin:20px 0;">
                     <img src="${imgData}" style="max-width:100%; max-height:650px; border:2px solid #000; border-radius:8px;">
@@ -379,7 +376,7 @@ window.exportTacticPDF = function() {
             </div>`;
             
         document.getElementById('print-area').innerHTML = html;
-        window.openSafePrintModal();
+        if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
     }).catch(err => {
         console.error(err);
         showToast('Erro ao gerar PDF tático.');
@@ -389,15 +386,25 @@ window.exportTacticPDF = function() {
 function initTacticCanvas() {
     const cvs = document.getElementById('tactic-canvas'); 
     if(!cvs) return;
-    canvasRect = cvs.getBoundingClientRect(); 
-    cvs.width = canvasRect.width; 
-    cvs.height = canvasRect.height;
+    const rect = cvs.getBoundingClientRect();
+    
+    if (cvs.width !== rect.width || cvs.height !== rect.height) {
+        cvs.width = rect.width; 
+        cvs.height = rect.height;
+    }
+    
     tacticCtx = cvs.getContext('2d'); 
     redrawCanvas();
 }
 
+window.addEventListener('resize', () => {
+    if (typeof currentTab !== 'undefined' && currentTab === 'tatica') {
+        setTimeout(initTacticCanvas, 100);
+    }
+});
+
 function redrawCanvas() {
-    if(!tacticCtx || !canvasRect) return; 
+    if(!tacticCtx || !tacticCtx.canvas.width) return; 
     tacticCtx.clearRect(0, 0, tacticCtx.canvas.width, tacticCtx.canvas.height); 
     tacticCtx.lineCap = 'round'; 
     tacticCtx.lineJoin = 'round'; 
@@ -424,7 +431,7 @@ document.addEventListener('touchend', handleDrawEnd);
 document.addEventListener('mouseup', handleDrawEnd);
 
 function handleDrawStart(e) { 
-    if(currentTab !== 'tatica' || currentTacticMode !== 'draw') return; 
+    if(typeof currentTab === 'undefined' || currentTab !== 'tatica' || currentTacticMode !== 'draw') return; 
     const cvs = document.getElementById('tactic-canvas'); 
     if(!cvs || e.target !== cvs) return; 
     isDrawing = true; 
@@ -434,22 +441,24 @@ function handleDrawStart(e) {
 }
 
 function handleDrawMove(e) { 
-    if(!isDrawing || currentTab !== 'tatica' || currentTacticMode !== 'draw') return; 
+    if(!isDrawing || typeof currentTab === 'undefined' || currentTab !== 'tatica' || currentTacticMode !== 'draw') return; 
     e.preventDefault(); 
     const pos = getTouchPos(e); 
     const cvs = document.getElementById('tactic-canvas'); 
     const rect = cvs.getBoundingClientRect(); 
     let pctX = ((pos.x - rect.left) / rect.width) * 100; 
     let pctY = ((pos.y - rect.top) / rect.height) * 100; 
-    pctX = Math.max(0, Math.min(100, pctX)); 
-    pctY = Math.max(0, Math.min(100, pctY)); 
+    
+    pctX = Math.round(Math.max(0, Math.min(100, pctX)) * 10) / 10;
+    pctY = Math.round(Math.max(0, Math.min(100, pctY)) * 10) / 10;
+    
     const currentPath = state.tacticPaths[state.tacticPaths.length - 1]; 
     currentPath.points.push({x: pctX, y: pctY}); 
     redrawCanvas(); 
 }
 
 function handleDrawEnd(e) { 
-    if(!isDrawing || currentTab !== 'tatica') return; 
+    if(!isDrawing || typeof currentTab === 'undefined' || currentTab !== 'tatica') return; 
     isDrawing = false; 
     saveState(); 
 }
@@ -463,10 +472,14 @@ function renderCaderno() {
     if(notebook.length === 0) {
         html += `<div class="empty">Nenhum esquema guardado no Caderno.<br>Cria um esquema no Quadro Tático e guarda como Jogada ou Treino.</div>`;
     } else {
+        let jogadasCount = 0;
+        let treinosCount = 0;
+        notebook.forEach(x => { if (x.category === 'treino') treinosCount++; else jogadasCount++; });
+
         html += `
         <div class="seg" style="margin-bottom:14px;">
-            <div class="seg-btn ${window.notebookFilter==='jogada'?'active':''}" onclick="window.notebookFilter='jogada'; render();">📋 Jogadas (${notebook.filter(x=>x.category!=='treino').length})</div>
-            <div class="seg-btn ${window.notebookFilter==='treino'?'active':''}" onclick="window.notebookFilter='treino'; render();">🏋️ Exercícios (${notebook.filter(x=>x.category==='treino').length})</div>
+            <div class="seg-btn ${window.notebookFilter==='jogada'?'active':''}" onclick="window.notebookFilter='jogada'; render();">📋 Jogadas (${jogadasCount})</div>
+            <div class="seg-btn ${window.notebookFilter==='treino'?'active':''}" onclick="window.notebookFilter='treino'; render();">🏋️ Exercícios (${treinosCount})</div>
         </div>`;
 
         const filtered = notebook.filter(x => {
@@ -487,7 +500,7 @@ function renderCaderno() {
                 html += `
                     <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
                         <div>
-                            <strong style="font-size:14px; color:var(--chalk); display:block;">${play.name}</strong>
+                            <strong style="font-size:14px; color:var(--chalk); display:block;">${escapeHTML(play.name)}</strong>
                             <span style="font-size:10px; color:${badgeColor}; font-weight:bold; text-transform:uppercase;">${badgeText}</span>
                             <span style="font-size:10px; color:var(--muted); margin-left:6px;">· ${play.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</span>
                         </div>
@@ -518,7 +531,7 @@ document.addEventListener('touchend', endDrag);
 document.addEventListener('mouseup', endDrag);
 
 function startDrag(e) { 
-    if (currentTab !== 'tatica' || currentTacticMode !== 'move') return; 
+    if (typeof currentTab === 'undefined' || currentTab !== 'tatica' || currentTacticMode !== 'move') return; 
     const piece = e.target.closest('.tactic-piece'); 
     if (!piece) return; 
     const pitchEl = document.getElementById('tactic-pitch'); 
@@ -532,27 +545,32 @@ function startDrag(e) {
 }
 
 function moveDrag(e) { 
-    if (!dragObj.dragging || currentTab !== 'tatica' || currentTacticMode !== 'move') return; 
+    if (!dragObj.dragging || typeof currentTab === 'undefined' || currentTab !== 'tatica' || currentTacticMode !== 'move') return; 
     e.preventDefault(); 
     const pos = getTouchPos(e); 
     let relX = pos.x - dragObj.pitchRect.left; 
     let relY = pos.y - dragObj.pitchRect.top; 
-    let pctX = (relX / dragObj.pitchRect.width) * 100; 
-    let pctY = (relY / dragObj.pitchRect.height) * 100; 
+    
+    let pctX = Math.round(((relX / dragObj.pitchRect.width) * 100) * 10) / 10; 
+    let pctY = Math.round(((relY / dragObj.pitchRect.height) * 100) * 10) / 10; 
+    
     pctX = Math.max(0, Math.min(100, pctX)); 
     pctY = Math.max(0, Math.min(100, pctY)); 
+    
     dragObj.el.style.left = pctX + '%'; 
     dragObj.el.style.top = pctY + '%'; 
 }
 
 function endDrag(e) { 
-    if (!dragObj.dragging || currentTab !== 'tatica') return; 
+    if (!dragObj.dragging || typeof currentTab === 'undefined' || currentTab !== 'tatica') return; 
     dragObj.dragging = false; 
     const pos = getTouchPos(e); 
     let relX = pos.x - dragObj.pitchRect.left; 
     let relY = pos.y - dragObj.pitchRect.top; 
-    let pctX = (relX / dragObj.pitchRect.width) * 100; 
-    let pctY = (relY / dragObj.pitchRect.height) * 100; 
+    
+    let pctX = Math.round(((relX / dragObj.pitchRect.width) * 100) * 10) / 10; 
+    let pctY = Math.round(((relY / dragObj.pitchRect.height) * 100) * 10) / 10; 
+
     if (pctX < -10 || pctX > 110 || pctY < -10 || pctY > 110) { 
         state.tactics = state.tactics.filter(i => i.id !== dragObj.id); 
     } else { 
