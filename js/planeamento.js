@@ -1089,3 +1089,66 @@ window.renderMicrociclo = function() {
     
     return html;
 };
+
+// HELPER À PROVA DE BALA: Constrói o SVG do Exercício no Modal
+window.buildExerciseTacticalPitchSVG = function(notebookId) {
+  const play = (state.tacticalNotebook || []).find(x => x.id === notebookId);
+  if (!play) return ''; // Só aborta se o exercício não existir de todo
+  
+  const isHalf = !!play.halfPitch;
+  const pieceBg = state.teamColor || '#D9A441';
+  const pieceColor = typeof getContrastColor === 'function' ? getContrastColor(pieceBg) : '#000000';
+  const oppBg = state.oppColor || '#C8493F';
+  const oppColor = typeof getContrastColor === 'function' ? getContrastColor(oppBg) : '#FFFFFF';
+
+  let piecesSVG = '';
+  (play.tactics || []).forEach(p => {
+    const cx = Number.isFinite(Number(p.x)) ? Number(p.x) : 50;
+    const cy = Number.isFinite(Number(p.y)) ? Number(p.y) : 50;
+    const svgY = (cy / 100) * 75;
+
+    if (p.kind === 'own' || p.kind === 'opp') {
+        const bg = p.kind === 'own' ? pieceBg : oppBg;
+        const fg = p.kind === 'own' ? pieceColor : oppColor;
+        const label = escapeHTML(p.label || '');
+        piecesSVG += `<circle cx="${cx}" cy="${svgY}" r="3.5" fill="${bg}" stroke="#FFFFFF" stroke-width="0.5" /><text x="${cx}" y="${svgY + 1.2}" fill="${fg}" font-size="3" font-weight="bold" font-family="-apple-system, sans-serif" text-anchor="middle">${label}</text>`;
+    } else if (p.kind === 'ball') {
+        piecesSVG += `<circle cx="${cx}" cy="${svgY}" r="2" fill="#FFF" stroke="#000" stroke-width="0.5" />`;
+    } else {
+        let svgContent = '';
+        if (p.kind === 'cone') svgContent = `<polygon points="-3,4 3,4 1.5,-4 -1.5,-4" fill="${p.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/><ellipse cx="0" cy="4" rx="4" ry="1.5" fill="${p.color || '#FF9500'}" stroke="#000" stroke-width="0.5"/>`;
+        else if (p.kind === 'minigoal') svgContent = `<rect x="-5" y="-3" width="10" height="6" rx="1" fill="none" stroke="#FFFFFF" stroke-width="1.5"/><line x1="-5" y1="-3" x2="5" y2="-3" stroke="#FF3B30" stroke-width="1"/>`;
+        else if (p.kind === 'pole') svgContent = `<circle cx="0" cy="0" r="2" fill="${p.color || '#FF2D55'}" stroke="#000" stroke-width="0.5"/><line x1="0" y1="0" x2="0" y2="-6" stroke="${p.color || '#FF2D55'}" stroke-width="1.5"/>`;
+        else if (p.kind === 'rope') svgContent = `<line x1="-8" y1="-3" x2="8" y2="-3" stroke="#EAB308" stroke-width="0.8"/><line x1="-8" y1="3" x2="8" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="-6" y1="-3" x2="-6" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="-2" y1="-3" x2="-2" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="2" y1="-3" x2="2" y2="3" stroke="#EAB308" stroke-width="0.8"/><line x1="6" y1="-3" x2="6" y2="3" stroke="#EAB308" stroke-width="0.8"/>`;
+        piecesSVG += `<g transform="translate(${cx}, ${svgY}) scale(0.6)">${svgContent}</g>`;
+    }
+  });
+
+  let pathsSVG = '';
+  (play.tacticPaths || []).forEach(path => {
+    if (!path.points || path.points.length === 0) return;
+    const pts = path.points.map(pt => `${pt.x},${(pt.y / 100) * 75}`).join(' ');
+    pathsSVG += `<polyline points="${pts}" fill="none" stroke="${path.color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />`;
+  });
+
+  return `
+    <div style="width:100%; aspect-ratio:4/3; background:#113821; border-radius:6px; overflow:hidden; position:relative;">
+      <svg viewBox="0 0 100 75" style="width:100%; height:100%; display:block;">
+        <rect x="0" y="0" width="100" height="75" fill="#113821" />
+        <rect x="3" y="3" width="94" height="69" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        ${isHalf ? `
+            <line x1="3" y1="72" x2="97" y2="72" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <circle cx="50" cy="72" r="14" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="22" y="3" width="56" height="18" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="34" y="3" width="32" height="7" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        ` : `
+            <line x1="50" y1="3" x2="50" y2="72" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <circle cx="50" cy="37.5" r="10" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="3" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+            <rect x="83" y="20" width="14" height="35" fill="none" stroke="#FFFFFF" stroke-width="0.8" stroke-opacity="0.6" />
+        `}
+        ${pathsSVG}
+        ${piecesSVG}
+      </svg>
+    </div>`;
+};
