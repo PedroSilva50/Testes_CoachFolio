@@ -1,7 +1,7 @@
 const dict = {
   pt: {
     // --- GERAIS & NAVEGAÇÃO ---
-    def_club: "A Minha Equipa", set_club: "Nome da tua Equipa", set_club_ph: "Ex: GD São Roque",
+    def_club: "A Minha Equipa", set_club: "Nome da tua Equipa", set_club_ph: "Ex: O Teu Clube",
     nav_home_lbl: "Início", set_home_tip: "💡 Clica no ícone da Bola no canto superior esquerdo para voltar ao Menu Inicial a qualquer momento.",
     nav_hub_match: "Dia de Jogo", nav_hub_plan: "Planeamento", nav_hub_strat: "Estratégia", nav_hub_team: "Equipa & Dados",
     home_title: "COACHFOLIO", home_sub: "Tudo sobre a tua equipa. Num só lugar.", home_cont: "Continuar Jogo Atual",

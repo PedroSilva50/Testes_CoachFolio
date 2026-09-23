@@ -236,13 +236,14 @@ function calcularEstatisticaJogador(playerId, targetSeason = state.currentSeason
     return { golos:0, assistencias:0, amarelos:0, vermelhos:0, media:'-', faltasTreino:0, presencasTreino:0, totalTreinos:0, minutosTreinoCumpridos:0, minutosTreinoTotais:0, jogosTitular:0, jogosConvocado:0, jogosUtilizado:0, minutos:"0m 0s", totalSegundosJogo:0, golosSofridos:0 };
   }
 
-  const validTrainings = (state.trainings || []).filter(tr => tr && (tr.status === undefined || tr.status === 'completed') && (targetSeason === 'TUDO' || getEntitySeason(tr) === targetSeason));
-  
-  let totalTreinos = validTrainings.length;
-  validTrainings.forEach(tr => { minutosTreinoTotais += (parseInt(tr.duration, 10) || 90); });
-
   const pInfo = state.roster.find(x=>x.id===playerId);
   const isGK = pInfo && typeof pInfo.positions === 'string' && getPosRank(pInfo.positions) === 1;
+  // 🛡️ DETETAR A DATA EM QUE O JOGADOR ENTROU NA EQUIPA
+  const playerJoinDate = (pInfo && pInfo.joinDate) ? pInfo.joinDate : null; 
+
+  const validTrainings = (state.trainings || []).filter(tr => tr && (tr.status === undefined || tr.status === 'completed') && (targetSeason === 'TUDO' || getEntitySeason(tr) === targetSeason));
+  
+  let totalTreinos = 0;
 
   (state.matches || []).filter(m => {
     if (!m) return false;
@@ -297,7 +298,13 @@ function calcularEstatisticaJogador(playerId, targetSeason = state.currentSeason
   });
   
   validTrainings.forEach(tr => {
+    // 🛡️ REGRA DE OURO: SE O TREINO FOI ANTES DO JOGADOR ENTRAR, É IGNORADO!
+    if (playerJoinDate && tr.date && tr.date < playerJoinDate) return;
+
+    totalTreinos++;
     const dur = parseInt(tr.duration, 10) || 90;
+    minutosTreinoTotais += dur;
+
     let absReason = null;
     if (Array.isArray(tr.absences)) { absReason = tr.absences.includes(playerId) ? 'injustificada' : null; }
     else if (tr.absences && tr.absences[playerId]) { absReason = tr.absences[playerId]; }
