@@ -169,6 +169,14 @@ window.buildMatchTacticalPitchSVG = function(m) {
 };
 
 window.exportMatchPDF = function(mId) {
+  // 🔒 BARREIRA DA DEMO: PROÍBE EXPORTAÇÃO PDF
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A exportação de relatórios em PDF é exclusiva da versão PRO. Desbloqueia a app para poderes imprimir e partilhar os teus jogos!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+
   const m = state.matches.find(x => x.id === mId);
   if (!m) return;
 
@@ -354,6 +362,14 @@ window.exportMatchPDF = function(mId) {
 };
 
 window.exportSeasonPDF = function(season){
+  // 🔒 BARREIRA DA DEMO: PROÍBE EXPORTAÇÃO PDF DA ÉPOCA
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A exportação do relatório da Época em PDF é exclusiva da versão PRO. Desbloqueia a tua licença!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+
   const seasonId = season || state.currentSeason;
   const seasonMatches = (state.matches || [])
     .filter(m => (m.season || state.currentSeason) === seasonId)

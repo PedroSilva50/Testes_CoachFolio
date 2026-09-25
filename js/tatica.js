@@ -176,7 +176,7 @@ function renderTatica() {
     
     if (!state.tactics) state.tactics = [];
     const format = state.tacticFormat || 11;
-    const roster = eligiblePlayers(); 
+    const roster = typeof eligiblePlayers === 'function' ? eligiblePlayers() : (state.roster || []); 
     const addedPlayerIds = state.tactics.filter(i => i.kind === 'own').map(i => i.playerId).filter(Boolean);
     const oppCount = state.tactics.filter(i => i.kind === 'opp').length;
     const isHalf = !!state.tacticHalfPitch;
@@ -191,7 +191,7 @@ function renderTatica() {
     const bR = currentDrawColor === '#E74C3C' ? 'var(--chalk)' : 'transparent';
     const bB = currentDrawColor === '#3498DB' ? 'var(--chalk)' : 'transparent';
 
-    let html = `${topbarHtml(t('hub_strat_title'))}${renderStratSubHeader()}
+    let html = `${typeof topbarHtml === 'function' ? topbarHtml(typeof t === 'function' ? t('hub_strat_title') : 'Tática') : ''}${typeof renderStratSubHeader === 'function' ? renderStratSubHeader() : ''}
 
     <div style="display:flex; gap:6px; margin-bottom:10px;">
         <button class="btn btn-gold" style="flex:1; font-size:10px; padding:10px 2px;" onclick="saveTacticalPlay('jogada')">📋 GUARDAR JOGADA</button>
@@ -307,28 +307,41 @@ function renderTatica() {
     return html;
 }
 
-window.saveTacticalPlay = function(category = 'jogada') {
-    if((!state.tactics || state.tactics.length === 0) && (!state.tacticPaths || state.tacticPaths.length === 0)) {
-        showToast('O quadro está vazio!'); return;
+window.saveTacticalPlay = function(category) {
+    if (!state.isActivated && (state.tacticalNotebook || []).length >= 1) {
+        modalConfig = { type: 'freemium', message: 'A versão de testes permite guardar apenas 1 esquema tático no teu Caderno.' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
     }
-    const labelText = category === 'treino' ? 'Nome do Exercício de Treino:' : 'Nome da Jogada Tática:';
-    const playName = prompt(labelText);
-    if(!playName || !playName.trim()) return;
-    if(!state.tacticalNotebook) state.tacticalNotebook = [];
 
-    state.tacticalNotebook.unshift({
+    const name = prompt("Dá um nome a este " + (category === 'treino' ? "exercício:" : "esquema/jogada:"));
+    if (!name || name.trim() === '') return;
+
+    if (!state.tacticalNotebook) state.tacticalNotebook = [];
+
+    const durationInput = category === 'treino' ? prompt("Duração aproximada do exercício (minutos)?", "15") : null;
+    let dur = 15;
+    if (durationInput !== null) {
+        dur = parseInt(durationInput, 10);
+        if (isNaN(dur) || dur <= 0) dur = 15;
+    }
+
+    const snap = {
         id: uid(),
-        name: escapeHTML(playName.trim()),
+        name: escapeHTML(name.trim()),
         category: category, 
-        format: state.tacticFormat || 11,
+        duration: dur,
         halfPitch: !!state.tacticHalfPitch,
+        format: state.tacticFormat,
         tactics: JSON.parse(JSON.stringify(state.tactics || [])),
         tacticPaths: JSON.parse(JSON.stringify(state.tacticPaths || []))
-    });
+    };
 
+    state.tacticalNotebook.push(snap);
     saveState();
-    render();
-    showToast(category === 'treino' ? 'Exercício guardado no Caderno! 🏋️' : 'Jogada guardada no Caderno! 📋');
+    
+    if (typeof showToast === 'function') showToast(`Guardado como ${category === 'treino' ? 'Treino' : 'Jogada'}! 💾`);
 };
 
 window.loadTacticalPlay = function(id) {
@@ -341,20 +354,28 @@ window.loadTacticalPlay = function(id) {
     saveState();
     currentTab = 'tatica';
     render();
-    showToast(`Carregado: ${play.name}`);
+    if(typeof showToast === 'function') showToast(`Carregado: ${play.name}`);
 };
 
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR DO CADERNO
 window.deleteTacticalPlay = function(id) {
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+
     state.tacticalNotebook = (state.tacticalNotebook || []).filter(x => x.id !== id);
     saveState();
     render();
-    showToast('Item eliminado.');
+    if(typeof showToast === 'function') showToast('Item eliminado.');
 };
 
 window.exportTacticPDF = function() {
     const pitchEl = document.getElementById('tactic-pitch');
     if (!pitchEl) return;
-    showToast('A preparar PDF... ⏳');
+    if(typeof showToast === 'function') showToast('A preparar PDF... ⏳');
     
     html2canvas(pitchEl, { useCORS: true, scale: 2, backgroundColor: '#113821' }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
@@ -362,7 +383,7 @@ window.exportTacticPDF = function() {
             <div class="print-card">
                 <div class="print-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <h1>${getMyClub()} — ESQUEMA TÁTICO</h1>
+                        <h1>${typeof getMyClub === 'function' ? getMyClub() : 'Clube'} — ESQUEMA TÁTICO</h1>
                         <p>Gerado em: ${new Date().toLocaleDateString('pt-PT')} | Época: ${state.currentSeason}</p>
                     </div>
                     ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
@@ -379,7 +400,7 @@ window.exportTacticPDF = function() {
         if(typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
     }).catch(err => {
         console.error(err);
-        showToast('Erro ao gerar PDF tático.');
+        if(typeof showToast === 'function') showToast('Erro ao gerar PDF tático.');
     });
 };
 
@@ -467,7 +488,7 @@ window.notebookFilter = 'jogada'; // 'jogada' ou 'treino'
 
 function renderCaderno() {
     const notebook = state.tacticalNotebook || [];
-    let html = `${topbarHtml(t('hub_strat_title'))}${renderStratSubHeader()}`;
+    let html = `${typeof topbarHtml === 'function' ? topbarHtml(typeof t === 'function' ? t('hub_strat_title') : 'Tática') : ''}${typeof renderStratSubHeader === 'function' ? renderStratSubHeader() : ''}`;
     
     if(notebook.length === 0) {
         html += `<div class="empty">Nenhum esquema guardado no Caderno.<br>Cria um esquema no Quadro Tático e guarda como Jogada ou Treino.</div>`;

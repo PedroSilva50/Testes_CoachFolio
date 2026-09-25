@@ -5,22 +5,19 @@ const storageAdapter = {
   async set(key, value){ if(usingClaudeStorage) return await window.storage.set(key, value); else { localStorage.setItem(key, value); return { key, value }; } }
 };
 
-// 🛡️ 1. FILA DE GRAVAÇÃO (SAVE QUEUE) - Fim dos atropelamentos de dados
 let saveQueue = Promise.resolve();
 
-function saveState() { 
-  // Proteção: Verifica se a variável global já carregou para não dar ReferenceError
+window.saveState = function() { 
   if (typeof IS_LICENSED !== 'undefined' && !IS_LICENSED) return Promise.resolve();
   
-  state.schemaVersion = 1; // Assinatura da versão para o futuro
-  state.lastBackupDate = Date.now(); // LÓGICA CORRIGIDA: Atualiza a data ANTES de converter para texto!
+  state.schemaVersion = 1; 
+  state.lastBackupDate = Date.now(); 
   
   saveQueue = saveQueue.then(async () => {
     try { 
       await storageAdapter.set(STORAGE_KEY, JSON.stringify(state)); 
     } catch(e) { 
       if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || (e.message && e.message.includes('quota'))) { 
-        // Proteção caso a tradução t() ainda não esteja pronta na memória
         alert(typeof t === 'function' ? t('msg_quota') : 'Espaço Esgotado! O telemóvel não tem memória.'); 
       } else { 
         console.error("Erro ao guardar estado:", e); 
@@ -28,10 +25,9 @@ function saveState() {
     } 
   });
   return saveQueue;
-}
+};
 
-// 🛡️ 2. PROTEÇÃO DE CARREGAMENTO & DIREITOS ADQUIRIDOS (GRANDFATHERING)
-async function loadState(){
+window.loadState = async function(){
   try{
     if (typeof IS_LICENSED !== 'undefined' && !IS_LICENSED) return;
 
@@ -39,7 +35,6 @@ async function loadState(){
     if(res && res.value) {
        state = JSON.parse(res.value);
        
-       // DIREITOS ADQUIRIDOS: Se o treinador já tem dados na memória, é cliente antigo, ativa automaticamente!
        if (!state.isActivated && ((state.matches && state.matches.length > 0) || (state.roster && state.roster.length > 0) || (state.schedule && state.schedule.length > 0))) {
            state.isActivated = true;
        }
@@ -64,7 +59,6 @@ async function loadState(){
        if(!state.teamColor) state.teamColor = '#D9A441';
        if(!state.oppColor) state.oppColor = '#C8493F';
        if(!state.seasonFormat) state.seasonFormat = 'europeu';
-       // Proteção: Se a função defaultSeason não existir ainda, usa fallback
        if(!state.currentSeason) state.currentSeason = typeof defaultSeason === 'function' ? defaultSeason() : '24/25';
        if(!state.theme) state.theme = 'original'; if(!state.lang) state.lang = 'pt'; if(!state.myClubName) state.myClubName = '';
        if(!state.rosterSortBy) state.rosterSortBy = 'posicao';
@@ -81,7 +75,6 @@ async function loadState(){
        
     } else { state.currentSeason = typeof defaultSeason === 'function' ? defaultSeason() : '24/25'; }
   } catch(e) {
-    // ⚠️ ECRÃ VERMELHO DE EMERGÊNCIA: Protege os dados se houver falha de leitura
     document.body.innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0E211A; color:#F3EFE6; text-align:center; padding:20px; font-family:sans-serif;">
         <span style="font-size:50px; margin-bottom:20px;">⚠️</span>
@@ -95,16 +88,13 @@ async function loadState(){
     throw new Error("Falha Crítica ao carregar dados. Execução interrompida.");
   }
   if(typeof applyTheme === 'function') applyTheme(state.theme || 'original'); 
-  checkActivationAndRender(); // Entra no verificador de licença em vez do render direto
-}
+  window.checkActivationAndRender(); 
+};
 
-// 🛡️ 3. SISTEMA DE ATIVAÇÃO POR CHAVE ÚNICA (OFFLINE - OFUSCADO)
-function verifyKey(identifier, key) {
-    // A palavra secreta está ofuscada e dividida. O curioso só vê lixo informático.
+window.verifyKey = function(identifier, key) {
     const _p = ['Q09B', 'Q0gy', 'Ng==']; 
     const secret = atob(_p.join('')); 
-    
-    const str = identifier.trim().toUpperCase() + secret;
+    const str = (identifier || 'COACH').trim().toUpperCase() + secret;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = ((hash << 5) - hash) + str.charCodeAt(i);
@@ -112,61 +102,131 @@ function verifyKey(identifier, key) {
     }
     const expected = Math.abs(hash).toString(16).toUpperCase().substring(0, 6);
     return key.trim().toUpperCase() === expected;
-}
+};
 
-window.activateApp = function() {
-    const idVal = document.getElementById('act-id').value;
-    const kVal = document.getElementById('act-key').value;
-    
-    if(!idVal || !kVal) { 
-        if(typeof showToast === 'function') showToast('Preenche os dois campos!'); else alert('Preenche os dois campos!');
-        return; 
-    }
-    
-    if(verifyKey(idVal, kVal)) {
-        state.isActivated = true;
-        saveState(); // Grava a licença no telemóvel
-        if(typeof render === 'function') render(); // Desbloqueia e carrega o Menu Inicial!
-    } else {
-        if(typeof showToast === 'function') showToast('Chave de Ativação Inválida!'); else alert('Chave Inválida!');
-    }
-}
+window.checkActivationAndRender = function() {
+    if (typeof render === 'function') render(); 
+};
 
-function checkActivationAndRender() {
-    if (state.isActivated) {
-        if(typeof render === 'function') render(); // Cliente ativado, a vida segue normal.
-    } else {
-        // Esconde a barra de navegação para ficar um ecrã limpo
-        const nav = document.getElementById('navbar');
-        if (nav) nav.style.display = 'none';
-        
-        // Proteção caso o ícone ainda não exista
-        const ballIcon = typeof ballIconSvg === 'function' ? ballIconSvg() : '⚽';
-        
-        // Ecrã de bloqueio compacto e sem scroll
-        document.getElementById('app').innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:20px; box-sizing:border-box; background:var(--bg); color:var(--chalk); text-align:center; font-family:-apple-system, sans-serif; margin-top:-20px;">
-            
-            <div style="width:70px; height:70px; margin-bottom:12px;">${ballIcon}</div>
-            <h1 style="color:var(--chalk); margin:0 0 4px 0; font-size:24px; letter-spacing:0.05em;">COACHFOLIO</h1>
-            <p style="color:var(--muted); font-size:10px; margin-bottom:24px; text-transform:uppercase; letter-spacing:1px;">App de um Treinador, para Treinadores!</p>
-            
-            <div style="background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; width:100%; max-width:320px; box-sizing:border-box;">
-                <p style="font-size:12px; margin-top:0; margin-bottom:20px;">Para usares a aplicação, introduz a tua chave.</p>
-                
-                <div style="text-align:left; margin-bottom:12px;">
-                    <label style="display:block; font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px; font-weight:bold;">Telemóvel ou Email</label>
-                    <input type="text" id="act-id" placeholder="Ex: 912345678" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--surface-2); color:var(--chalk); font-size:14px; box-sizing:border-box;">
-                </div>
-                
-                <div style="text-align:left; margin-bottom:20px;">
-                    <label style="display:block; font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:4px; font-weight:bold;">Chave de Ativação</label>
-                    <input type="text" id="act-key" placeholder="Ex: A4F9B2" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--surface-2); color:var(--chalk); font-size:14px; box-sizing:border-box; text-transform:uppercase;">
-                </div>
-                
-                <button style="width:100%; padding:12px; background:var(--gold); color:#000; border:none; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer;" onclick="activateApp()">Desbloquear</button>
-            </div>
-          </div>
-        `;
+window.calcularEstatisticaJogador = function(playerId, targetSeason = state.currentSeason, typeFilter = 'todos', phaseFilter = 'todas', tourFilter = 'todas') {
+  let golos = 0, assistencias = 0, amarelos = 0, vermelhos = 0, somaAvaliacoes = 0, numAvaliacoes = 0, faltasTreino = 0, jogosTitular = 0, totalSegundosJogo = 0, presencasTreino = 0, jogosConvocado = 0, jogosUtilizado = 0;
+  let minutosTreinoCumpridos = 0, minutosTreinoTotais = 0, golosSofridos = 0;
+  
+  if (typeof IS_LICENSED !== 'undefined' && !IS_LICENSED || !state || !playerId) {
+    return { golos:0, assistencias:0, amarelos:0, vermelhos:0, media:'-', faltasTreino:0, presencasTreino:0, totalTreinos:0, minutosTreinoCumpridos:0, minutosTreinoTotais:0, jogosTitular:0, jogosConvocado:0, jogosUtilizado:0, minutos:"0m 0s", totalSegundosJogo:0, golosSofridos:0 };
+  }
+
+  const pInfo = state.roster.find(x=>x.id===playerId);
+  const isGK = pInfo && typeof pInfo.positions === 'string' && getPosRank(pInfo.positions) === 1;
+  
+  // 🛡️ DETETAR A DATA DE ENTRADA DO JOGADOR
+  const playerJoinDate = (pInfo && pInfo.joinDate) ? pInfo.joinDate : null; 
+
+  const validTrainings = (state.trainings || []).filter(tr => tr && (tr.status === undefined || tr.status === 'completed') && (targetSeason === 'TUDO' || getEntitySeason(tr) === targetSeason));
+  
+  let totalTreinos = 0;
+
+  (state.matches || []).filter(m => {
+    if (!m) return false;
+    if (targetSeason !== 'TUDO' && getEntitySeason(m) !== targetSeason) return false;
+    if (typeFilter !== 'todos' && m.type !== typeFilter) return false;
+    if (typeFilter === 'campeonato' && phaseFilter !== 'todas' && (m.phase||'').trim() !== phaseFilter) return false;
+    if (typeFilter === 'torneio' && tourFilter !== 'todas' && (m.tournamentName||'').trim() !== tourFilter) return false;
+    return true;
+  }).forEach(m => {
+    const usedInMatch = (m.lineup || []).includes(playerId) || (m.subs || []).some(s => s && s.inId === playerId);
+    const calledUpList = (m.originalSchedule && m.originalSchedule.callup && m.originalSchedule.callup.length > 0) ? m.originalSchedule.callup : null;
+    
+    if (calledUpList ? calledUpList.includes(playerId) : usedInMatch) jogosConvocado++;
+
+    if (state.trackSubs && m.finished) {
+      if (!m.ignoreMinutes) {
+        if (usedInMatch) jogosUtilizado++;
+        if ((m.lineup || []).includes(playerId)) jogosTitular++; 
+        if (typeof calcPlayerMinutes === 'function') totalSegundosJogo += calcPlayerMinutes(m, playerId); 
+      }
+    }    
+    (m.goals || []).forEach(g => { 
+      if (g && g.type === 'scored' && g.scorerId === playerId) golos++; 
+      if (g && g.type === 'scored' && g.assistId === playerId) assistencias++; 
+      
+      if (g && g.type === 'conceded') {
+          if (g.gkId && g.gkId !== 'auto' && g.gkId !== 'none') {
+              if (g.gkId === playerId) golosSofridos++;
+          } else {
+              if (isGK) {
+                  if (!state.trackSubs || m.ignoreMinutes || !m.lineup || m.lineup.length === 0) {
+                      if (m.lineup && m.lineup.includes(playerId)) golosSofridos++;
+                  } else {
+                      let goalHalf = g.half || 1; let goalMin = g.minute || 0;
+                      let currentXI = [...(m.lineup || [])];
+                      let subsBeforeGoal = (m.subs || []).filter(s => {
+                          if (s.half < goalHalf) return true;
+                          if (s.half === goalHalf) { if (s.isHalftime) return true; return (s.minute || 0) <= goalMin; }
+                          return false;
+                      }).sort((a,b) => (a.half - b.half) || (a.isHalftime ? -1 : 1) || ((a.minute||0) - (b.minute||0)));
+                      subsBeforeGoal.forEach(s => { currentXI = currentXI.filter(id => id !== s.outId); currentXI.push(s.inId); });
+                      if (currentXI.includes(playerId)) golosSofridos++;
+                  }
+              }
+          }
+      }
+    });  
+    (m.cards || []).forEach(c => { 
+      if (c && c.playerId === playerId) { if (c.color === 'Amarelo') amarelos++; else vermelhos++; } 
+    });
+    if (m.ratings && m.ratings[playerId]) { somaAvaliacoes += m.ratings[playerId]; numAvaliacoes++; }
+  });
+  
+  validTrainings.forEach(tr => {
+    // 🛡️ IGNORAR TREINOS ANTES DA DATA DE ENTRADA DO JOGADOR
+    if (playerJoinDate && tr.date && tr.date < playerJoinDate) return;
+
+    totalTreinos++;
+    const dur = parseInt(tr.duration, 10) || 90;
+    minutosTreinoTotais += dur;
+
+    let absReason = null;
+    if (Array.isArray(tr.absences)) { absReason = tr.absences.includes(playerId) ? 'injustificada' : null; }
+    else if (tr.absences && tr.absences[playerId]) { absReason = tr.absences[playerId]; }
+
+    const trueAbsenceReasons = ['injustificada', 'justificada'];
+
+    if (absReason && trueAbsenceReasons.includes(absReason)) {
+      faltasTreino++;
+      if (tr.customMinutes && tr.customMinutes[playerId] != null) { minutosTreinoCumpridos += parseInt(tr.customMinutes[playerId], 10); }
+    } else if (absReason) {
+      presencasTreino++;
+      minutosTreinoCumpridos += (tr.customMinutes && tr.customMinutes[playerId] != null) ? parseInt(tr.customMinutes[playerId], 10) : 0;
+    } else { 
+      presencasTreino++; minutosTreinoCumpridos += dur; 
     }
-}
+  });
+  
+  return { 
+    golos, assistencias, amarelos, vermelhos, 
+    media: numAvaliacoes > 0 ? (somaAvaliacoes / numAvaliacoes).toFixed(1) : '-', 
+    faltasTreino, presencasTreino, totalTreinos, 
+    minutosTreinoCumpridos, minutosTreinoTotais,
+    jogosTitular, jogosConvocado, jogosUtilizado, 
+    minutos: typeof formatSecsToMinSec === 'function' ? formatSecsToMinSec(totalSegundosJogo) : Math.round(totalSegundosJogo/60) + "'",
+    totalSegundosJogo, golosSofridos 
+  };
+};
+
+window.wipeAllData = function() {
+  // 🔒 BARREIRA DA DEMO: PROÍBE O RESET DA APLICAÇÃO
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A limpeza total de dados (Reset) está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total da tua aplicação!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+
+  if (confirm("ATENÇÃO: Vais APAGAR TODOS OS DADOS (Plantel, Jogos, Treinos, etc) da aplicação no teu dispositivo.\n\nTens a certeza absoluta?")) {
+    if (confirm("Aviso final: Esta ação é irreversível. Todos os dados serão eliminados agora.")) {
+        localStorage.removeItem(STORAGE_KEY);
+        window.location.reload();
+    }
+  }
+};

@@ -16,7 +16,6 @@ function computeStats(typeFilterVal, seasonFilterVal, phaseFilterVal, tournament
   const matches = seasonMatches.filter(m => (!phaseFilterVal || phaseFilterVal==='todas' || (m.phase||'').trim()===phaseFilterVal))
                                 .filter(m => (!tournamentFilterVal || tournamentFilterVal==='todas' || (m.tournamentName||'').trim()===tournamentFilterVal));
 
-  // OTIMIZAÇÃO: Ordenar os jogos apenas UMA VEZ
   const finishedMatches = [...matches].filter(m => m.finished).sort((a,b) => new Date(a.date) - new Date(b.date));
   
   const last6Matches = finishedMatches.slice(-6);
@@ -142,7 +141,6 @@ window.exportGlobalStatsPDF = function(){
   const topAssister = s.assisters[0] || null;
   const mostUsed = playerRows[0] || null;
 
-  // NOVO: Lista de todos os marcadores
   const allScorersHtml = s.scorers.length > 0 
       ? s.scorers.map(sc => `${sc.name} (${sc.count})`).join(' &nbsp;•&nbsp; ') 
       : 'Sem golos marcados.';
@@ -165,8 +163,6 @@ window.exportGlobalStatsPDF = function(){
       <div style="background:#F3F4F6; border-radius:6px; padding:8px;"><div style="font-size:18px; font-weight:bold;">${totalJogos}</div><div style="font-size:9px; color:#666; text-transform:uppercase;">Jogos</div></div>
       <div style="background:#F3F4F6; border-radius:6px; padding:8px;"><div style="font-size:18px; font-weight:bold; color:#166534;">${s.wins}V ${s.draws}E ${s.losses}D</div><div style="font-size:9px; color:#666; text-transform:uppercase;">Resultado</div></div>
       <div style="background:#F3F4F6; border-radius:6px; padding:8px;"><div style="font-size:18px; font-weight:bold;">${aproveitamento}%</div><div style="font-size:9px; color:#666; text-transform:uppercase;">Aproveitamento</div></div>
-      
-      <!-- ALTERADO: Mostrar os totais de GM e GS -->
       <div style="background:#F3F4F6; border-radius:6px; padding:8px;"><div style="font-size:16px; font-weight:bold;"><span style="color:#166534;">${s.scored} GM</span> / <span style="color:#DC2626;">${s.conceded} GS</span></div><div style="font-size:9px; color:#666; text-transform:uppercase;">Golos</div></div>
     </div>
 
@@ -192,7 +188,6 @@ window.exportGlobalStatsPDF = function(){
       <div style="border:1px solid #CCC; border-radius:6px; padding:8px; text-align:center;"><div style="font-size:9px; color:#666; text-transform:uppercase;">Mais Utilizado</div><div style="font-weight:bold; margin-top:3px;">${mostUsed ? `${mostUsed.name} (${mostUsed.minutes}')` : '-'}</div></div>
     </div>
     
-    <!-- NOVO: Lista de Todos os Marcadores -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:6px; padding:10px; margin-bottom:15px; font-size:11px;">
       <div style="font-size:9px; color:#666; text-transform:uppercase; font-weight:bold; margin-bottom:4px;">⚽ Todos os Marcadores desta Competição</div>
       <div style="font-weight:bold; color:#111827; line-height:1.5;">${allScorersHtml}</div>
@@ -238,8 +233,7 @@ function calcularEstatisticaJogador(playerId, targetSeason = state.currentSeason
 
   const pInfo = state.roster.find(x=>x.id===playerId);
   const isGK = pInfo && typeof pInfo.positions === 'string' && getPosRank(pInfo.positions) === 1;
-  // 🛡️ DETETAR A DATA EM QUE O JOGADOR ENTROU NA EQUIPA
-  const playerJoinDate = (pInfo && pInfo.joinDate) ? pInfo.joinDate : null; 
+  const playerJoinDate = (pInfo && pInfo.joinDate) ? pInfo.joinDate : null;
 
   const validTrainings = (state.trainings || []).filter(tr => tr && (tr.status === undefined || tr.status === 'completed') && (targetSeason === 'TUDO' || getEntitySeason(tr) === targetSeason));
   
@@ -298,7 +292,6 @@ function calcularEstatisticaJogador(playerId, targetSeason = state.currentSeason
   });
   
   validTrainings.forEach(tr => {
-    // 🛡️ REGRA DE OURO: SE O TREINO FOI ANTES DO JOGADOR ENTRAR, É IGNORADO!
     if (playerJoinDate && tr.date && tr.date < playerJoinDate) return;
 
     totalTreinos++;
@@ -606,7 +599,14 @@ window.toggleFinesLock = function() {
     if (typeof showToast === 'function') showToast(window.finesUnlocked ? '🔓 Caixinha destrancada para edição!' : '🔒 Caixinha protegida!');
 };
 
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR MULTAS
 window.deleteFine = function(fId) { 
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
     state.fines = state.fines.filter(x => x.id !== fId); 
     saveState(); render(); 
 };
@@ -666,9 +666,37 @@ window.renderCaixinha = function() {
 };
 
 window.uiSaveLeague = function() { if(!leagueForm.name || !leagueForm.name.trim()) return; state.leagues.push({ id: uid(), name: escapeHTML(leagueForm.name.trim()), teams: [], matches: [] }); leagueForm = null; saveState(); render(); };
-window.deleteLeague = function(id) { state.leagues = state.leagues.filter(l => l.id !== id); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR LIGAS
+window.deleteLeague = function(id) { 
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+    state.leagues = state.leagues.filter(l => l.id !== id); 
+    saveState(); render(); 
+};
+
 window.uiAddLeagueTeam = function(lgId) { const input = document.getElementById('lg-team-input'); if(!input || !input.value.trim()) return; const lg = state.leagues.find(l => l.id === lgId); if(lg && !lg.teams.includes(input.value.trim())) { lg.teams.push(escapeHTML(input.value.trim())); saveState(); render(); } };
-window.uiRemoveLeagueTeam = function(lgId, index) { const lg = state.leagues.find(l => l.id === lgId); if(lg) { const tName = lg.teams[index]; lg.teams.splice(index, 1); lg.matches = lg.matches.filter(m => m.h !== tName && m.a !== tName); saveState(); render(); } };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR EQUIPAS DAS LIGAS
+window.uiRemoveLeagueTeam = function(lgId, index) { 
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+    const lg = state.leagues.find(l => l.id === lgId); 
+    if(lg) { 
+        const tName = lg.teams[index]; lg.teams.splice(index, 1); 
+        lg.matches = lg.matches.filter(m => m.h !== tName && m.a !== tName); 
+        saveState(); render(); 
+    } 
+};
+
 window.uiEditLeagueMatch = function(lgId, mId) { const lg = state.leagues.find(l => l.id === lgId); const m = lg.matches.find(x => x.id === mId); if(m) { editingLgMatch = { lgId, mId, md: m.md, h: m.h, a: m.a, hg: m.hg, ag: m.ag }; render(); } };
 window.uiCancelEditLeagueMatch = function() { editingLgMatch = null; render(); };
 window.uiAddLeagueMatch = function(lgId) {
@@ -676,7 +704,22 @@ window.uiAddLeagueMatch = function(lgId) {
     const h = document.getElementById('lg-match-h').value; const a = document.getElementById('lg-match-a').value; const hg = document.getElementById('lg-match-hg').value; const ag = document.getElementById('lg-match-ag').value; let md = document.getElementById('lg-match-md').value;
     if(h && a && h !== a && hg !== '' && ag !== '') { if (typeof editingLgMatch !== 'undefined' && editingLgMatch && editingLgMatch.lgId === lgId) { const m = lg.matches.find(x => x.id === editingLgMatch.mId); if (m) { m.md = escapeHTML(md); m.h = h; m.a = a; m.hg = parseInt(hg); m.ag = parseInt(ag); } editingLgMatch = null; } else { if(!md) md = '1'; lg.matches.push({ id: uid(), md: escapeHTML(md), h: h, a: a, hg: parseInt(hg), ag: parseInt(ag) }); } saveState(); render(); } else { typeof showToast === 'function' ? showToast("Dados inválidos.") : alert("Dados inválidos."); }
 };
-window.uiRemoveLeagueMatch = function(lgId, mId) { const lg = state.leagues.find(l => l.id === lgId); if(lg) { lg.matches = lg.matches.filter(m => m.id !== mId); saveState(); render(); } };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR JOGOS DAS LIGAS
+window.uiRemoveLeagueMatch = function(lgId, mId) { 
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+    const lg = state.leagues.find(l => l.id === lgId); 
+    if(lg) { 
+        lg.matches = lg.matches.filter(m => m.id !== mId); 
+        saveState(); render(); 
+    } 
+};
+
 window.filterLeagueTeams = function(lgId) {
     const mdInput = document.getElementById('lg-match-md'); if(!mdInput) return; const md = mdInput.value; const lg = state.leagues.find(l=>l.id===lgId); if(!lg) return;
     const played = lg.matches.filter(m => m.md === md && (typeof editingLgMatch === 'undefined' || !editingLgMatch || m.id !== editingLgMatch.mId)).flatMap(m => [m.h, m.a]);
@@ -777,7 +820,14 @@ window.saveStaffMember = function() {
   if(typeof showToast === 'function') showToast('Elemento guardado!');
 };
 
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR EQUIPA TÉCNICA
 window.deleteStaffMember = function(id) {
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
   state.staff = (state.staff || []).filter(s => s.id !== id);
   saveState();
   render();
@@ -910,7 +960,6 @@ window.exportPlayerPDF = function(pId) {
 window.renderPlantel = function() {
   const activeRoster = eligiblePlayers();
 
-  // OTIMIZAÇÃO: Calcular as estatísticas de todos APENAS UMA VEZ no início
   const playerStatsMap = {};
   activeRoster.forEach(p => {
       playerStatsMap[p.id] = calcularEstatisticaJogador(p.id);
@@ -994,7 +1043,6 @@ window.renderPlantel = function() {
         const isExpanded = typeof expandedPlayer !== 'undefined' && expandedPlayer === p.id;
         const isEditing = typeof editingPlayerId !== 'undefined' && editingPlayerId === p.id;
         
-        // Recuperar do mapa sem recalcular!
         const st = playerStatsMap[p.id];
         const age = p.birthDate ? computeAge(p.birthDate) : null;
 
@@ -1265,7 +1313,28 @@ window.renderPlantel = function() {
   return html;
 };
 
-window.uiAddPlayer = function(){ try { if(!state.roster) state.roster = []; const input = document.getElementById('new-player-input'); if(!input) return; const v = input.value; if(v && v.trim() !== '') { state.roster.push({ id: uid(), name: escapeHTML(v.trim()), birthDate: null, number: null, positions: '', active: true, joinDate: new Date().toISOString().slice(0,10) }); input.value = ''; saveState(); render(); } } catch(e) { console.error("Error:", e); alert(t('msg_err_add_pl') + e.message); } };
+window.uiAddPlayer = function(){ 
+    if (!state.isActivated && (state.roster || []).filter(p => p.active !== false).length >= 7) {
+        modalConfig = { type: 'freemium', message: 'A versão de testes permite um máximo de 7 jogadores no plantel.' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+    
+    try { 
+        if(!state.roster) state.roster = []; 
+        const input = document.getElementById('new-player-input'); 
+        if(!input) return; 
+        const v = input.value; 
+        if(v && v.trim() !== '') { 
+            state.roster.push({ id: uid(), name: escapeHTML(v.trim()), birthDate: null, number: null, positions: '', active: true, joinDate: new Date().toISOString().slice(0,10) }); 
+            input.value = ''; saveState(); render(); 
+        } 
+    } catch(e) { 
+        console.error("Error:", e); 
+        if(typeof showToast === 'function') showToast(t('msg_err_add_pl') + e.message); 
+    } 
+};
 window.updatePlayerName = function(id, val){ const p=state.roster.find(x=>x.id===id); if(p){p.name=escapeHTML(val.trim()); saveState(); render();} };
 window.updatePlayerNumber = function(id, val){ const p=state.roster.find(x=>x.id===id); if(p){p.number=parseInt(val)||null; saveState(); render();} };
 window.updatePlayerNotes = function(id, val) {
@@ -1295,4 +1364,14 @@ window.updatePlayerBirthDate = function(id, val){
   saveState(); render();
 };
 
-window.removePlayer = function(id){ const p=state.roster.find(x=>x.id===id); if(p){ p.active=false; saveState(); render(); } };
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR JOGADORES
+window.removePlayer = function(id){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de jogadores está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  const p=state.roster.find(x=>x.id===id); 
+  if(p){ p.active=false; saveState(); render(); } 
+};

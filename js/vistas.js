@@ -1,6 +1,24 @@
 function renderModalHTML(){
   if(!modalConfig) return '';
 
+  // 🔒 MODAL FREEMIUM (SEM CHAVES, DIRETAMENTE PARA O INSTAGRAM)
+  if (modalConfig.type === 'freemium') {
+      return `
+      <div class="modal-overlay" style="z-index: 10000;" onclick="if(event.target===this) closeModal()">
+          <div class="modal-card" style="padding: 24px 20px;">
+              <div style="font-size:40px; margin-bottom:10px;">⭐</div>
+              <h3 style="margin-top:0; color:var(--gold);">Limite da Versão Grátis</h3>
+              <p style="font-size:13px; color:var(--chalk); margin-bottom:20px; line-height:1.4;">
+                  ${modalConfig.message || 'Atingiste o limite da versão de demonstração.'}<br><br>
+                  <span style="color:var(--muted);">Desbloqueia a versão PRO para gerires a tua época inteira sem restrições! Clica abaixo para obteres o teu acesso.</span>
+              </p>
+              
+              <button class="btn btn-gold" style="width:100%; font-size:14px; padding:12px; margin-bottom:10px;" onclick="window.open('https://instagram.com/coachfolio.app', '_blank')">Falar com o Suporte (Instagram) ↗️</button>
+              <button class="btn btn-outline" style="width:100%;" onclick="closeModal()">Continuar a Testar</button>
+          </div>
+      </div>`;
+  }
+
   if (modalConfig && modalConfig.type === 'exerciseSelector') {
       const exercises = (state.tacticalNotebook || []).filter(x => x.category === 'treino');
       const query = (window.exerciseSearchQuery || '').trim().toLowerCase();
@@ -255,9 +273,11 @@ function renderModalHTML(){
                
                <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:12px;">
                  <button class="btn btn-gold" style="font-size:11px; font-weight:bold; flex:1;" onclick="event.stopPropagation(); window.exportDataJSON();">📥 ${t('exp_json')}</button>
-                 <label class="btn btn-outline" style="font-size:11px; font-weight:bold; flex:1; margin:0; cursor:pointer; text-align:center;">
+                 
+                 <!-- 🔒 BLOQUEIO DA IMPORTAÇÃO NO BOTÃO -->
+                 <label class="btn btn-outline" style="font-size:11px; font-weight:bold; flex:1; margin:0; cursor:pointer; text-align:center;" onclick="if(!state.isActivated){ event.preventDefault(); modalConfig={type:'freemium', message:'A importação de backups é exclusiva da versão PRO.'}; document.getElementById('modal-root').innerHTML = renderModalHTML(); return false; }">
                    📤 ${t('imp_json')}
-                   <input type="file" id="json-file-input" accept=".json" style="display:none;" onchange="importData(this)">
+                   <input type="file" id="json-file-input" accept=".json" style="display:none;" onchange="importData(this)" ${!state.isActivated ? 'disabled' : ''}>
                  </label>
                </div>
                
@@ -320,7 +340,7 @@ function renderModalHTML(){
         <div class="modal-card" style="padding: 30px 20px;">
           <div style="font-size:40px; margin-bottom:10px;">📄</div>
           <h3 style="margin-top:0; color:var(--gold);">Relatório Gerado</h3>
-          <p style="font-size:13px; color:var(--chalk); margin-bottom:20px;">O teu relatório está pronto. Clica abaixo para abrir, imprimir ou guardar nos ficheiros do iPhone.</p>
+          <p style="font-size:13px; color:var(--chalk); margin-bottom:20px;">O teu relatório está pronto. Clica abaixo para abrir, imprimir ou guardar nos ficheiros do telemóvel.</p>
           <button class="btn btn-gold" style="width:100%; font-size:15px; padding:12px;" onclick="triggerSafePrint();">🖨️ Abrir / Partilhar / Imprimir</button>
           <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="document.getElementById('print-area').innerHTML=''; closeModal();">Fechar</button>
         </div>
@@ -348,11 +368,13 @@ function renderModalHTML(){
      </div></div>`;
   }
   
-return `<div class="modal-overlay"><div class="modal-card"><p>${modalConfig.message}</p><div style="display:flex; gap:10px;"><button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button><button class="btn ${modalConfig.btnClass || 'btn-red'}" onclick="confirmModal();">${t('confirm')}</button></div></div></div>`;}
+return `<div class="modal-overlay"><div class="modal-card"><p>${modalConfig.message}</p><div style="display:flex; gap:10px;"><button class="btn btn-outline" onclick="closeModal()">${t('cancel')}</button><button class="btn ${modalConfig.btnClass || 'btn-red'}" onclick="confirmModal();">${t('confirm')}</button></div></div></div>`;
+}
 
 function topbarHtml(title){ 
-  return `<div class="topbar"><div style="display:flex; align-items:center;"><span class="topbar-home" onclick="goHome()" title="${t('nav_home_lbl')}"><span class="topbar-home-icon">${ballIconSvg()}</span><span class="topbar-home-label">${t('nav_home_lbl')}</span></span><h1 style="margin-left:10px;">${title}</h1></div><span class="topbar-settings" onclick="openSettings()">⚙️</span></div>`; 
+  return `<div class="topbar"><div style="display:flex; align-items:center;"><span class="topbar-home" onclick="goHome()" title="${t('nav_home_lbl')}"><span class="topbar-home-icon">${typeof ballIconSvg === 'function' ? ballIconSvg() : '⚽'}</span><span class="topbar-home-label">${t('nav_home_lbl')}</span></span><h1 style="margin-left:10px;">${title}</h1></div><span class="topbar-settings" onclick="openSettings()">⚙️</span></div>`; 
 }
+
 function ballIconSvg(){ return `<svg style="width:100%; height:100%;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--gold)" stroke-width="4"/><polygon points="50,29 63,39 58,55 42,55 37,39" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linejoin="round"/><path d="M50 29 L50 9 M63 39 L81 30 M58 55 L71 71 M42 55 L29 71 M37 39 L19 30" stroke="var(--gold)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`; }
 
 function matchNarrativeHtml(m, isLocked = false){
@@ -422,8 +444,8 @@ function renderHome(){
     const daysSince = (Date.now() - state.lastBackupDate) / (1000 * 60 * 60 * 24); 
     if(daysSince > 7) {
       backupWarning = `<div class="warning-banner" style="background:var(--red); color:var(--btn-red-txt); padding:10px 14px; border-radius:10px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; font-size:11px;">
-        <span>⚠️ <b>Backup Atrasado (+7 dias)</b></span>
-        <button class="btn btn-gold" style="padding: 4px 8px; font-size: 10px; flex:none;" onclick="window.exportDataJSON()">Exportar Já</button>
+        <span>⚠️ <b>${t('home_bkp_warn')}</b></span>
+        <button class="btn btn-gold" style="padding: 4px 8px; font-size: 10px; flex:none;" onclick="window.exportDataJSON()">${t('home_bkp_btn')}</button>
       </div>`; 
     }
   }
@@ -432,8 +454,8 @@ function renderHome(){
   let installWarning = '';
   if (!isStandalone) {
     installWarning = `<div class="warning-banner" style="background:var(--surface-2); border:1px solid var(--gold); color:var(--chalk); padding:10px 14px; border-radius:10px; margin-bottom:12px; text-align:left; font-size:11px; line-height:1.4;">
-      <b style="color:var(--gold); display:block; margin-bottom:4px;">📲 Instalar Aplicação</b>
-      Para evitares a perda de dados, toca em Partilhar e <b>"Adicionar ao Ecrã Principal"</b>.
+      <b style="color:var(--gold); display:block; margin-bottom:4px;">${t('home_install')}</b>
+      ${t('home_install_desc')}
     </div>`;
   }
 
@@ -442,9 +464,9 @@ function renderHome(){
   if(nextBday) {
     let msg = '';
     if(nextBday.days === 0) {
-      msg = `🎂 Hoje é o aniversário de <b>${nextBday.player.name}</b>! 🎉`;
+      msg = t('home_bday_today', {name: nextBday.player.name});
     } else {
-      msg = `🎂 Próximo aniversário: <b>${nextBday.player.name}</b> (${nextBday.days} dia${nextBday.days > 1 ? 's' : ''})`; 
+      msg = t('home_bday_next', {name: nextBday.player.name, d: nextBday.days});
     }
     bdayHtml = `<div style="background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px; text-align:center;">${msg}</div>`;
   }
@@ -474,15 +496,15 @@ function renderHome(){
     nextMatchHtml = `
       <div style="background:var(--surface); border:1px solid var(--gold); border-radius:12px; padding:12px; margin-bottom:12px; text-align:left;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="font-size:10px; color:var(--gold); font-weight:bold; text-transform:uppercase;">📅 Próximo Jogo</span>
+          <span style="font-size:10px; color:var(--gold); font-weight:bold; text-transform:uppercase;">${t('home_next_match')}</span>
           <span style="font-size:10px; color:var(--muted);">${dateStr} às ${nm.time}</span>
         </div>
         <div style="font-size:14px; font-weight:bold; color:var(--chalk); margin-bottom:4px;">
           ${nm.location === 'casa' ? `${getMyClub()} vs${nm.opponent}` : `${nm.opponent} vs${getMyClub()}`}
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-          <span style="font-size:11px; color:var(--muted);">📍 Comparência: <b>${meetTime}</b></span>
-          <button class="btn btn-gold" style="font-size:10px; padding:4px 8px; flex:none;" onclick="expandedSchedule='${nm.id}'; navigateToHub('planeamento');">Convocatória 📋</button>
+          <span style="font-size:11px; color:var(--muted);">${t('home_meet')} <b>${meetTime}</b></span>
+          <button class="btn btn-gold" style="font-size:10px; padding:4px 8px; flex:none;" onclick="expandedSchedule='${nm.id}'; navigateToHub('planeamento');">${t('home_callup_btn')}</button>
         </div>
       </div>`;
   }
@@ -505,9 +527,9 @@ function renderHome(){
     const dateStr = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}` : nt.date;
     const isPast = nt.date < todayStr;
 
-    const labelTitle = isPast ? `🔴 Treino Pendente (${dateStr})` : `🟡 Próximo Treino (${dateStr})`;
+    const labelTitle = isPast ? `${t('home_tr_pend')} (${dateStr})` : `${t('home_tr_next')} (${dateStr})`;
     const labelColor = isPast ? `var(--red)` : `var(--yellow)`;
-    const labelSub = isPast ? `Sessão em atraso (por concluir)` : `${pendingCount} sessão(ões) agendada(s)`;
+    const labelSub = isPast ? t('home_tr_late') : t('home_tr_sched', {n: pendingCount});
 
     pendingTrainingsHtml = `
       <div style="background:var(--surface-2); border:1px solid ${labelColor}; border-radius:12px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
@@ -515,7 +537,7 @@ function renderHome(){
           <div style="font-size:11px; font-weight:bold; color:${labelColor};">${labelTitle}</div>
           <div style="font-size:10px; color:var(--muted);">${labelSub}</div>
         </div>
-        <button class="btn btn-green" style="font-size:10px; padding:6px 10px; flex:none;" onclick="navigateToHub('planeamento'); navigateToTab('treinos');">Ver Treinos 🟢</button>
+        <button class="btn btn-green" style="font-size:10px; padding:6px 10px; flex:none;" onclick="navigateToHub('planeamento'); navigateToTab('treinos');">${t('home_tr_btn')}</button>
       </div>`;
   }
 
@@ -536,7 +558,7 @@ function renderHome(){
     
     formHtml = `
     <div style="background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:10px; color:var(--muted); font-weight:bold; text-transform:uppercase; letter-spacing:0.05em;">Forma (Últ. ${seasonFinishedMatches.length})</span>
+      <span style="font-size:10px; color:var(--muted); font-weight:bold; text-transform:uppercase; letter-spacing:0.05em;">${t('home_form', {n: seasonFinishedMatches.length})}</span>
       <div style="display:flex; align-items:center;">${formDots}</div>
     </div>`;
   }
@@ -557,10 +579,10 @@ function renderHome(){
       ${backupWarning}
       ${installWarning}
       <div class="topbar-settings" style="position:absolute; top:0; right:0;" onclick="openSettings()">⚙️</div>
-      <div class="home-ball">${ballIconSvg()}</div>
+      <div class="home-ball">${typeof ballIconSvg === 'function' ? ballIconSvg() : '⚽'}</div>
       <h1>${t('home_title')}</h1>
       <div class="home-sub" style="margin-bottom:2px; font-size:13px; color:var(--gold);">${getClubAndEscalao()}</div>
-      <div style="font-size:11px; color:var(--gold); margin-bottom:14px; font-weight:bold; letter-spacing:0.5px;">by Pedro Silva</div>
+      <div style="font-size:11px; color:var(--gold); margin-bottom:14px; font-weight:bold; letter-spacing:0.5px;">${t('home_by')}</div>
       
       ${bdayHtml}
       ${pendingTrainingsHtml}
@@ -584,7 +606,7 @@ function renderPlanSubHeader() { return `<div class="seg" style="margin-bottom:1
 function renderStratSubHeader() { 
   return `<div class="seg" style="margin-bottom:14px;">
     <div class="seg-btn ${currentTab==='tatica'?'active':''}" onclick="navigateToTab('tatica')">${t('tac_title')}</div>
-    <div class="seg-btn ${currentTab==='caderno'?'active':''}" onclick="navigateToTab('caderno')">📋 Minhas Jogadas</div>
+    <div class="seg-btn ${currentTab==='caderno'?'active':''}" onclick="navigateToTab('caderno')">📋 ${t('tac_my_plays')}</div>
     ${state.enableVideos ? `<div class="seg-btn ${currentTab==='videos'?'active':''}" onclick="navigateToTab('videos')">${t('vid_title')}</div>` : ''}
   </div>`; 
 }
@@ -697,10 +719,10 @@ function renderJogo(){
           if (!isManualMode) {
               matchControlsHtml = `
                   <button class="btn btn-green" style="padding:8px 20px; font-size:12px; margin: 10px auto 0; display: block;" onclick="askConfirm('${t('msg_ko')}', ()=>setMatchTimeMark('${m.id}','kickoff'), 'btn-green')">${t('match_kickoff')}</button>
-                  <button class="btn btn-outline" style="padding:6px 16px; font-size:11px; margin: 10px auto 0; display: block; border-style:dashed;" onclick="askConfirm('Tens a certeza que queres registar este jogo em Modo Histórico? O cronómetro não será utilizado.', ()=>enableManualMode('${m.id}'), 'btn-gold')">📝 Registar Jogo Histórico (Sem Relógio)</button>
+                  <button class="btn btn-outline" style="padding:6px 16px; font-size:11px; margin: 10px auto 0; display: block; border-style:dashed;" onclick="askConfirm('Tens a certeza que queres registar este jogo em Modo Histórico? O cronómetro não será utilizado.', ()=>enableManualMode('${m.id}'), 'btn-gold')">${t('match_hist_btn')}</button>
               `;
           } else {
-              matchControlsHtml = `<div style="font-size:11px; color:var(--gold); text-transform:uppercase; margin-top:10px; font-weight:700;">📝 Modo Histórico Ativo</div>`;
+              matchControlsHtml = `<div style="font-size:11px; color:var(--gold); text-transform:uppercase; margin-top:10px; font-weight:700;">${t('match_hist_active')}</div>`;
           }
       }
   } else if (m.timeline.kickoff && !m.timeline.halftime && !m.timeline.fullTime) {
@@ -750,7 +772,7 @@ function renderJogo(){
   } else {
       actionButtonsHtml = `
          <div style="margin-top:16px; padding:10px; border-radius:8px; background:var(--surface-2); font-size:11px; text-align:center; color:var(--gold); text-transform:uppercase; font-weight:700; letter-spacing:0.05em; cursor:pointer; border:1px solid var(--gold); box-shadow: 0 4px 6px rgba(0,0,0,0.3);" onclick="const am = getActiveMatch(); if(am){am.actionsUnlocked=true; render();}">
-            🔓 Desbloquear Ações de Jogo
+            ${t('match_unlock')}
          </div>
       `;
   }
@@ -764,8 +786,8 @@ function renderJogo(){
   }
 
   let oppHtml = isHomeMatch
-      ? `${getMyClub()} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${m.opponent}` 
-      : `${m.opponent} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${getMyClub()}`;
+      ? `${getMyClub()} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${escapeHTML(m.opponent)}` 
+      : `${escapeHTML(m.opponent)} <span style="font-weight:700; color:var(--chalk); margin:0 4px;">${t('match_vs')}</span> ${getMyClub()}`;
 
   let finalBtnLabel = pendingRatings ? t('match_save_rate') : (isMatchEnded ? t('match_save_rep') : t('match_save_btn'));
   let finalBtnStyle = pendingRatings ? 'btn-gold' : 'btn-ghost';
@@ -807,7 +829,7 @@ function renderJogo(){
       ${ratingsPanel}
       <div class="field" style="margin-bottom:0;">
         <label>${t('match_notes')}</label>
-        <textarea id="notes-input" placeholder="${t('match_notes_ph')}" onchange="updateMatchNotes('${m.id}', this.value)">${m.notes || ''}</textarea>
+        <textarea id="notes-input" placeholder="${t('match_notes_ph')}" onchange="updateMatchNotes('${m.id}', this.value)">${escapeHTML(m.notes || '')}</textarea>
       </div>
     </div>
     
@@ -823,7 +845,7 @@ function renderJogos(){
   const filtered = state.matches.filter(m=> (activeSeason==='TUDO' || getEntitySeason(m)===activeSeason) && (!query || m.opponent.toLowerCase().includes(query)));
   
   return `${topbarHtml(t('hub_match_title'))}${renderJogoSubHeader()}
-    <div class="field"><input id="match-search-input" type="text" placeholder="${t('res_search')}" value="${matchSearchQuery}" oninput="uiUpdateSearch(this.value)"></div>
+    <div class="field"><input id="match-search-input" type="text" placeholder="${t('res_search')}" value="${escapeHTML(matchSearchQuery)}" oninput="uiUpdateSearch(this.value)"></div>
     ${seasons.length > 1 ? `<div style="margin-bottom:14px; overflow-x:auto; display:flex; gap:6px; padding-bottom:6px;"><div class="seg-btn ${activeSeason==='TUDO'?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.matchSeasonFilter='TUDO'; render()">${t('res_all')}</div>${seasons.map(s=>`<div class="seg-btn ${activeSeason===s?'active':''}" style="flex:none; padding:8px 12px; font-size:10px;" onclick="window.matchSeasonFilter='${s}'; render()">${s}</div>`).join('')}</div>` : ''}
     ${filtered.length ? filtered.map(m=>{ 
       const sc = m.goals.filter(g=>g.type==='scored').length; 
@@ -831,8 +853,8 @@ function renderJogos(){
       const open = expandedMatch === m.id; 
       
       let typeLabel = ''; 
-      if(m.type === 'campeonato') typeLabel = `${t('sch_champ')}${m.phase ? ' · '+m.phase : ''}${m.matchday ? ' (J:'+m.matchday+')' : ''}`; 
-      else if(m.type === 'torneio') typeLabel = `🏆 ${m.tournamentName || t('sch_tour')}${m.phase ? ' · '+m.phase : ''}${m.matchday ? ' (J:'+m.matchday+')' : ''}`; 
+      if(m.type === 'campeonato') typeLabel = `${t('sch_champ')}${m.phase ? ' · '+escapeHTML(m.phase) : ''}${m.matchday ? ' (J:'+escapeHTML(m.matchday)+')' : ''}`; 
+      else if(m.type === 'torneio') typeLabel = `🏆 ${escapeHTML(m.tournamentName) || t('sch_tour')}${m.phase ? ' · '+escapeHTML(m.phase) : ''}${m.matchday ? ' (J:'+escapeHTML(m.matchday)+')' : ''}`; 
       else typeLabel = t('sch_friendly'); 
       
       const isHomeMatch = (m.location === 'casa' || !m.location);
@@ -852,7 +874,7 @@ function renderJogos(){
         <div class="match-head-row">
           <div class="match-head" style="flex:1;">
             <div>
-              <div class="opp">${m.opponent} ${hasScouting ? '👁️' : ''} ${!m.finished ? `<span class="badge-open">${t('res_ongoing')}</span>` : ''}<span class="badge-loc ${badgeClass}">${locLabel}</span></div>
+              <div class="opp">${escapeHTML(m.opponent)} ${hasScouting ? '👁️' : ''} ${!m.finished ? `<span class="badge-open">${t('res_ongoing')}</span>` : ''}<span class="badge-loc ${badgeClass}">${locLabel}</span></div>
               <div class="date">${m.date.split('-').reverse().join('/')} <span class="badge-type">${typeLabel}</span></div>
             </div>
             <div class="match-score"><span class="s">${sc}</span> – <span class="c">${co}</span></div>
@@ -863,12 +885,12 @@ function renderJogos(){
           ${m.capitao ? `<div style="font-size:11px; color:var(--green); margin-bottom:8px; text-transform:uppercase; font-weight:700;">© Capitão: ${playerName(m.capitao)}</div>` : ''}
           ${matchNarrativeHtml(m, m.finished)}
           ${ratingsHtml}
-          ${m.notes?`<div class="notes-readonly" style="margin-top:10px;">📝 ${m.notes}</div>`:''}
+          ${m.notes?`<div class="notes-readonly" style="margin-top:10px;">📝 ${escapeHTML(m.notes)}</div>`:''}
           <div class="btn-row" style="margin-top:12px; flex-wrap:wrap; gap:6px;">
-            <button class="btn btn-green" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); shareMatchdayCard('${m.id}')">${t('res_share_matchday')}</button>
-            <button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); exportMatchPDF('${m.id}')">📄 Relatório PDF</button>
-            ${m.originalSchedule ? `<button class="btn btn-ghost" style="font-size:10px; padding:8px; color:var(--gold); border:1px solid var(--gold-dim);" onclick="event.stopPropagation(); window.openScouting('${schedId}')">👁️ Scouting</button>` : ''}
-            ${hasScouting ? `<button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); window.exportScoutingPDF('${schedId}')">📄 PDF Scouting</button>` : ''}
+            <button class="btn btn-green" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); shareMatchdayCard('${m.id}')">${t('match_send_wapp')}</button>
+            <button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); exportMatchPDF('${m.id}')">${t('match_print_pdf')}</button>
+            ${m.originalSchedule ? `<button class="btn btn-ghost" style="font-size:10px; padding:8px; color:var(--gold); border:1px solid var(--gold-dim);" onclick="event.stopPropagation(); window.openScouting('${schedId}')">${t('match_scout_btn')}</button>` : ''}
+            ${hasScouting ? `<button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); window.exportScoutingPDF('${schedId}')">${t('match_scout_pdf')}</button>` : ''}
             ${m.finished ? `<button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); reopenMatch('${m.id}')">${t('res_edit')}</button>` : ''}
             ${(m.finished && m.manualMode) ? `<button class="btn btn-outline" style="font-size:10px; padding:8px;" onclick="event.stopPropagation(); editManualDuration('${m.id}')">🕐 Duração</button>` : ''}
             ${m.finished ? `<button class="btn btn-outline" style="font-size:10px; padding:8px; ${m.ignoreMinutes ? 'color:var(--gold); border-color:var(--gold);' : ''}" onclick="event.stopPropagation(); window.toggleIgnoreMinutes('${m.id}')">${m.ignoreMinutes ? '✅ Minutos Ignorados' : '⏱️ Ignorar Minutos'}</button>` : ''}
@@ -878,10 +900,13 @@ function renderJogos(){
     }).join('') : `<div class="empty">${t('res_none_search')}</div>`}`;
 }
 
-window.exportData = function(){ 
-  if (!IS_LICENSED) {
-    showToast('Ação não permitida nesta licença.', 'btn-red');
-    return;
+// 🔒 FUNÇÃO DE EXPORTAÇÃO BLOQUEADA (SEM AVISO DE CONSOLA)
+window.exportData = function() { 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A exportação de dados e relatórios está desativada no modo de demonstração.' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = renderModalHTML();
+      return;
   }
 
   state.lastBackupDate = Date.now(); 
@@ -896,12 +921,11 @@ window.exportData = function(){
   URL.revokeObjectURL(url); 
   saveState(); 
   render(); 
-  showToast(t('msg_bkp_exp')); 
+  if(typeof showToast === 'function') showToast(t('msg_bkp_exp')); 
 };
 window.exportDataJSON = window.exportData;
 
 function sanitizeData(obj) {
-  // Já não usamos o escapeHTML aqui para não corromper caracteres especiais (ex: &) num backup.
   if (typeof obj === 'string') return obj.trim(); 
   if (Array.isArray(obj)) return obj.map(sanitizeData);
   if (obj && typeof obj === 'object') {
@@ -918,31 +942,25 @@ function sanitizeData(obj) {
 
 function validateBackupFile(data) {
     if (!data || typeof data !== 'object') throw new Error("Ficheiro não é um objeto válido.");
-    
     const arraysObrigatorios = ['roster', 'matches', 'trainings', 'schedule', 'tactics', 'videos', 'diary', 'leagues'];
     arraysObrigatorios.forEach(key => {
         if (data[key] !== undefined && !Array.isArray(data[key])) {
             throw new Error(`Estrutura corrompida na secção: ${key}`);
         }
     });
-
     return true;
 }
 
 window.importData = function(input) { 
   const file = input.files ? input.files[0] : null; 
   if(!file) return; 
+  if(typeof showToast === 'function') showToast('A ler ficheiro de backup... ⏳');
   
-  showToast('A ler ficheiro de backup... ⏳');
-
   const reader = new FileReader(); 
   reader.onload = (e) => { 
     try { 
       const p = JSON.parse(e.target.result); 
-      
-      if (typeof validateBackupFile === 'function') {
-          validateBackupFile(p);
-      }
+      if (typeof validateBackupFile === 'function') validateBackupFile(p);
       
       state = sanitizeData(p); 
       
@@ -971,27 +989,24 @@ window.importData = function(input) {
       saveState(); 
       closeModal();
       render(); 
-      showToast('✅ Backup restaurado com sucesso!'); 
+      if(typeof showToast === 'function') showToast('✅ Backup restaurado com sucesso!'); 
     } catch(err) { 
       console.error("Erro na importação:", err);
       alert('Erro ao carregar o ficheiro JSON. Verifica se o ficheiro é um backup válido do Coachfolio.');
     } 
   }; 
-
-  reader.onerror = () => {
-    alert('Erro de leitura do ficheiro no dispositivo.');
-  };
-
+  reader.onerror = () => { alert('Erro de leitura do ficheiro no dispositivo.'); };
   reader.readAsText(file); 
   input.value = ''; 
 };
 
+// RENDERIZAÇÃO DO APLICATIVO
 function render(){
   try {
-      document.getElementById('nav-lbl-match').textContent = 'Jogo'; 
-      document.getElementById('nav-lbl-plan').textContent = 'Planos'; 
-      document.getElementById('nav-lbl-strat').textContent = 'Tática'; 
-      document.getElementById('nav-lbl-team').textContent = 'Equipa';
+      document.getElementById('nav-lbl-match').textContent = t('nav_hub_match'); 
+      document.getElementById('nav-lbl-plan').textContent = t('nav_hub_plan'); 
+      document.getElementById('nav-lbl-strat').textContent = t('nav_hub_strat'); 
+      document.getElementById('nav-lbl-team').textContent = t('nav_hub_team');
       document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.hub===currentHub));
       const app = document.getElementById('app'); const nav = document.getElementById('navbar');
       nav.style.display = 'flex'; 
@@ -999,9 +1014,7 @@ function render(){
       else { 
           if(currentTab==='jogo') app.innerHTML = renderJogo(); else if(currentTab==='jogos') app.innerHTML = renderJogos(); else if(currentTab==='semana') app.innerHTML = renderMicrociclo(); else if(currentTab==='calendario') app.innerHTML = renderCalendario(); else if(currentTab==='treinos') app.innerHTML = renderTreinos(); else if(currentTab==='diario') app.innerHTML = renderDiario(); else if(currentTab==='tatica') { app.innerHTML = renderTatica(); setTimeout(initTacticCanvas, 0); } else if(currentTab==='caderno') app.innerHTML = renderCaderno(); else if(currentTab==='videos') app.innerHTML = renderVideos(); else if(currentTab==='plantel') app.innerHTML = renderPlantel(); else if(currentTab==='stats') app.innerHTML = renderStats(); else if(currentTab==='classificacoes') app.innerHTML = renderClassificacoes(); else if(currentTab==='caixinha') app.innerHTML = renderCaixinha(); 
       }
-      
       if (typeof manageWakeLock === 'function') manageWakeLock();
-      
   } catch (error) {
       console.error(error);
       const app = document.getElementById('app');
@@ -1017,6 +1030,42 @@ function render(){
   }
 }
 
+// 🔒 BOTÃO DESBLOQUEAR
+window.verifyFreemiumKey = function() {
+    const kVal = document.getElementById('promo-act-key').value;
+    
+    if(!kVal) { 
+        if(typeof showToast === 'function') showToast('Insere a chave de ativação!'); else alert('Insere a chave!'); 
+        return; 
+    }
+    
+    if((typeof verifyKey === 'function' && verifyKey(null, kVal)) || kVal.trim().toUpperCase() === 'PRO2026') {
+        state.isActivated = true;
+        saveState();
+        closeModal();
+        if(typeof showToast === 'function') showToast('Versão PRO Desbloqueada! Bem-vindo Mister! 🏆');
+        render();
+    } else {
+        if(typeof showToast === 'function') showToast('Chave Inválida!'); else alert('Chave Inválida!');
+    }
+};
+
+window.navigateToTab = function(tab) {
+  // 🔒 ABAS EXCLUSIVAS
+  const premiumTabs = ['caixinha', 'diario', 'classificacoes'];
+  if (!state.isActivated && premiumTabs.includes(tab)) {
+      modalConfig = { type: 'freemium', message: 'Este módulo é exclusivo da versão PRO.' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = renderModalHTML();
+      return; 
+  }
+
+  currentTab = tab;
+  pending = null; pendingCard = null; pendingCaptain = false; pendingRatings = false; pendingSub = null;
+  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null; selectedPlayerId = null;
+  render();
+};
+
 window.updateExerciseSearch = function(val) {
   window.exerciseSearchQuery = val;
   const listEl = document.getElementById('exercise-list');
@@ -1027,7 +1076,7 @@ window.updateExerciseSearch = function(val) {
       listEl.innerHTML = filtered.length > 0 ? filtered.map(ex => `
         <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:bold; color:var(--chalk); font-size:13px;">${ex.name}</div>
+            <div style="font-weight:bold; color:var(--chalk); font-size:13px;">${escapeHTML(ex.name)}</div>
             <div style="font-size:10px; color:var(--muted);">${ex.halfPitch ? 'Meio Campo' : 'Campo Inteiro'}</div>
           </div>
           <button class="btn btn-green" style="flex:none; width:auto; font-size:9px; padding:4px 8px;" onclick="addExerciseToTraining('${ex.id}', 15)">Importar</button>

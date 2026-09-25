@@ -187,7 +187,15 @@ window.saveScoutingData = function(schId) {
   render(); 
 };
 
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR SCOUTING
 window.deleteScoutingData = function(schId) {
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+
   const s = state.schedule.find(x => x.id === schId);
   if (!s || !s.scouting) return;
   
@@ -229,7 +237,6 @@ window.exportScoutingPDF = function(schId) {
       ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
     </div>
 
-    <!-- PAINEL DE TÁTICA E BLOCO -->
     <div style="background:#F3F4F6; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:11px; text-align:center; page-break-inside:avoid;">
       <div>
         <div style="font-size:9px; color:#6B7280; font-weight:800; text-transform:uppercase;">Sistema Tático Base</div>
@@ -245,19 +252,16 @@ window.exportScoutingPDF = function(schId) {
       </div>
     </div>
 
-    <!-- JOGADORES CHAVE / ALERTAS -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:16px; page-break-inside:avoid;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">⚠️ Jogadores-Chave & Alertas Individuais</h3>
       <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.keyPlayers || 'Sem alertas individuais registados.'}</div>
     </div>
 
-    <!-- BOLAS PARADAS -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:16px; page-break-inside:avoid;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">🎯 Bolas Paradas (Ofensivas / Defensivas)</h3>
       <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.setPieces || 'Sem observações de bolas paradas registadas.'}</div>
     </div>
 
-    <!-- PLANO DE JOGO -->
     <div style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:12px; margin-bottom:18px; page-break-inside:avoid;">
       <h3 style="font-size:11px; font-weight:800; margin:0 0 6px 0; border-bottom:1px solid #D1D5DB; padding-bottom:3px; text-transform:uppercase; color:#0E211A;">💡 Estratégia & Plano de Jogo</h3>
       <div style="font-size:11px; line-height:1.5; color:#1F2937; white-space:pre-wrap;">${sc.gamePlan || 'Sem plano de jogo especificado.'}</div>
@@ -415,6 +419,15 @@ function renderCalendario(){
 window.uiSaveTraining = function() {
   if (!trainingForm) return;
 
+  if (!state.isActivated && !trainingForm.id) {
+      if ((state.trainings || []).length >= 1) {
+          modalConfig = { type: 'freemium', message: 'A versão de testes permite registar apenas 1 sessão de treino.' };
+          const root = document.getElementById('modal-root');
+          if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+          return;
+      }
+  }
+
   const date = trainingForm.date || new Date().toISOString().slice(0, 10);
   const duration = parseInt(trainingForm.duration, 10) || 90;
   const plan = (trainingForm.plan != null ? trainingForm.plan : trainingForm.notes) || '';
@@ -511,7 +524,18 @@ window.editTraining = function(trId) {
   render();
 };
 
-window.deleteTraining = function(id){ state.trainings = state.trainings.filter(t=>t.id!==id); saveState(); render(); };
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR TREINOS
+window.deleteTraining = function(id){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  state.trainings = state.trainings.filter(t=>t.id!==id); 
+  saveState(); 
+  render(); 
+};
 
 window.quickCompleteTraining = function(id) {
   const tr = state.trainings.find(t => t.id === id);
@@ -523,114 +547,6 @@ window.quickCompleteTraining = function(id) {
     render();
     showToast("Treino concluído com sucesso! 🟢");
   }, 'btn-green'); 
-};
-
-window.exportTrainingPDF = function(trId, mode) {
-  const tr = state.trainings.find(t => t.id === trId);
-  if (!tr) return;
-
-  const dateStr = tr.date ? tr.date.split('-').reverse().join('/') : '-';
-  const duration = tr.duration || 90;
-  const isCompleted = tr.status === 'completed';
-
-  let exercisesHtml = '';
-  if (tr.exercises && tr.exercises.length > 0) {
-    tr.exercises.forEach((ex, idx) => {
-      const svg = window.buildExerciseTacticalPitchSVG ? window.buildExerciseTacticalPitchSVG(ex.notebookId) : '';
-      exercisesHtml += `
-        <div style="margin-bottom:15px; page-break-inside:avoid; border:1px solid #CCC; padding:10px; border-radius:8px; background:#F9F9F9;">
-          <h4 style="margin:0 0 10px 0; font-size:14px; color:#0E211A;">${idx + 1}. ${escapeHTML(ex.name)} (${ex.duration} min)</h4>
-          <div style="text-align:center; max-width:300px; margin:0 auto;">
-            ${svg}
-          </div>
-        </div>
-      `;
-    });
-  } else {
-    exercisesHtml = '<p style="color:#666; font-size:12px;">Sem exercícios visuais associados.</p>';
-  }
-
-  let absHtml = '';
-  if (mode === 'full') {
-    const roster = eligiblePlayers();
-    let present = [];
-    let absent = [];
-
-    let absObj = {};
-    if (Array.isArray(tr.absences)) {
-      tr.absences.forEach(id => absObj[id] = 'injustificada');
-    } else {
-      absObj = tr.absences || {};
-    }
-
-    roster.forEach(p => {
-      if (absObj[p.id]) {
-        let label = 'Falta';
-        if(absObj[p.id] === 'justificada') label = 'Falta Justificada';
-        if(absObj[p.id] === 'atrasado') label = 'Atrasado';
-        if(absObj[p.id] === 'lesao') label = 'Lesão';
-        if(absObj[p.id] === 'castigo') label = 'Castigo';
-        if(absObj[p.id] === 'dispensado') label = 'Dispensado';
-
-        let cMins = (tr.customMinutes && tr.customMinutes[p.id] != null) ? tr.customMinutes[p.id] : 0;
-        let minStr = cMins > 0 ? ` (${cMins}')` : '';
-        
-        absent.push(`<tr><td style="text-align:left;">${p.number||'-'} ${escapeHTML(p.name)}</td><td style="color:#C8493F;">${label}${minStr}</td></tr>`);
-      } else {
-        present.push(`<tr><td style="text-align:left;">${p.number||'-'} ${escapeHTML(p.name)}</td><td style="color:#16A34A;">Presente (${duration}')</td></tr>`);
-      }
-    });
-
-    absHtml = `
-      <h3 style="font-size:14px; font-weight:bold; margin:20px 0 10px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase;">Registo de Presenças</h3>
-      <div style="display:flex; gap:15px; page-break-inside:avoid;">
-         <div style="flex:1;">
-           <h4 style="margin:0 0 5px 0; font-size:12px;">✅ Presentes (${present.length})</h4>
-           <table style="width:100%; border-collapse:collapse; font-size:11px;">
-             ${present.length ? present.join('') : '<tr><td>Sem presentes</td></tr>'}
-           </table>
-         </div>
-         <div style="flex:1;">
-           <h4 style="margin:0 0 5px 0; font-size:12px;">❌ Ausentes / Parciais (${absent.length})</h4>
-           <table style="width:100%; border-collapse:collapse; font-size:11px;">
-             ${absent.length ? absent.join('') : '<tr><td>Nenhum</td></tr>'}
-           </table>
-         </div>
-      </div>
-    `;
-  }
-
-  let html = `
-  <div class="print-card" style="padding:20px; font-family:-apple-system, sans-serif; color:#000;">
-    <div class="print-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0E211A; padding-bottom:12px; margin-bottom:20px;">
-      <div>
-        <h1 style="font-size:22px; margin:0; text-transform:uppercase; color:#0E211A; font-weight:800;">PLANO DE TREINO</h1>
-        <p style="font-size:14px; font-weight:bold; margin:4px 0 0 0; color:#D9A441;">Data: ${dateStr} | Duração: ${duration} Minutos</p>
-        <p style="font-size:11px; color:#4B5563; margin-top:2px;">Clube: <b>${getClubAndEscalao()}</b> | Estado: <b>${isCompleted ? 'Realizado' : 'Agendado'}</b></p>
-      </div>
-      ${typeof getClubLogoHtml === 'function' ? getClubLogoHtml() : ''}
-    </div>
-
-    <h3 style="font-size:14px; font-weight:bold; margin:0 0 10px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase;">📝 Estrutura da Sessão</h3>
-    <div style="white-space:pre-wrap; font-size:12px; line-height:1.5; margin-bottom:20px; background:#F3F4F6; padding:10px; border-radius:6px; border:1px solid #E5E7EB;">${escapeHTML(tr.plan || tr.notes || 'Sem plano registado.')}</div>
-    
-    ${tr.obs ? `<h3 style="font-size:14px; font-weight:bold; margin:0 0 10px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase;">📌 Observações</h3>
-    <div style="white-space:pre-wrap; font-size:12px; line-height:1.5; margin-bottom:20px; background:#FFFBEB; padding:10px; border-radius:6px; border:1px solid #FEF3C7;">${escapeHTML(tr.obs)}</div>` : ''}
-
-    <h3 style="font-size:14px; font-weight:bold; margin:0 0 10px 0; border-bottom:2px solid #0E211A; padding-bottom:4px; text-transform:uppercase;">🏋️ Exercícios (${tr.exercises ? tr.exercises.length : 0})</h3>
-    ${exercisesHtml}
-
-    ${absHtml}
-    
-    <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
-      <div style="font-size:10px; color:#666;">• Ficha de Treino — Coachfolio v3.6</div>
-      <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
-    </div>
-  </div>
-  `;
-
-  document.getElementById('print-area').innerHTML = html;
-  if (typeof window.openSafePrintModal === 'function') window.openSafePrintModal();
 };
 
 function renderTreinos(){
@@ -818,7 +734,19 @@ window.uiSaveDiary = function(){
     state.diary.unshift({ id: uid(), date: diaryForm.date || new Date().toISOString().slice(0,10), season: state.currentSeason, title: escapeHTML(diaryForm.title.trim()), content: diaryForm.content||'' }); 
     diaryForm = null; saveState(); render(); showToast('Nota guardada no Diário ✓'); 
 };
-window.deleteDiary = function(id){ state.diary = state.diary.filter(d=>d.id!==id); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR DO DIÁRIO
+window.deleteDiary = function(id){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  state.diary = state.diary.filter(d=>d.id!==id); 
+  saveState(); 
+  render(); 
+};
 
 function renderDiario(){
   if(diaryForm){ 
@@ -854,7 +782,20 @@ function renderDiario(){
 }
 
 window.uiSaveVideo = function(){ if(!videoForm.title || !videoForm.title.trim()){ showToast(t('vid_name')); return; } if(!videoForm.url || !videoForm.url.trim()){ showToast(t('vid_url')); return; } state.videos.unshift({ id: uid(), title: escapeHTML(videoForm.title.trim()), type: videoForm.type || 'treino', url: escapeHTML(videoForm.url.trim()), notes: videoForm.notes || '' }); videoForm = null; saveState(); render(); showToast(t('msg_vid_saved')); };
-window.deleteVideo = function(id){ state.videos = state.videos.filter(v=>v.id!==id); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR VÍDEOS
+window.deleteVideo = function(id){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  state.videos = state.videos.filter(v=>v.id!==id); 
+  saveState(); 
+  render(); 
+};
+
 window.shareVideoWhatsapp = function(id){
   const v = state.videos.find(x=>x.id===id); if(!v) return;
   let text = `🎬 *${v.title}*\n\n🔗 ${v.url}\n`;
@@ -1083,7 +1024,7 @@ window.exportMicrocyclePDF = function() {
         </div>
         ${daysHtml}
         <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">
-            <div style="font-size:10px; color:#6B7280;">• Planeamento Semanal — Coachfolio v3.6</div>
+            <div style="font-size:10px; color:#6B7280;">• Planeamento Semanal — Coachfolio v3.5</div>
             <div style="text-align:center; width:200px; border-top:1.5px solid #111827; padding-top:4px; font-size:11px; font-weight:bold;">A Equipa Técnica</div>
         </div>
     </div>`;
