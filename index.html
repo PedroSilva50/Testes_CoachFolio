@@ -467,9 +467,18 @@ window.navigateToHub = function(hub) {
 };
 
 window.navigateToTab = function(tab) {
+  // 🔒 BARREIRAS DE MÓDULOS PREMIUM (Clica na Aba, mas a porta não abre!)
+  const premiumTabs = ['caixinha', 'diario', 'classificacoes'];
+  if (!state.isActivated && premiumTabs.includes(tab)) {
+      modalConfig = { type: 'freemium', message: 'Este módulo é exclusivo da versão PRO.' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return; 
+  }
+
   currentTab = tab;
   pending = null; pendingCard = null; pendingCaptain = false; pendingRatings = false; pendingSub = null;
-  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null;
+  schedulingNew = false; editingSchId = null; pendingLineupSet = []; editingPlayerId = null; editingLgMatch = null; fineForm = null; selectedPlayerId = null;
   render();
 };
 
@@ -661,24 +670,46 @@ window.uiRemoveTournamentGame = function(id){ schForm.games = schForm.games.filt
 window.uiUpdateTournamentGame = function(id, field, val){ const g = schForm.games.find(x=>x.id===id); if(g) g[field] = val; };
 
 window.uiSaveSchedule = function(){
+  // 🔒 BARREIRA DA DEMO NOS JOGOS
+  if (!state.isActivated && !editingSchId) {
+      const totalJogos = (state.schedule || []).length + (state.matches || []).length;
+      if (totalJogos >= 2) {
+          modalConfig = { type: 'freemium', message: 'A versão de testes permite gerir no máximo 2 jogos (Agendados ou no Histórico).' };
+          const root = document.getElementById('modal-root');
+          if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+          return;
+      }
+  }
+
   if(editingSchId) {
-    if(!schForm.opp.trim()){ showToast(t('msg_no_opp')); return; } const s = state.schedule.find(x=>x.id===editingSchId);
+    if(!schForm.opp.trim()){ if(typeof showToast==='function') showToast(t('msg_no_opp')); return; } const s = state.schedule.find(x=>x.id===editingSchId);
     if(s) { s.opponent = escapeHTML(schForm.opp.trim()); s.date = schForm.date || s.date; s.time = schForm.time || s.time; s.type = schForm.type; s.location = schForm.loc; s.phase = escapeHTML((schForm.phase || '').trim()); s.matchday = escapeHTML((schForm.matchday || '').trim()); s.tournamentName = (schForm.type === 'torneio') ? escapeHTML((schForm.tournamentName || '').trim()) : ''; s.numberOfHalves = schForm.numberOfHalves || 2; s.halfDuration = schForm.halfDuration || state.defaultHalfDuration || 30; }
-    state.schedule.sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time)); editingSchId = null; schedulingNew = false; saveState(); render(); showToast(t('msg_sch_saved')); return;
+    state.schedule.sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time)); editingSchId = null; schedulingNew = false; saveState(); render(); if(typeof showToast==='function') showToast(t('msg_sch_saved')); return;
   }
   if(schForm.isBatch){
-    if(!schForm.tournamentName.trim()){ showToast(t('msg_no_tour')); return; } const validGames = schForm.games.filter(g => g.opp.trim() !== ''); if(validGames.length === 0){ showToast(t('msg_no_games')); return; }
-    validGames.forEach(g => { state.schedule.push({ id: uid(), opponent: escapeHTML(g.opp.trim()), date: g.date || new Date().toISOString().slice(0,10), time: g.time || '09:00', type: 'torneio', phase: escapeHTML(g.phase.trim()), matchday: escapeHTML(g.matchday.trim()), tournamentName: escapeHTML(schForm.tournamentName.trim()), season: state.currentSeason, location: schForm.loc || 'fora', callup: [], numberOfHalves: schForm.numberOfHalves || 2, halfDuration: schForm.halfDuration || state.defaultHalfDuration || 30 }); }); showToast(t('msg_tour_saved'));
+    if(!schForm.tournamentName.trim()){ if(typeof showToast==='function') showToast(t('msg_no_tour')); return; } const validGames = schForm.games.filter(g => g.opp.trim() !== ''); if(validGames.length === 0){ if(typeof showToast==='function') showToast(t('msg_no_games')); return; }
+    validGames.forEach(g => { state.schedule.push({ id: uid(), opponent: escapeHTML(g.opp.trim()), date: g.date || new Date().toISOString().slice(0,10), time: g.time || '09:00', type: 'torneio', phase: escapeHTML(g.phase.trim()), matchday: escapeHTML(g.matchday.trim()), tournamentName: escapeHTML(schForm.tournamentName.trim()), season: state.currentSeason, location: schForm.loc || 'fora', callup: [], numberOfHalves: schForm.numberOfHalves || 2, halfDuration: schForm.halfDuration || state.defaultHalfDuration || 30 }); }); if(typeof showToast==='function') showToast(t('msg_tour_saved'));
   } else {
-    if(!schForm.opp.trim()){ showToast(t('msg_no_opp')); return; }
-    state.schedule.push({ id: uid(), opponent: escapeHTML(schForm.opp.trim()), date: schForm.date || new Date().toISOString().slice(0,10), time: schForm.time || '09:00', type: schForm.type || 'amigavel', phase: (schForm.type==='campeonato'||schForm.type==='torneio' ? escapeHTML((schForm.phase||'').trim()) : ''), matchday: (schForm.type==='campeonato'||schForm.type==='torneio' ? escapeHTML((schForm.matchday||'').trim()) : ''), tournamentName: escapeHTML((schForm.tournamentName || '').trim()), season: state.currentSeason, location: schForm.loc || 'casa', callup: [], numberOfHalves: schForm.numberOfHalves || 2, halfDuration: schForm.halfDuration || state.defaultHalfDuration || 30 }); showToast(t('msg_game_saved'));
+    if(!schForm.opp.trim()){ if(typeof showToast==='function') showToast(t('msg_no_opp')); return; }
+    state.schedule.push({ id: uid(), opponent: escapeHTML(schForm.opp.trim()), date: schForm.date || new Date().toISOString().slice(0,10), time: schForm.time || '09:00', type: schForm.type || 'amigavel', phase: (schForm.type==='campeonato'||schForm.type==='torneio' ? escapeHTML((schForm.phase||'').trim()) : ''), matchday: (schForm.type==='campeonato'||schForm.type==='torneio' ? escapeHTML((schForm.matchday||'').trim()) : ''), tournamentName: escapeHTML((schForm.tournamentName || '').trim()), season: state.currentSeason, location: schForm.loc || 'casa', callup: [], numberOfHalves: schForm.numberOfHalves || 2, halfDuration: schForm.halfDuration || state.defaultHalfDuration || 30 }); if(typeof showToast==='function') showToast(t('msg_game_saved'));
   }
   state.schedule.sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time)); schedulingNew = false; saveState(); render();
 };
 
 window.editSchedule = function(id){ const s = state.schedule.find(x=>x.id===id); if(s){ schForm = { isBatch: false, opp: s.opponent, date: s.date, time: s.time, type: s.type, phase: s.phase||'', matchday: s.matchday||'', loc: s.location, tournamentName: s.tournamentName||'', games: [], numberOfHalves: s.numberOfHalves || 2, halfDuration: s.halfDuration || state.defaultHalfDuration || 30 }; editingSchId = id; schedulingNew = true; render(); } };
 window.duplicateSchedule = function(id){ const s = state.schedule.find(x=>x.id===id); if(s){ schForm = { isBatch: false, opp: '', date: s.date, time: s.time, type: s.type, phase: s.phase||'', matchday: s.matchday||'', loc: s.location, tournamentName: s.tournamentName||'', games: [], numberOfHalves: s.numberOfHalves || 2, halfDuration: s.halfDuration || state.defaultHalfDuration || 30 }; editingSchId = null; schedulingNew = true; render(); } };
-window.deleteSchedule = function(id){ state.schedule = state.schedule.filter(x=>x.id!==id); saveState(); render(); };
+
+window.deleteSchedule = function(id){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  state.schedule = state.schedule.filter(x=>x.id!==id); 
+  saveState(); render(); 
+};
+
 window.startScheduledMatch = function(schedId){
   const s = state.schedule.find(x => x.id === schedId); if(!s) return;
   if(getActiveMatch()) { showToast(t('msg_ongoing')); return; }
@@ -1033,7 +1064,21 @@ window.getGoalInputPanelHTML = function(m, isManualMode) {
 
   return '';
 };
-window.deleteGoal = function(matchId, goalId){ const m = state.matches.find(m=>m.id===matchId); if(!m) return; m.goals = m.goals.filter(g=>g.id!==goalId); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR GOLOS
+window.deleteGoal = function(matchId, goalId){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  const m = state.matches.find(m=>m.id===matchId); 
+  if(!m) return; 
+  m.goals = m.goals.filter(g=>g.id!==goalId); 
+  saveState(); render(); 
+};
+
 window.editEventMinute = function(matchId, kind, eventId){
   const m = state.matches.find(x => x.id === matchId);
   if (!m) return;
@@ -1074,7 +1119,21 @@ window.addCard = function(matchId, playerId, color, half){
     m.cards.push({ id: uid(), playerId, color, half: half==='halftime'?1:half, minute: getMatchMinute(m), timestamp: Date.now() }); 
     pendingCard = null; saveState(); render(); 
 };
-window.deleteCard = function(matchId, cardId){ const m = state.matches.find(m=>m.id===matchId); if(!m) return; m.cards = m.cards.filter(c=>c.id!==cardId); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR CARTÕES
+window.deleteCard = function(matchId, cardId){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  const m = state.matches.find(m=>m.id===matchId); 
+  if(!m) return; 
+  m.cards = m.cards.filter(c=>c.id!==cardId); 
+  saveState(); render(); 
+};
+
 window.confirmSub = function(mId, customMin) { 
   const m = state.matches.find(x => x.id === mId); 
   if(!m) return; 
@@ -1102,8 +1161,33 @@ window.confirmSub = function(mId, customMin) {
 
   pendingSub = null; saveState(); render(); 
 };
-window.deleteSub = function(mId, subId) { const m = state.matches.find(x=>x.id===mId); if(!m) return; m.subs = m.subs.filter(s => s.id !== subId); saveState(); render(); };
-window.deleteMatch = function(matchId){ state.matches = state.matches.filter(m => m.id !== matchId); saveState(); render(); };
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR SUBSTITUIÇÕES
+window.deleteSub = function(mId, subId) { 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de dados está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  const m = state.matches.find(x=>x.id===mId); 
+  if(!m) return; 
+  m.subs = m.subs.filter(s => s.id !== subId); 
+  saveState(); render(); 
+};
+
+// 🔒 BARREIRA DA DEMO: PROÍBE APAGAR JOGOS INTEIROS
+window.deleteMatch = function(matchId){ 
+  if (!state.isActivated) {
+      modalConfig = { type: 'freemium', message: 'A eliminação de jogos está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total!' };
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+      return;
+  }
+  state.matches = state.matches.filter(m => m.id !== matchId); 
+  saveState(); render(); 
+};
+
 window.setCaptain = function(matchId, playerId){ const m = state.matches.find(m=>m.id===matchId); if(m){ m.capitao = playerId; saveState(); } pendingCaptain = false; render(); };
 window.setRating = function(matchId, playerId, rating){ const m = state.matches.find(m=>m.id===matchId); if(!m) return; if(!m.ratings) m.ratings = {}; if(m.ratings[playerId] === rating) delete m.ratings[playerId]; else m.ratings[playerId] = rating; saveState(); render(); };
 window.askConfirm = function(message, onConfirm, btnClass = 'btn-red'){ modalConfig = { type: 'confirm', message, onConfirm, btnClass }; document.getElementById('modal-root').innerHTML = renderModalHTML(); };
@@ -1157,7 +1241,6 @@ window.triggerSafePrint = async function() {
     if (isIOSPWA) {
         try {
             showToast('A preparar ficheiro para o iOS... ⏳');
-            // AQUI ESTÁ A TÁTICA ANTI LIVE SERVER DA VS CODE
             const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Coachfolio Relatório</title><style>body{font-family:-apple-system,sans-serif;padding:20px;color:#000;background:#fff;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;text-align:center;} th{background:#eee;}</style></head><body>${printArea.innerHTML}\x3C/body\x3E\x3C/html\x3E`;
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const file = new File([blob], `Coachfolio_Relatorio_${Date.now()}.html`, { type: 'text/html' });
@@ -1181,8 +1264,17 @@ window.triggerSafePrint = async function() {
         window.print();
     }, 200);
 };
+
 window.archiveSeason = function() { closeModal(); modalConfig = { type: 'archiveSeason' }; document.getElementById('modal-root').innerHTML = renderModalHTML(); };
 window.doArchiveSeason = function() {
+    // 🔒 BARREIRA DA DEMO: PROÍBE ARQUIVAR ÉPOCA
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'Arquivar a época (Reset do Histórico) é exclusivo da versão PRO. Desbloqueia a tua licença!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+
     const parts = state.currentSeason.split('/'); let nextSeason = 'Nova Época';
     if(state.seasonFormat === 'civil') { let y = parseInt(state.currentSeason); if(isNaN(y)) y = new Date().getFullYear(); nextSeason = String(y + 1); } 
     else { nextSeason = parts.length === 2 ? `${parseInt(parts[1])}/${parseInt(parts[1])+1}` : defaultSeason(); }
@@ -1192,13 +1284,22 @@ window.doArchiveSeason = function() {
     saveState(); closeModal(); showToast(t('msg_archive_done')); goHome();
 };
 
+// 🔒 BARREIRA DA DEMO: PROÍBE O RESET TOTAL DA APLICAÇÃO
 window.wipeAllData = function() {
+    if (!state.isActivated) {
+        modalConfig = { type: 'freemium', message: 'A limpeza total de dados (Reset) está bloqueada na versão de demonstração. Desbloqueia a versão PRO para teres controlo total da tua aplicação!' };
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = typeof renderModalHTML === 'function' ? renderModalHTML() : '';
+        return;
+    }
+
     if(confirm("TEM A CERTEZA ABSOLUTA?\nIsto vai apagar completamente a app: planteis, jogos, histórico e definições. Não há como voltar atrás!")) {
         localStorage.removeItem('coach-app-data-v1');
         if(typeof window.storage !== 'undefined') window.storage.set('coach-app-data-v1', '');
         window.location.reload();
     }
 };
+
 setInterval(()=>{
   if(currentTab !== 'jogo') return; const m = getActiveMatch(); if(!m || !m.timer || !m.timer.isRunning) return;
   const el = document.getElementById('live-timer'); if(el) el.textContent = formatMatchTime(window.getMatchDisplayTimeMs(m));
