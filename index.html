@@ -1264,7 +1264,7 @@ window.triggerSafePrint = async function() {
         window.print();
     }, 200);
 };
-
+// === REMOVE_ON_BUILD_START ===
 window.archiveSeason = function() { closeModal(); modalConfig = { type: 'archiveSeason' }; document.getElementById('modal-root').innerHTML = renderModalHTML(); };
 window.doArchiveSeason = function() {
     // 🔒 BARREIRA DA DEMO: PROÍBE ARQUIVAR ÉPOCA
@@ -1299,7 +1299,7 @@ window.wipeAllData = function() {
         window.location.reload();
     }
 };
-
+// === REMOVE_ON_BUILD_END ===
 setInterval(()=>{
   if(currentTab !== 'jogo') return; const m = getActiveMatch(); if(!m || !m.timer || !m.timer.isRunning) return;
   const el = document.getElementById('live-timer'); if(el) el.textContent = formatMatchTime(window.getMatchDisplayTimeMs(m));
